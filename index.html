@@ -37,15 +37,25 @@
   .auth-body { padding: 22px; }
   .auth-body input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--wa-border); border-radius: 8px; font-size: 14px; margin-bottom: 11px; outline: none; transition: border-color .2s; font-family: inherit; }
   .auth-body input:focus { border-color: var(--wa-dark-green); }
-  .ph-row { display: flex; gap: 7px; margin-bottom: 11px; align-items: center; }
-  .ph-row .prefix { background: var(--wa-input-bg); border: 1.5px solid var(--wa-border); border-radius: 8px; padding: 11px 11px; font-size: 14px; color: var(--wa-text-secondary); white-space: nowrap; }
+  .ph-row { display: flex; gap: 7px; margin-bottom: 11px; align-items: center; position: relative; }
   .ph-row input { margin-bottom: 0; flex: 1; }
+  .cc-btn { background: var(--wa-input-bg); border: 1.5px solid var(--wa-border); border-radius: 8px; padding: 9px 8px; font-size: 14px; color: var(--wa-text-secondary); white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 5px; user-select: none; flex-shrink: 0; }
+  .cc-btn:hover { border-color: var(--wa-dark-green); }
+  .cc-btn .cc-arrow { font-size: 9px; color: var(--wa-text-secondary); }
+  .cc-popup { display: none; position: absolute; top: 100%; left: 0; z-index: 100; background: #fff; border: 1.5px solid var(--wa-border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); width: 200px; overflow: hidden; }
+  .cc-popup.open { display: block; }
+  .cc-popup-inner { padding: 8px; }
+  .cc-plus { display: flex; align-items: center; gap: 0; border: 1.5px solid var(--wa-border); border-radius: 6px; overflow: hidden; }
+  .cc-plus-sign { padding: 8px 6px 8px 10px; font-size: 14px; font-weight: 600; color: var(--wa-text); background: var(--wa-input-bg); border-right: 1px solid var(--wa-border); user-select: none; }
+  .cc-plus input { border: none; outline: none; padding: 8px 6px; font-size: 14px; width: 80px; font-family: inherit; background: #fff; }
+  .cc-flag-preview { margin-top: 8px; text-align: center; font-size: 22px; min-height: 30px; }
+  .cc-apply { width: 100%; margin-top: 8px; padding: 8px; background: var(--wa-green); color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .cc-apply:hover { background: var(--wa-dark-green); }
   .auth-btn { width: 100%; padding: 12px; background: var(--wa-green); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
   .auth-btn:hover { background: var(--wa-dark-green); }
   .auth-btn:disabled { background: #aaa; cursor: not-allowed; }
   .auth-error { color: #e53935; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; }
-  .guest-link { text-align: center; margin-top: 11px; }
-  .guest-link button { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--wa-text-secondary); text-decoration: underline; }
+
 
   /* HEADER */
   #app-header { background: var(--wa-header); display: flex; align-items: center; padding: 0 14px; height: 58px; flex-shrink: 0; position: relative; z-index: 10; }
@@ -181,9 +191,12 @@
 <!-- AUTH OVERLAY -->
 <div id="auth-overlay">
   <div class="auth-box">
-    <div class="auth-header">
+    <div class="auth-header" style="position:relative;">
+      <button onclick="continueAsGuest()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.15);border:none;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
       <div class="logo">Signature Digital</div>
-      <div class="sub">Your trusted subscription partner</div>
+      <div class="sub">Genuine Softwares at Affordable Prices</div>
     </div>
     <div class="auth-tabs">
       <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
@@ -192,7 +205,24 @@
     <div class="auth-body">
       <div class="auth-error" id="auth-error"></div>
       <div id="login-form">
-        <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+        <div class="ph-row">
+          <div class="cc-btn" onclick="toggleCC('login-cc')" id="login-cc-btn">
+            <span id="login-flag">🇱🇰</span>
+            <span id="login-code">+94</span>
+            <span class="cc-arrow">▼</span>
+          </div>
+          <div class="cc-popup" id="login-cc">
+            <div class="cc-popup-inner">
+              <div class="cc-plus">
+                <span class="cc-plus-sign">+</span>
+                <input type="tel" id="login-cc-input" placeholder="94" maxlength="4" oninput="updateCCPreview('login')" value="94">
+              </div>
+              <div class="cc-flag-preview" id="login-cc-flag">🇱🇰</div>
+              <button class="cc-apply" onclick="applyCC('login')">Apply</button>
+            </div>
+          </div>
+          <input type="tel" id="login-phone" placeholder="Phone number" maxlength="15">
+        </div>
         <input type="password" id="login-pass" placeholder="Password">
         <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
       </div>
@@ -209,7 +239,24 @@
         <!-- Step 1: Phone -->
         <div id="reg-step1">
           <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:10px;">Enter your WhatsApp number to receive a verification code.</p>
-          <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+          <div class="ph-row">
+            <div class="cc-btn" onclick="toggleCC('reg-cc')" id="reg-cc-btn">
+              <span id="reg-flag">🇱🇰</span>
+              <span id="reg-code">+94</span>
+              <span class="cc-arrow">▼</span>
+            </div>
+            <div class="cc-popup" id="reg-cc">
+              <div class="cc-popup-inner">
+                <div class="cc-plus">
+                  <span class="cc-plus-sign">+</span>
+                  <input type="tel" id="reg-cc-input" placeholder="94" maxlength="4" oninput="updateCCPreview('reg')" value="94">
+                </div>
+                <div class="cc-flag-preview" id="reg-cc-flag">🇱🇰</div>
+                <button class="cc-apply" onclick="applyCC('reg')">Apply</button>
+              </div>
+            </div>
+            <input type="tel" id="reg-phone" placeholder="Phone number" maxlength="15">
+          </div>
           <button class="auth-btn" id="reg-btn-send" onclick="sendOTP()">📲 Send OTP via WhatsApp</button>
         </div>
 
@@ -238,7 +285,7 @@
           <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
         </div>
       </div>
-      <div class="guest-link"><button onclick="continueAsGuest()">View updates without account</button></div>
+
     </div>
   </div>
 </div>
@@ -439,7 +486,11 @@ function switchAuthTab(t) {
   document.querySelectorAll('.auth-tab').forEach((el,i) => el.classList.toggle('active', i===(t==='login'?0:1)));
   setAuthError('');
 }
-function setAuthError(m) { document.getElementById('auth-error').textContent = m; }
+function setAuthError(m) {
+  const el = document.getElementById('auth-error');
+  el.innerHTML = m;
+}
+const ADMIN_ERROR = 'Something went wrong. <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">Report Admin</a> for assistance.';
 function setAuthLoading(id, loading) {
   const b = document.getElementById(id);
   b.disabled = loading; b.textContent = loading ? 'Please wait...' : (id==='login-btn' ? 'Login' : 'Create Account');
@@ -461,10 +512,15 @@ async function doLogin() {
   const pass = document.getElementById('login-pass').value;
   if (!phone || !pass) return setAuthError('Please fill all fields');
   setAuthLoading('login-btn', true);
-  const { error } = await sb.auth.signInWithPassword({ email: fmtEmail(phone), password: pass });
-  setAuthLoading('login-btn', false);
-  if (error) setAuthError(error.message.includes('Invalid') ? 'Wrong phone or password' : error.message);
-  else showToast('Welcome back!');
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email: getLoginEmail(), password: pass });
+    setAuthLoading('login-btn', false);
+    if (error) setAuthError(error.message.includes('Invalid') ? 'Wrong phone or password' : error.message);
+    else showToast('Welcome back!');
+  } catch(e) {
+    setAuthLoading('login-btn', false);
+    setAuthError(ADMIN_ERROR);
+  }
 }
 
 let otpVerifiedPhone = null;
@@ -598,7 +654,7 @@ async function sendOTP(isResend) {
     const res = await fetch(BOT_URL + '/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,''), session_id: getSessionId() })
+      body: JSON.stringify({ secret: OTP_SECRET, phone: '+' + getSelectedCode('reg') + phone.replace(/\D/g,'').replace(/^0+/,''), session_id: getSessionId() })
     });
     const data = await res.json();
     if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
@@ -619,7 +675,7 @@ async function sendOTP(isResend) {
     showRegStep(2);
     showToast(isResend ? 'New OTP sent! (' + newSends + '/' + MAX_SENDS + ' used)' : 'OTP sent to your WhatsApp!');
   } catch(e) {
-    setAuthError('Could not reach server. Try again.');
+    setAuthError(ADMIN_ERROR);
   } finally {
     btn.disabled = false; btn.textContent = '📲 Send OTP via WhatsApp';
   }
@@ -654,7 +710,7 @@ async function verifyOTP() {
     const res = await fetch(BOT_URL + '/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,''), otp })
+      body: JSON.stringify({ secret: OTP_SECRET, phone: '+' + getSelectedCode('reg') + phone.replace(/\D/g,'').replace(/^0+/,''), otp })
     });
     const data = await res.json();
     if (!res.ok || !data.valid) {
@@ -687,9 +743,10 @@ async function verifyOTP() {
     localStorage.removeItem('otp_switch_count');
     localStorage.removeItem('otp_tried_phones');
     localStorage.removeItem('otp_tried_expiry');
+    localStorage.removeItem('otp_lockout_count');
     showRegStep(3);
   } catch(e) {
-    setAuthError('Could not verify. Try again.');
+    setAuthError(ADMIN_ERROR);
     btn.disabled = false; btn.textContent = 'Verify Code';
   } finally {
     if (!btn.disabled || otpAttempts < MAX_ATTEMPTS) {
@@ -709,11 +766,11 @@ async function doRegister() {
   setAuthLoading('reg-btn', true);
   const username = document.getElementById('reg-username').value.trim();
   const { data: signUpData, error } = await sb.auth.signUp({
-    email: fmtEmail(phone), password: pass,
-    options: { data: { phone: fmtPhone(phone), username: username || null } }
+    email: getRegEmail(), password: pass,
+    options: { data: { phone: getRegPhone(), username: username || null } }
   });
   setAuthLoading('reg-btn', false);
-  if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : error.message);
+  if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : (error.message || ADMIN_ERROR));
   else {
     if (signUpData?.user) {
       // Save profile
@@ -1265,6 +1322,90 @@ if ('caches' in window) {
     otpAttempts = session.attempts || 0;
   }
 })();
+
+// ── COUNTRY CODE PICKER ───────────────────────────────
+const CC_MAP = {
+  '1':'🇺🇸','7':'🇷🇺','20':'🇪🇬','27':'🇿🇦','30':'🇬🇷','31':'🇳🇱','32':'🇧🇪','33':'🇫🇷',
+  '34':'🇪🇸','36':'🇭🇺','39':'🇮🇹','40':'🇷🇴','41':'🇨🇭','43':'🇦🇹','44':'🇬🇧','45':'🇩🇰',
+  '46':'🇸🇪','47':'🇳🇴','48':'🇵🇱','49':'🇩🇪','51':'🇵🇪','52':'🇲🇽','54':'🇦🇷','55':'🇧🇷',
+  '56':'🇨🇱','57':'🇨🇴','58':'🇻🇪','60':'🇲🇾','61':'🇦🇺','62':'🇮🇩','63':'🇵🇭','64':'🇳🇿',
+  '65':'🇸🇬','66':'🇹🇭','81':'🇯🇵','82':'🇰🇷','84':'🇻🇳','86':'🇨🇳','90':'🇹🇷','91':'🇮🇳',
+  '92':'🇵🇰','93':'🇦🇫','94':'🇱🇰','95':'🇲🇲','98':'🇮🇷','212':'🇲🇦','213':'🇩🇿','216':'🇹🇳',
+  '218':'🇱🇾','220':'🇬🇲','221':'🇸🇳','233':'🇬🇭','234':'🇳🇬','254':'🇰🇪','255':'🇹🇿',
+  '256':'🇺🇬','260':'🇿🇲','263':'🇿🇼','351':'🇵🇹','353':'🇮🇪','358':'🇫🇮','380':'🇺🇦',
+  '385':'🇭🇷','386':'🇸🇮','420':'🇨🇿','421':'🇸🇰','966':'🇸🇦','971':'🇦🇪','972':'🇮🇱',
+  '973':'🇧🇭','974':'🇶🇦','975':'🇧🇹','976':'🇲🇳','977':'🇳🇵','992':'🇹🇯','993':'🇹🇲',
+  '994':'🇦🇿','995':'🇬🇪','996':'🇰🇬','998':'🇺🇿'
+};
+
+function getFlagForCode(code) {
+  const digits = code.replace(/\D/g,'');
+  // Try longest match first (3 digits), then 2, then 1
+  for (let len = 3; len >= 1; len--) {
+    const key = digits.slice(0, len);
+    if (CC_MAP[key]) return CC_MAP[key];
+  }
+  return '🌍';
+}
+
+function toggleCC(id) {
+  const popup = document.getElementById(id);
+  popup.classList.toggle('open');
+  // Close other
+  ['login-cc','reg-cc'].forEach(pid => { if (pid !== id) document.getElementById(pid).classList.remove('open'); });
+}
+
+function updateCCPreview(prefix) {
+  const input = document.getElementById(prefix + '-cc-input');
+  const flagEl = document.getElementById(prefix + '-cc-flag');
+  flagEl.textContent = getFlagForCode(input.value);
+}
+
+function applyCC(prefix) {
+  const input = document.getElementById(prefix + '-cc-input');
+  const code = input.value.replace(/\D/g,'');
+  if (!code) return;
+  document.getElementById(prefix + '-code').textContent = '+' + code;
+  document.getElementById(prefix + '-flag').textContent = getFlagForCode(code);
+  document.getElementById(prefix + '-cc').classList.remove('open');
+}
+
+// Close CC popup on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ph-row')) {
+    document.querySelectorAll('.cc-popup').forEach(p => p.classList.remove('open'));
+  }
+});
+
+// Override fmtPhone and fmtEmail to use selected country code
+function getSelectedCode(prefix) {
+  const codeEl = document.getElementById(prefix + '-code');
+  return codeEl ? codeEl.textContent.replace('+','') : '94';
+}
+
+// Fix login/register to use dynamic country code
+const _origDoLogin = doLogin;
+
+// Fix sendOTP phone format to use selected country code
+// Override fmtPhone for reg
+function getRegPhone() {
+  const phone = document.getElementById('reg-phone').value.trim();
+  const code = getSelectedCode('reg');
+  const digits = phone.replace(/\D/g,'').replace(/^0+/,'');
+  return '+' + code + digits;
+}
+function getRegEmail() {
+  const phone = document.getElementById('reg-phone').value.trim();
+  const code = getSelectedCode('reg');
+  const digits = phone.replace(/\D/g,'').replace(/^0+/,'');
+  return code + digits + '@sigdig.app';
+}
+function getLoginEmail() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const code = getSelectedCode('login');
+  const digits = phone.replace(/\D/g,'').replace(/^0+/,'');
+  return code + digits + '@sigdig.app';
+}
 
 // Fix mobile — track visual viewport so input stays above browser nav bar
 function fixMobileHeight() {
