@@ -461,7 +461,12 @@ function setAuthError(m) {
   const el = document.getElementById('auth-error');
   el.innerHTML = m;
 }
-const ADMIN_ERROR = 'Something went wrong. <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">Report Admin</a> for assistance.';
+function getNetworkError(e, context) {
+  if (e && e.name === 'AbortError') return 'Request timed out. Please check your connection and try again.';
+  if (!navigator.onLine) return 'No internet connection. Please check your network and try again.';
+  return context || 'Unable to connect. Please try again or <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">contact admin</a>.';
+}
+const ADMIN_ERROR = 'Unable to connect. Please try again or <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">contact admin</a>.';
 function setAuthLoading(id, loading) {
   const b = document.getElementById(id);
   b.disabled = loading; b.textContent = loading ? 'Please wait...' : (id==='login-btn' ? 'Login' : 'Create Account');
@@ -483,6 +488,8 @@ function fmtEmail(raw, cc) {
 }
 
 async function doLogin() {
+  if (checkLockout()) return;
+
   const phone = document.getElementById('login-phone').value.trim();
   const pass = document.getElementById('login-pass').value;
   if (!phone || !pass) return setAuthError('Please fill all fields');
@@ -490,51 +497,137 @@ async function doLogin() {
   try {
     const { error } = await sb.auth.signInWithPassword({ email: fmtEmail(phone, getCC('login')), password: pass });
     setAuthLoading('login-btn', false);
-    if (error) setAuthError(error.message.includes('Invalid') ? 'Wrong phone or password' : error.message);
-    else showToast('Welcome back!');
+    if (error) {
+      const state = recordFailedAttempt();
+      if (state.lockedUntil) { showLockoutPopup(state.lockedUntil); return; }
+      const remaining = MAX_TOTAL_ATTEMPTS - state.count;
+      const hint = remaining > 0 ? ' (' + remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' remaining)' : '';
+      setAuthError((error.message.includes('Invalid') ? 'Wrong phone or password.' : error.message) + hint);
+    } else {
+      clearAttempts();
+      showToast('Welcome back!');
+    }
   } catch(e) {
     setAuthLoading('login-btn', false);
-    setAuthError(ADMIN_ERROR);
+    setAuthError(getNetworkError(e, 'Login failed. Check your connection and try again.'));
   }
 }
 
 let otpVerifiedPhone = null;
-let otpAttempts = 0;
-let otpSendCount = 0;
-const MAX_ATTEMPTS = 3;
-const MAX_SENDS = 3;
+let otpAttempts = 0;   // OTP wrong-code attempts this session
+let loginAttempts = 0; // Login wrong-password attempts this session
+const MAX_TOTAL_ATTEMPTS = 10;  // combined budget across login + OTP verify
+const LOCKOUT_MS = 6 * 60 * 60 * 1000; // 6 hours
 
-// ── OTP ABUSE PREVENTION ─────────────────────────────
-// Stores: { phone, sends, attempts, blockedUntil, sessionId }
-function getOTPSession() {
+// ── UNIFIED 10-ATTEMPT LOCKOUT ────────────────────────
+// Tracks total failed auth actions (login + OTP verify) in localStorage
+// so it survives page refreshes but does NOT block anything mid-flow —
+// only after all 10 are used does the UI lock for 6 hours.
+
+function getAttemptState() {
   try {
-    const raw = sessionStorage.getItem('otp_session');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-function saveOTPSession(data) {
-  try { sessionStorage.setItem('otp_session', JSON.stringify(data)); } catch {}
-}
-function clearOTPSession() {
-  try { sessionStorage.removeItem('otp_session'); } catch {}
-}
-function getGlobalBlock() {
-  try {
-    const raw = localStorage.getItem('otp_global_block');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-function setGlobalBlock(until) {
-  try { localStorage.setItem('otp_global_block', JSON.stringify({ until, ts: Date.now() })); } catch {}
-}
-function checkGlobalBlock() {
-  const block = getGlobalBlock();
-  if (!block) return null;
-  if (Date.now() > block.until) { localStorage.removeItem('otp_global_block'); return null; }
-  return block.until;
+    const raw = localStorage.getItem('auth_attempts');
+    if (!raw) return { count: 0, lockedUntil: 0 };
+    const s = JSON.parse(raw);
+    // If lockout expired, reset automatically
+    if (s.lockedUntil && Date.now() > s.lockedUntil) {
+      localStorage.removeItem('auth_attempts');
+      return { count: 0, lockedUntil: 0 };
+    }
+    return s;
+  } catch { return { count: 0, lockedUntil: 0 }; }
 }
 
-// Generate a session fingerprint to track this browser
+function saveAttemptState(state) {
+  try { localStorage.setItem('auth_attempts', JSON.stringify(state)); } catch {}
+}
+
+function recordFailedAttempt() {
+  const s = getAttemptState();
+  if (s.lockedUntil) return s; // already locked
+  s.count = (s.count || 0) + 1;
+  if (s.count >= MAX_TOTAL_ATTEMPTS) {
+    s.lockedUntil = Date.now() + LOCKOUT_MS;
+  }
+  saveAttemptState(s);
+  return s;
+}
+
+function clearAttempts() {
+  localStorage.removeItem('auth_attempts');
+  otpAttempts = 0;
+  loginAttempts = 0;
+}
+
+// Check lockout and show the popup if locked; returns true if locked
+function checkLockout() {
+  const s = getAttemptState();
+  if (s.lockedUntil && Date.now() < s.lockedUntil) {
+    showLockoutPopup(s.lockedUntil);
+    return true;
+  }
+  return false;
+}
+
+// ── LOCKOUT POPUP ─────────────────────────────────────
+let lockoutTimerInterval = null;
+function showLockoutPopup(until) {
+  // Disable all auth buttons
+  ['login-btn','reg-btn-send','reg-btn-verify','reg-btn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.disabled = true; el.style.opacity = '0.4'; }
+  });
+
+  let modal = document.getElementById('lockout-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'lockout-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:14px;width:320px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.35);text-align:center;">
+        <div style="background:#c62828;padding:22px 20px 18px;">
+          <div style="font-size:36px;margin-bottom:6px;">🔒</div>
+          <div style="color:#fff;font-size:17px;font-weight:700;">Access Temporarily Locked</div>
+        </div>
+        <div style="padding:22px 24px 26px;">
+          <p style="font-size:14px;color:#444;margin-bottom:6px;">Too many failed attempts.</p>
+          <p style="font-size:13px;color:#888;margin-bottom:18px;">Please wait before trying again.</p>
+          <div id="lockout-countdown" style="font-size:28px;font-weight:700;color:#c62828;letter-spacing:2px;margin-bottom:20px;font-variant-numeric:tabular-nums;">--:--:--</div>
+          <p style="font-size:12px;color:#aaa;">Need help? <a href="https://wa.me/94778315058" target="_blank" style="color:#128C7E;text-decoration:underline;font-weight:500;">Contact admin</a></p>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  } else {
+    modal.style.display = 'flex';
+  }
+
+  function tick() {
+    const remaining = until - Date.now();
+    if (remaining <= 0) {
+      clearInterval(lockoutTimerInterval);
+      lockoutTimerInterval = null;
+      modal.style.display = 'none';
+      clearAttempts();
+      // Re-enable buttons
+      ['login-btn','reg-btn-send','reg-btn-verify','reg-btn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = false; el.style.opacity = '1'; }
+      });
+      setAuthError('');
+      return;
+    }
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const sec = Math.floor((remaining % 60000) / 1000);
+    const pad = n => String(n).padStart(2, '0');
+    const el = document.getElementById('lockout-countdown');
+    if (el) el.textContent = pad(h) + ':' + pad(m) + ':' + pad(sec);
+  }
+  tick();
+  if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
+  lockoutTimerInterval = setInterval(tick, 1000);
+}
+
 function getSessionId() {
   let sid = localStorage.getItem('otp_sid');
   if (!sid) {
@@ -546,9 +639,6 @@ function getSessionId() {
 
 function resetOTPCounters() {
   otpAttempts = 0;
-  otpSendCount = 0;
-  otpBlockedUntil = 0;
-  clearOTPSession();
   const warn = document.getElementById('attempts-warning');
   if (warn) warn.style.display = 'none';
   const resendBtn = document.getElementById('resend-btn');
@@ -575,164 +665,144 @@ function showRegStep(n) {
 }
 
 async function sendOTP(isResend) {
+  if (checkLockout()) return;
+
   const phone = document.getElementById('reg-phone').value.trim();
   if (!phone || phone.length < 9) return setAuthError('Enter a valid phone number');
 
-  // Check global block (browser-level)
-  const blockedUntil = checkGlobalBlock();
-  if (blockedUntil) {
-    const minsLeft = Math.ceil((blockedUntil - Date.now()) / 60000);
-    setAuthError('Too many attempts. Try again in ' + minsLeft + ' min.');
-    return;
-  }
+  const cc = getCC('reg');
+  const fullPhone = fmtPhone(phone, cc);
 
-  // Track all phones tried in this browser (persists across tabs/refreshes)
-  let triedPhones = [];
-  try { triedPhones = JSON.parse(localStorage.getItem('otp_tried_phones') || '[]'); } catch {}
-  const triedExpiry = parseInt(localStorage.getItem('otp_tried_expiry') || '0');
-  // Reset list after 1 hour
-  if (Date.now() > triedExpiry) {
-    triedPhones = [];
-    localStorage.removeItem('otp_tried_phones');
-    localStorage.removeItem('otp_tried_expiry');
-  }
-  if (!triedPhones.includes(phone)) {
-    if (triedPhones.length >= 2) {
-      setGlobalBlock(Date.now() + 3600000);
-      setAuthError('Too many different numbers tried. Blocked for 60 min.');
-      return;
-    }
-    triedPhones.push(phone);
-    localStorage.setItem('otp_tried_phones', JSON.stringify(triedPhones));
-    if (!triedExpiry) localStorage.setItem('otp_tried_expiry', Date.now() + 3600000);
-  }
-
-  let session = getOTPSession();
-  if (session && session.phone !== phone) {
-    session = null;
-    clearOTPSession();
-    otpAttempts = 0;
-    otpSendCount = 0;
-  }
-
-  const sends = session ? session.sends : 0;
-  if (sends >= MAX_SENDS) {
-    setAuthError('Maximum ' + MAX_SENDS + ' OTPs allowed per number. Try again later.');
-    const resendBtn = document.getElementById('resend-btn');
-    if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; }
-    return;
+  // ── BLOCK ALREADY-REGISTERED NUMBERS ──
+  if (!isResend) {
+    const btn = document.getElementById('reg-btn-send');
+    btn.disabled = true; btn.textContent = 'Checking...';
+    try {
+      const { data: existing } = await sb.from('profiles').select('id').eq('phone', fullPhone).maybeSingle();
+      if (existing) {
+        setAuthError('This number is already registered. Please <b>Login</b> instead.');
+        btn.disabled = false; btn.textContent = '📲 Send OTP via WhatsApp';
+        return;
+      }
+    } catch(e) { /* proceed if check fails */ }
+    btn.disabled = false; btn.textContent = '📲 Send OTP via WhatsApp';
   }
 
   const btn = document.getElementById('reg-btn-send');
   btn.disabled = true; btn.textContent = 'Sending...';
   try {
-    const controller1 = new AbortController();
-    const timeout1 = setTimeout(() => controller1.abort(), 10000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(BOT_URL + '/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value, getCC('reg')), session_id: getSessionId() }),
-      signal: controller1.signal
+      body: JSON.stringify({ secret: OTP_SECRET, phone: fullPhone, session_id: getSessionId() }),
+      signal: controller.signal
     });
-    clearTimeout(timeout1);
+    clearTimeout(timeout);
     const data = await res.json();
-    if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
-
-    // Save session
-    const newSends = sends + 1;
-    otpSendCount = newSends;
-    otpAttempts = 0;
-    saveOTPSession({ phone, sends: newSends, attempts: 0, sessionId: getSessionId() });
-
-    document.getElementById('attempts-warning').style.display = 'none';
-    if (newSends >= MAX_SENDS) {
-      const resendBtn = document.getElementById('resend-btn');
-      if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; resendBtn.title = 'Maximum OTPs sent'; }
+    if (!res.ok) {
+      const errMsg = (data.error || '').toLowerCase();
+      if (errMsg.includes('ip') || errMsg.includes('rate') || errMsg.includes('flood') || res.status === 429) {
+        setAuthError('🚫 Network restricted — too many requests from your connection. Try again later.');
+      } else if (errMsg.includes('phone') || errMsg.includes('number') || errMsg.includes('banned') || errMsg.includes('block')) {
+        setAuthError('🚫 Phone number restricted — this number cannot receive OTPs. <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">Contact admin</a> for help.');
+      } else if (errMsg.includes('invalid') || errMsg.includes('format')) {
+        setAuthError('❌ Invalid phone number format. Please check and try again.');
+      } else {
+        setAuthError(data.error || 'Failed to send OTP. Please try again.');
+      }
+      return;
     }
+    otpAttempts = 0;
+    document.getElementById('attempts-warning').style.display = 'none';
     const phoneDisplay = document.getElementById('reg-phone-display');
-    if (phoneDisplay) phoneDisplay.textContent = '+94 ' + phone;
+    if (phoneDisplay) phoneDisplay.textContent = '+' + cc + ' ' + phone;
     showRegStep(2);
-    showToast(isResend ? 'New OTP sent! (' + newSends + '/' + MAX_SENDS + ' used)' : 'OTP sent to your WhatsApp!');
+    showToast(isResend ? 'New OTP sent!' : 'OTP sent to your WhatsApp!');
   } catch(e) {
-    setAuthError(ADMIN_ERROR);
+    setAuthError(getNetworkError(e, 'Failed to reach OTP service. Check your connection or <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">contact admin</a>.'));
   } finally {
     btn.disabled = false; btn.textContent = '📲 Send OTP via WhatsApp';
   }
 }
 
-let otpBlockedUntil = 0;
+let otpBlockedUntil = 0; // kept for compat but unused for blocking
 
 async function verifyOTP() {
+  if (checkLockout()) return;
+
   const phone = document.getElementById('reg-phone').value.trim();
   const otp = document.getElementById('reg-otp').value.trim();
   if (!otp || otp.length !== 6) return setAuthError('Enter the 6-digit code');
 
-  // Check if blocked
-  if (Date.now() < otpBlockedUntil) {
-    const minsLeft = Math.ceil((otpBlockedUntil - Date.now()) / 60000);
-    setAuthError('Too many attempts. Try again in ' + minsLeft + ' min.');
-    return;
-  }
-
-  if (otpAttempts >= MAX_ATTEMPTS) {
-    otpBlockedUntil = Date.now() + 3600000; // block for 1 hour
-    setAuthError('Too many attempts. Try again in 60 min.');
-    const btn = document.getElementById('reg-btn-verify');
-    btn.disabled = true; btn.style.opacity = '0.5';
-    document.getElementById('attempts-warning').style.display = 'none';
-    return;
-  }
-
   const btn = document.getElementById('reg-btn-verify');
   btn.disabled = true; btn.textContent = 'Verifying...';
   try {
-    const controller2 = new AbortController();
-    const timeout2 = setTimeout(() => controller2.abort(), 10000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(BOT_URL + '/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value, getCC('reg')), otp }),
-      signal: controller2.signal
+      signal: controller.signal
     });
-    clearTimeout(timeout2);
+    clearTimeout(timeout);
     const data = await res.json();
+
     if (!res.ok || !data.valid) {
+      const state = recordFailedAttempt();
       otpAttempts++;
-      const remaining = MAX_ATTEMPTS - otpAttempts;
-      setAuthError(data.error || 'Incorrect code');
       document.getElementById('reg-otp').value = '';
 
-      const warn = document.getElementById('attempts-warning');
-      if (remaining > 0 && remaining < MAX_ATTEMPTS) {
-        // only show after first failure
-        warn.style.display = 'block';
-        warn.textContent = remaining === 1
-          ? '⚠️ Last attempt remaining'
-          : remaining + ' attempts remaining';
-      } else if (remaining <= 0) {
-        otpBlockedUntil = Date.now() + 3600000;
-        warn.style.display = 'none';
-        setAuthError('Too many attempts. Try again in 60 min.');
-        btn.disabled = true; btn.style.opacity = '0.5';
+      // If now locked, show popup immediately
+      if (state.lockedUntil) {
+        showLockoutPopup(state.lockedUntil);
+        btn.disabled = true;
         return;
       }
+
+      const remaining = MAX_TOTAL_ATTEMPTS - state.count;
+      const errMsg = (data.error || '').toLowerCase();
+
+      // Map specific server errors
+      if (errMsg.includes('ip') || errMsg.includes('rate') || errMsg.includes('flood') || res.status === 429) {
+        setAuthError('🚫 Network restricted — too many requests from your connection. Try again later.');
+      } else if (errMsg.includes('phone') || errMsg.includes('number') || errMsg.includes('banned') || errMsg.includes('block')) {
+        setAuthError('🚫 Phone number restricted. <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">Contact admin</a> for help.');
+      } else if (errMsg.includes('expired') || errMsg.includes('expir')) {
+        setAuthError('⏱️ OTP has expired. Please go back and request a new code.');
+      } else {
+        setAuthError('❌ Incorrect code. Please try again.');
+      }
+
+      // Show attempts warning
+      const warn = document.getElementById('attempts-warning');
+      if (remaining > 0) {
+        warn.style.display = 'block';
+        warn.textContent = remaining === 1 ? '⚠️ Last attempt remaining before 6-hour lockout' : remaining + ' attempts remaining';
+      } else {
+        warn.style.display = 'none';
+      }
+
       btn.disabled = false; btn.textContent = 'Verify Code';
       return;
     }
-    // Success
+
+    // Success — clear all attempt counters
     otpVerifiedPhone = phone;
     otpAttempts = 0;
-    clearOTPSession();
-    localStorage.removeItem('otp_switch_count');
+    clearAttempts();
     localStorage.removeItem('otp_tried_phones');
     localStorage.removeItem('otp_tried_expiry');
-    localStorage.removeItem('otp_lockout_count');
     showRegStep(3);
   } catch(e) {
     if (e.name === 'AbortError') {
-      setAuthError('Request timed out. ' + ADMIN_ERROR);
+      setAuthError('⏱️ Request timed out. Check your connection and try again.');
+    } else if (!navigator.onLine) {
+      setAuthError('📵 No internet connection. Please check your network and try again.');
     } else {
-      setAuthError(ADMIN_ERROR);
+      setAuthError('Unable to verify. Please try again or <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">contact admin</a>.');
     }
     btn.disabled = false; btn.textContent = 'Verify Code';
   }
@@ -744,26 +814,44 @@ async function doRegister() {
   const pass = document.getElementById('reg-pass').value;
   const pass2 = document.getElementById('reg-pass2').value;
   if (!phone || !pass) return setAuthError('Please fill all fields');
-  if (pass.length < 6) return setAuthError('Password min 6 characters');
+  if (pass.length < 6) return setAuthError('Password must be at least 6 characters');
   if (pass !== pass2) return setAuthError('Passwords do not match');
   setAuthLoading('reg-btn', true);
   const username = document.getElementById('reg-username').value.trim();
   const cc = getCC('reg');
+  const fullPhone = fmtPhone(document.getElementById('reg-phone').value, cc);
+
+  // Final duplicate check before creating account
+  try {
+    const { data: existing } = await sb.from('profiles').select('id').eq('phone', fullPhone).maybeSingle();
+    if (existing) {
+      setAuthLoading('reg-btn', false);
+      setAuthError('This number is already registered. Please <b>Login</b> instead.');
+      return;
+    }
+  } catch(e) { /* proceed, signup will catch it */ }
+
   const { data: signUpData, error } = await sb.auth.signUp({
     email: fmtEmail(document.getElementById('reg-phone').value, cc), password: pass,
-    options: { data: { phone: fmtPhone(document.getElementById('reg-phone').value, cc), username: username || null } }
+    options: { data: { phone: fullPhone, username: username || null } }
   });
   setAuthLoading('reg-btn', false);
-  if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : (error.message || ADMIN_ERROR));
-  else {
+  if (error) {
+    const msg = (error.message || '').toLowerCase();
+    if (msg.includes('already') || msg.includes('exists') || msg.includes('registered')) {
+      setAuthError('This number is already registered. Please <b>Login</b> instead.');
+    } else if (msg.includes('password')) {
+      setAuthError('Password is too weak. Use at least 6 characters.');
+    } else {
+      setAuthError('Registration failed. Please try again or <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;font-weight:500;">contact admin</a>.');
+    }
+  } else {
     if (signUpData?.user) {
-      // Save profile
       await sb.from('profiles').upsert({ 
         id: signUpData.user.id, 
-        phone: fmtPhone(phone), 
+        phone: fullPhone, 
         username: username || null 
       });
-      // Send welcome message from admin into client's chat
       await sendWelcomeMessage(signUpData.user.id);
     }
     showToast('Account created! You are now logged in.');
@@ -1294,16 +1382,12 @@ if ('caches' in window) {
   caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
 }
 
-// Restore OTP session on page load
+// Check for active lockout on page load and restore popup if needed
 (function() {
-  const blockedUntil = checkGlobalBlock();
-  if (blockedUntil) {
-    otpBlockedUntil = blockedUntil;
-  }
-  const session = getOTPSession();
-  if (session) {
-    otpSendCount = session.sends || 0;
-    otpAttempts = session.attempts || 0;
+  const s = getAttemptState();
+  if (s.lockedUntil && Date.now() < s.lockedUntil) {
+    // Show after a short delay so the DOM is fully ready
+    setTimeout(() => showLockoutPopup(s.lockedUntil), 300);
   }
 })();
 
