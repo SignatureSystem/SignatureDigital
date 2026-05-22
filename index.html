@@ -193,11 +193,11 @@
     <svg viewBox="0 0 24 24"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
     Sign In / Register
   </div>
-  <div id="pm-edit-username" class="p-item hidden" onclick="openEditUsername()">
+  <div id="pm-edit-username" class="p-item" style="display:none" onclick="openEditUsername()">
     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
     Edit Username
   </div>
-  <div id="pm-logout" class="p-item danger hidden" onclick="doLogout()">
+  <div id="pm-logout" class="p-item danger" style="display:none" onclick="doLogout()">
     <svg viewBox="0 0 24 24"><path d="M17 7l-1.4 1.4 2.6 2.6H9v2h9.2l-2.6 2.6L17 17l5-5-5-5zM5 5h7V3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h7v-2H5V5z"/></svg>
     Sign Out
   </div>
@@ -279,7 +279,7 @@
 </div>
 
 <!-- USERNAME EDIT MODAL -->
-<div id="username-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;">
+<div id="username-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:12px;width:320px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
     <div style="background:var(--wa-header);padding:18px 20px;">
       <p style="color:#fff;font-size:16px;font-weight:600;">Edit Username</p>
