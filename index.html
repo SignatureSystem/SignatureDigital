@@ -199,6 +199,23 @@
         <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
       </div>
 
+      <div id="register-form" style="display:none">
+        <!-- Step indicator -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;">
+          <div id="si1" style="width:28px;height:28px;border-radius:50%;background:var(--wa-green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
+          <div style="flex:1;height:2px;background:var(--wa-border);max-width:40px;" id="si-line1"></div>
+          <div id="si2" style="width:28px;height:28px;border-radius:50%;background:var(--wa-border);color:var(--wa-text-secondary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
+          <div style="flex:1;height:2px;background:var(--wa-border);max-width:40px;" id="si-line2"></div>
+          <div id="si3" style="width:28px;height:28px;border-radius:50%;background:var(--wa-border);color:var(--wa-text-secondary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
+        </div>
+
+        <!-- Step 1: Phone -->
+        <div id="reg-step1">
+          <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:10px;">Enter your WhatsApp number to receive a verification code.</p>
+          <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+          <button class="auth-btn" id="reg-btn-send" onclick="sendOTP()">📲 Send OTP via WhatsApp</button>
+        </div>
+
         <!-- Step 2: OTP -->
         <div id="reg-step2" style="display:none">
           <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:4px;">Code sent to your WhatsApp. Enter it below.</p>
@@ -223,6 +240,7 @@
           </div>
           <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
         </div>
+      </div>
       </div>
 
     </div>
@@ -419,7 +437,11 @@ function onSignOut() {
 
 // ── AUTH ─────────────────────────────────────────
 function switchAuthTab(t) {
-  if (t === 'register') { resetOTPCounters(); if(document.getElementById('reg-otp')) document.getElementById('reg-otp').value=''; }
+  if (t === 'register') {
+    resetOTPCounters();
+    if(document.getElementById('reg-otp')) document.getElementById('reg-otp').value='';
+    showRegStep(1);
+  }
   document.getElementById('login-form').style.display = t === 'login' ? '' : 'none';
   document.getElementById('register-form').style.display = t === 'register' ? '' : 'none';
   document.querySelectorAll('.auth-tab').forEach((el,i) => el.classList.toggle('active', i===(t==='login'?0:1)));
