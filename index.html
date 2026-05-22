@@ -172,6 +172,10 @@
         <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
         <input type="password" id="reg-pass" placeholder="Create password (min 6 chars)">
         <input type="password" id="reg-pass2" placeholder="Confirm password">
+        <div style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:11px;">
+          <p style="font-size:13px;color:#15803d;margin-bottom:8px;">👋 What should we call you?</p>
+          <input type="text" id="reg-username" placeholder="Enter your name or nickname" style="margin-bottom:0">
+        </div>
         <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
       </div>
       <div class="guest-link"><button onclick="continueAsGuest()">View updates without account</button></div>
@@ -188,6 +192,10 @@
   <div id="pm-login" class="p-item" onclick="openAuth()">
     <svg viewBox="0 0 24 24"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
     Sign In / Register
+  </div>
+  <div id="pm-edit-username" class="p-item hidden" onclick="openEditUsername()">
+    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+    Edit Username
   </div>
   <div id="pm-logout" class="p-item danger hidden" onclick="doLogout()">
     <svg viewBox="0 0 24 24"><path d="M17 7l-1.4 1.4 2.6 2.6H9v2h9.2l-2.6 2.6L17 17l5-5-5-5zM5 5h7V3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h7v-2H5V5z"/></svg>
@@ -268,6 +276,23 @@
     <div><div class="ac-name" id="ac-name"></div><div class="ac-phone" id="ac-phone"></div></div>
   </div>
 
+</div>
+
+<!-- USERNAME EDIT MODAL -->
+<div id="username-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:320px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="background:var(--wa-header);padding:18px 20px;">
+      <p style="color:#fff;font-size:16px;font-weight:600;">Edit Username</p>
+    </div>
+    <div style="padding:20px;">
+      <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:12px;">This name will be visible to admin when you chat.</p>
+      <input type="text" id="username-input" placeholder="Your name or nickname" style="width:100%;padding:11px 13px;border:1.5px solid var(--wa-border);border-radius:8px;font-size:14px;outline:none;font-family:inherit;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeEditUsername()" style="flex:1;padding:11px;background:var(--wa-input-bg);border:none;border-radius:8px;font-size:14px;cursor:pointer;">Cancel</button>
+        <button onclick="saveUsername()" style="flex:1;padding:11px;background:var(--wa-green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Save</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -376,13 +401,19 @@ async function doRegister() {
   if (pass.length < 6) return setAuthError('Password min 6 characters');
   if (pass !== pass2) return setAuthError('Passwords do not match');
   setAuthLoading('reg-btn', true);
-  const { error } = await sb.auth.signUp({
+  const username = document.getElementById('reg-username').value.trim();
+  const { data: signUpData, error } = await sb.auth.signUp({
     email: fmtEmail(phone), password: pass,
-    options: { data: { phone: fmtPhone(phone) } }
+    options: { data: { phone: fmtPhone(phone), username: username || null } }
   });
   setAuthLoading('reg-btn', false);
   if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : error.message);
-  else showToast('Account created! You are now logged in.');
+  else {
+    if (username && signUpData?.user) {
+      await sb.from('profiles').upsert({ id: signUpData.user.id, phone: fmtPhone(phone), username });
+    }
+    showToast('Account created! You are now logged in.');
+  }
 }
 
 async function doLogout() {
@@ -403,16 +434,34 @@ document.addEventListener('click', e => {
   if (!document.getElementById('profile-menu').classList.contains('hidden') &&
       !e.target.closest('#profile-menu') && !e.target.closest('.h-btn')) closeProfileMenu();
 });
-function updateProfileMenu(user) {
+async function updateProfileMenu(user) {
   if (user) {
     const ph = user.user_metadata?.phone || '';
     document.getElementById('p-name').textContent = isAdmin ? 'Admin' : 'Client';
     document.getElementById('p-phone').textContent = ph || 'Signed in';
     document.getElementById('p-avatar').textContent = ph.slice(-2) || 'U';
+    // Load username from profiles
+    const { data } = await sb.from('profiles').select('username').eq('id', user.id).single();
+    if (data?.username) {
+      document.getElementById('p-phone').textContent = ph;
+      // show username below phone
+      let unEl = document.getElementById('p-username');
+      if (!unEl) {
+        unEl = document.createElement('div');
+        unEl.id = 'p-username';
+        unEl.style.cssText = 'font-size:12px;color:var(--wa-green);font-weight:500;margin-top:2px;';
+        document.getElementById('p-phone').after(unEl);
+      }
+      unEl.textContent = data.username;
+    }
+    document.getElementById('pm-edit-username').style.display = '';
   } else {
     document.getElementById('p-name').textContent = 'Guest';
     document.getElementById('p-phone').textContent = 'Not signed in';
     document.getElementById('p-avatar').textContent = '?';
+    document.getElementById('pm-edit-username').style.display = 'none';
+    const unEl = document.getElementById('p-username');
+    if (unEl) unEl.remove();
   }
 }
 
@@ -643,30 +692,32 @@ async function loadInbox() {
   const items = Object.values(seen);
   // fetch user phones
   const uids = items.map(i => i.chat_id);
-  const { data: users } = await sb.from('profiles').select('id, phone').in('id', uids);
+  const { data: users } = await sb.from('profiles').select('id, phone, username').in('id', uids);
   const phoneMap = {};
-  (users||[]).forEach(u => phoneMap[u.id] = u.phone);
+  const usernameMap = {};
+  (users||[]).forEach(u => { phoneMap[u.id] = u.phone; usernameMap[u.id] = u.username; });
 
   document.getElementById('inbox-list').innerHTML = items.map(m => `
-    <div class="inbox-item" onclick="openAdminChat('${m.chat_id}', '${phoneMap[m.chat_id]||'Client'}')">
-      <div class="inbox-avatar">${(phoneMap[m.chat_id]||'?').slice(-2)}</div>
+    <div class="inbox-item" onclick="openAdminChat('${m.chat_id}', '${usernameMap[m.chat_id]||phoneMap[m.chat_id]||'Client'}', '${phoneMap[m.chat_id]||''}')">
+      <div class="inbox-avatar">${(usernameMap[m.chat_id]||phoneMap[m.chat_id]||'?').slice(-2).toUpperCase()}</div>
       <div class="inbox-info">
-        <div class="inbox-name">${phoneMap[m.chat_id] || 'Client'}</div>
+        <div class="inbox-name">${usernameMap[m.chat_id] ? usernameMap[m.chat_id] : (phoneMap[m.chat_id] || 'Client')}</div>
+        <div class="inbox-preview" style="font-size:12px;color:#aaa;">${phoneMap[m.chat_id]||''}</div>
         <div class="inbox-preview">${esc(m.text)}</div>
       </div>
       <div class="inbox-time">${fmtTime(new Date(m.created_at))}</div>
     </div>`).join('');
 }
 
-function openAdminChat(chatId, phone) {
+function openAdminChat(chatId, name, phone) {
   adminOpenChatId = chatId;
   document.getElementById('inbox-view').classList.add('hidden');
   document.getElementById('admin-chat-header').classList.remove('hidden');
   document.getElementById('chat-view').classList.remove('hidden');
   document.getElementById('chat-input-bar').classList.remove('hidden');
   document.getElementById('chat-gate').style.display = 'none';
-  document.getElementById('ac-name').textContent = phone;
-  document.getElementById('ac-phone').textContent = 'Client';
+  document.getElementById('ac-name').textContent = name;
+  document.getElementById('ac-phone').textContent = phone || 'Client';
   loadChat(chatId);
 }
 
@@ -695,6 +746,28 @@ function showToast(msg) {
 
 document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
 document.getElementById('post-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();postUpdate();} });
+
+// ── USERNAME EDIT ─────────────────────────────────
+function openEditUsername() {
+  closeProfileMenu();
+  const modal = document.getElementById('username-modal');
+  modal.style.display = 'flex';
+  // pre-fill current username
+  const unEl = document.getElementById('p-username');
+  if (unEl) document.getElementById('username-input').value = unEl.textContent;
+}
+function closeEditUsername() {
+  document.getElementById('username-modal').style.display = 'none';
+}
+async function saveUsername() {
+  const username = document.getElementById('username-input').value.trim();
+  if (!username) return showToast('Please enter a username');
+  const { error } = await sb.from('profiles').upsert({ id: currentUser.id, username, phone: currentUser.user_metadata?.phone });
+  if (error) return showToast('Error: ' + error.message);
+  closeEditUsername();
+  showToast('Username saved!');
+  updateProfileMenu(currentUser);
+}
 
 init();
 </script>
