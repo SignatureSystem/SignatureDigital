@@ -574,10 +574,14 @@ async function loadUpdates() {
   if (!data || !data.length) { list.innerHTML = ''; none.style.display = ''; return; }
   none.style.display = 'none';
   list.innerHTML = data.map(u => `
-    <div class="update-card">
+    <div class="update-card" style="margin-bottom:10px;">
       <div class="update-meta">
         <span class="update-badge">UPDATE</span>
         <span class="update-time">${fmtTime(new Date(u.created_at))}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:13px;font-weight:600;color:#25D366;">Signature Digital</span>
+        <a href="tel:+94778315058" style="font-size:12px;color:rgba(0,0,0,0.45);text-decoration:none;" onclick="event.stopPropagation()">077 831 5058</a>
       </div>
       <div class="update-text">${esc(u.text)}</div>
       ${u.image_url ? `<img src="${u.image_url}" style="width:100%;border-radius:8px;margin-top:8px;max-height:260px;object-fit:contain;background:#f0f0f0;">` : ''}
@@ -732,11 +736,22 @@ async function loadInbox() {
   const usernameMap = {};
   (users||[]).forEach(u => { phoneMap[u.id] = u.phone; usernameMap[u.id] = u.username; });
 
+  // Sort: most recent first, but pin admin's own initiated chats at top
+  items.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
   // total unread for tab badge
   const totalUnread = Object.values(unreadCount).reduce((a,b) => a+b, 0);
   updateTabBadge(totalUnread);
 
-  document.getElementById('inbox-list').innerHTML = items.map(m => {
+  const pinnedCard = `<div style="background:#e8f5e9;padding:13px 16px;border-bottom:2px solid #25D366;display:flex;align-items:center;gap:12px;">
+    <div style="width:46px;height:46px;border-radius:50%;background:#075E54;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px;flex-shrink:0;">SD</div>
+    <div>
+      <div style="font-size:15px;font-weight:600;color:#075E54;">Signature Digital</div>
+      <div style="font-size:12px;color:#667781;">077 831 5058 — You (Admin)</div>
+    </div>
+  </div>`;
+
+  document.getElementById('inbox-list').innerHTML = pinnedCard + items.map(m => {
     const count = unreadCount[m.chat_id] || 0;
     const badgeStr = count > 99 ? '99+' : count > 0 ? String(count) : '';
     return `
@@ -791,8 +806,13 @@ function closeAdminChat() {
 function esc(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 function fmtTime(d) {
   const now = new Date();
-  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  return d.toLocaleDateString();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today - 86400000);
+  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const timeStr = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if (msgDay.getTime() === today.getTime()) return timeStr;
+  if (msgDay.getTime() === yesterday.getTime()) return 'Yesterday ' + timeStr;
+  return d.toLocaleDateString() + ' ' + timeStr;
 }
 function showToast(msg) {
   const t = document.getElementById('toast');
