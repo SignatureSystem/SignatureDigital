@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual">
 <title>Signature Digital</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,7 +19,7 @@
     --wa-input-bg: #F0F2F5;
     --wa-online: #25D366;
   }
-  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--wa-bg); height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--wa-bg); height: 100%; max-height: 100%; overflow: hidden; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; bottom: 0; }
 
   /* AUTH */
   #auth-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; }
@@ -61,7 +61,7 @@
   .tab.active { color: #fff; border-bottom-color: #fff; }
 
   /* MAIN */
-  #main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  #main { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
 
   /* UPDATES */
   #updates-view { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -85,7 +85,7 @@
   .send-btn svg { width: 20px; height: 20px; fill: #fff; }
 
   /* CHAT */
-  #chat-view { flex: 1; overflow-y: auto; padding: 12px 14px; background: var(--wa-bg); background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b2b2b2' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E"); display: flex; flex-direction: column; gap: 6px; }
+  #chat-view { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px; background: var(--wa-bg); background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b2b2b2' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E"); display: flex; flex-direction: column; gap: 6px; }
   #chat-view.hidden { display: none; }
   .chat-gate { margin: auto; text-align: center; background: rgba(255,255,255,0.92); border-radius: 12px; padding: 24px 28px; max-width: 260px; }
   .chat-gate p { font-size: 14px; color: var(--wa-text-secondary); margin-bottom: 13px; }
@@ -103,7 +103,7 @@
   .date-sep span { background: rgba(255,255,255,0.85); font-size: 12px; color: var(--wa-text-secondary); padding: 3px 12px; border-radius: 8px; }
 
   /* CHAT INPUT */
-  #chat-input-bar { background: var(--wa-input-bg); border-top: 1px solid var(--wa-border); padding: 8px 12px; padding-bottom: max(12px, env(safe-area-inset-bottom, 16px)); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; position: sticky; bottom: 0; z-index: 20; }
+  #chat-input-bar { background: var(--wa-input-bg); border-top: 1px solid var(--wa-border); padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; z-index: 20; }
   #chat-input-bar.hidden { display: none; }
   #chat-input { flex: 1; padding: 10px 13px; background: #fff; border: none; border-radius: 22px; font-size: 14px; outline: none; resize: none; max-height: 100px; font-family: inherit; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 
@@ -171,14 +171,30 @@
         <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
       </div>
       <div id="register-form" style="display:none">
-        <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
-        <input type="password" id="reg-pass" placeholder="Create password (min 6 chars)">
-        <input type="password" id="reg-pass2" placeholder="Confirm password">
-        <div style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:11px;">
-          <p style="font-size:13px;color:#15803d;margin-bottom:8px;">👋 What should we call you?</p>
-          <input type="text" id="reg-username" placeholder="Enter your name or nickname" style="margin-bottom:0">
+        <!-- Step 1: Phone -->
+        <div id="reg-step1">
+          <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:10px;">Enter your phone number to receive a WhatsApp verification code.</p>
+          <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+          <button class="auth-btn" id="reg-btn-send" onclick="sendOTP()">Send WhatsApp OTP</button>
         </div>
-        <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
+        <!-- Step 2: OTP -->
+        <div id="reg-step2" style="display:none">
+          <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:10px;">Enter the 6-digit code sent to your WhatsApp.</p>
+          <input type="number" id="reg-otp" placeholder="6-digit OTP code" maxlength="6" style="letter-spacing:6px;font-size:20px;text-align:center;">
+          <button class="auth-btn" id="reg-btn-verify" onclick="verifyOTP()">Verify OTP</button>
+          <div style="text-align:center;margin-top:8px;"><button onclick="showRegStep(1)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--wa-text-secondary);text-decoration:underline;">Change number</button></div>
+        </div>
+        <!-- Step 3: Password + Username -->
+        <div id="reg-step3" style="display:none">
+          <div style="background:#f0fdf4;border-radius:8px;padding:10px 12px;margin-bottom:11px;font-size:13px;color:#15803d;">✅ Phone verified!</div>
+          <input type="password" id="reg-pass" placeholder="Create password (min 6 chars)">
+          <input type="password" id="reg-pass2" placeholder="Confirm password">
+          <div style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:11px;">
+            <p style="font-size:13px;color:#15803d;margin-bottom:8px;">👋 What should we call you?</p>
+            <input type="text" id="reg-username" placeholder="Enter your name or nickname" style="margin-bottom:0">
+          </div>
+          <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
+        </div>
       </div>
       <div class="guest-link"><button onclick="continueAsGuest()">View updates without account</button></div>
     </div>
@@ -314,7 +330,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ════════════════════════════════════════════════
 //  🔧 YOUR SETTINGS
 // ════════════════════════════════════════════════
-const ADMIN_PHONE = '0778315058'; // Your phone number (used to detect admin)
+const ADMIN_PHONE = '0778315058';
+const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
+const OTP_SECRET = 'SGD_OTP_2026'; // Your phone number (used to detect admin)
 
 // ════════════════════════════════════════════════
 const { createClient } = supabase;
@@ -399,8 +417,63 @@ async function doLogin() {
   else showToast('Welcome back!');
 }
 
-async function doRegister() {
+let otpVerifiedPhone = null;
+
+function showRegStep(n) {
+  document.getElementById('reg-step1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('reg-step2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('reg-step3').style.display = n === 3 ? '' : 'none';
+  setAuthError('');
+}
+
+async function sendOTP() {
   const phone = document.getElementById('reg-phone').value.trim();
+  if (!phone || phone.length < 9) return setAuthError('Enter a valid phone number');
+  const btn = document.getElementById('reg-btn-send');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    const res = await fetch(BOT_URL + '/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,'') })
+    });
+    const data = await res.json();
+    if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
+    showRegStep(2);
+    showToast('OTP sent to your WhatsApp!');
+  } catch(e) {
+    setAuthError('Could not reach server. Try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send WhatsApp OTP';
+  }
+}
+
+async function verifyOTP() {
+  const phone = document.getElementById('reg-phone').value.trim();
+  const otp = document.getElementById('reg-otp').value.trim();
+  if (!otp || otp.length !== 6) return setAuthError('Enter the 6-digit code');
+  const btn = document.getElementById('reg-btn-verify');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  try {
+    const res = await fetch(BOT_URL + '/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,''), otp })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.valid) { setAuthError(data.error || 'Invalid OTP'); return; }
+    otpVerifiedPhone = phone;
+    showRegStep(3);
+  } catch(e) {
+    setAuthError('Could not verify. Try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Verify OTP';
+  }
+}
+
+async function doRegister() {
+  if (!otpVerifiedPhone) return setAuthError('Please verify your phone first');
+  const phone = otpVerifiedPhone;
   const pass = document.getElementById('reg-pass').value;
   const pass2 = document.getElementById('reg-pass2').value;
   if (!phone || !pass) return setAuthError('Please fill all fields');
@@ -878,16 +951,16 @@ async function saveUsername() {
   updateProfileMenu(currentUser);
 }
 
-// Fix mobile browser nav bar height
+// Fix mobile — track visual viewport so input stays above browser nav bar
 function fixMobileHeight() {
-  if (window.visualViewport) {
-    document.body.style.height = window.visualViewport.height + 'px';
-  }
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.body.style.height = vh + 'px';
+  document.body.style.top = (window.visualViewport ? window.visualViewport.offsetTop : 0) + 'px';
 }
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', fixMobileHeight);
-  window.visualViewport.addEventListener('scroll', fixMobileHeight);
 }
+window.addEventListener('resize', fixMobileHeight);
 fixMobileHeight();
 
 init();
