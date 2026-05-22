@@ -342,10 +342,11 @@ async function onSignIn(user) {
   const phone = user.user_metadata?.phone || '';
   const norm = p => p.replace(/\D/g,'').replace(/^94/,'').replace(/^0/,'');
   isAdmin = norm(phone) === norm(ADMIN_PHONE);
-  updateProfileMenu(user);
   closeAuthOverlay();
   document.getElementById('pm-login').style.display = 'none';
   document.getElementById('pm-logout').style.display = '';
+  document.getElementById('pm-edit-username').style.display = '';
+  await updateProfileMenu(user);
   if (isAdmin) setAdminOnline(true);
   renderCurrentTab();
 }
