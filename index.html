@@ -470,10 +470,51 @@ let otpSendCount = 0;
 const MAX_ATTEMPTS = 3;
 const MAX_SENDS = 3;
 
+// ── OTP ABUSE PREVENTION ─────────────────────────────
+// Stores: { phone, sends, attempts, blockedUntil, sessionId }
+function getOTPSession() {
+  try {
+    const raw = sessionStorage.getItem('otp_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function saveOTPSession(data) {
+  try { sessionStorage.setItem('otp_session', JSON.stringify(data)); } catch {}
+}
+function clearOTPSession() {
+  try { sessionStorage.removeItem('otp_session'); } catch {}
+}
+function getGlobalBlock() {
+  try {
+    const raw = localStorage.getItem('otp_global_block');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function setGlobalBlock(until) {
+  try { localStorage.setItem('otp_global_block', JSON.stringify({ until, ts: Date.now() })); } catch {}
+}
+function checkGlobalBlock() {
+  const block = getGlobalBlock();
+  if (!block) return null;
+  if (Date.now() > block.until) { localStorage.removeItem('otp_global_block'); return null; }
+  return block.until;
+}
+
+// Generate a session fingerprint to track this browser
+function getSessionId() {
+  let sid = localStorage.getItem('otp_sid');
+  if (!sid) {
+    sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('otp_sid', sid);
+  }
+  return sid;
+}
+
 function resetOTPCounters() {
   otpAttempts = 0;
   otpSendCount = 0;
   otpBlockedUntil = 0;
+  clearOTPSession();
   const warn = document.getElementById('attempts-warning');
   if (warn) warn.style.display = 'none';
   const resendBtn = document.getElementById('resend-btn');
@@ -502,34 +543,68 @@ function showRegStep(n) {
 async function sendOTP(isResend) {
   const phone = document.getElementById('reg-phone').value.trim();
   if (!phone || phone.length < 9) return setAuthError('Enter a valid phone number');
-  if (isResend && otpSendCount >= MAX_SENDS) {
-    setAuthError('Maximum OTP requests reached. Please try again later.');
+
+  // Check global block (browser-level)
+  const blockedUntil = checkGlobalBlock();
+  if (blockedUntil) {
+    const minsLeft = Math.ceil((blockedUntil - Date.now()) / 60000);
+    setAuthError('Too many attempts. Try again in ' + minsLeft + ' min.');
+    return;
+  }
+
+  // Check session — if phone changed, warn and reset
+  let session = getOTPSession();
+  if (session && session.phone && session.phone !== phone) {
+    // Different number attempted — count against global limit
+    const switchCount = parseInt(localStorage.getItem('otp_switch_count') || '0') + 1;
+    localStorage.setItem('otp_switch_count', switchCount);
+    if (switchCount >= 2) {
+      setGlobalBlock(Date.now() + 3600000);
+      localStorage.removeItem('otp_switch_count');
+      setAuthError('Suspicious activity detected. Try again in 60 min.');
+      return;
+    }
+    // Reset session for new number
+    session = null;
+    clearOTPSession();
+    otpAttempts = 0;
+    otpSendCount = 0;
+  }
+
+  const sends = session ? session.sends : 0;
+  if (sends >= MAX_SENDS) {
+    setAuthError('Maximum ' + MAX_SENDS + ' OTPs allowed per number. Try again later.');
     const resendBtn = document.getElementById('resend-btn');
     if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; }
     return;
   }
+
   const btn = document.getElementById('reg-btn-send');
   btn.disabled = true; btn.textContent = 'Sending...';
   try {
     const res = await fetch(BOT_URL + '/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,'') })
+      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,''), session_id: getSessionId() })
     });
     const data = await res.json();
     if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
-    otpSendCount++;
+
+    // Save session
+    const newSends = sends + 1;
+    otpSendCount = newSends;
     otpAttempts = 0;
+    saveOTPSession({ phone, sends: newSends, attempts: 0, sessionId: getSessionId() });
+
     document.getElementById('attempts-warning').style.display = 'none';
-    // update resend button if near limit
-    if (otpSendCount >= MAX_SENDS) {
+    if (newSends >= MAX_SENDS) {
       const resendBtn = document.getElementById('resend-btn');
       if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; resendBtn.title = 'Maximum OTPs sent'; }
     }
     const phoneDisplay = document.getElementById('reg-phone-display');
     if (phoneDisplay) phoneDisplay.textContent = '+94 ' + phone;
     showRegStep(2);
-    showToast(isResend ? 'New OTP sent! (' + otpSendCount + '/' + MAX_SENDS + ' used)' : 'OTP sent to your WhatsApp!');
+    showToast(isResend ? 'New OTP sent! (' + newSends + '/' + MAX_SENDS + ' used)' : 'OTP sent to your WhatsApp!');
   } catch(e) {
     setAuthError('Could not reach server. Try again.');
   } finally {
@@ -537,7 +612,7 @@ async function sendOTP(isResend) {
   }
 }
 
-let otpBlockedUntil = 0; // timestamp when block expires
+let otpBlockedUntil = 0;
 
 async function verifyOTP() {
   const phone = document.getElementById('reg-phone').value.trim();
@@ -595,6 +670,8 @@ async function verifyOTP() {
     // Success
     otpVerifiedPhone = phone;
     otpAttempts = 0;
+    clearOTPSession();
+    localStorage.removeItem('otp_switch_count');
     showRegStep(3);
   } catch(e) {
     setAuthError('Could not verify. Try again.');
@@ -1159,6 +1236,19 @@ async function saveUsername() {
     }
     pulling = false;
   }, { passive: true });
+})();
+
+// Restore OTP session on page load
+(function() {
+  const blockedUntil = checkGlobalBlock();
+  if (blockedUntil) {
+    otpBlockedUntil = blockedUntil;
+  }
+  const session = getOTPSession();
+  if (session) {
+    otpSendCount = session.sends || 0;
+    otpAttempts = session.attempts || 0;
+  }
 })();
 
 // Fix mobile — track visual viewport so input stays above browser nav bar
