@@ -421,12 +421,7 @@ async function doRegister() {
         username: username || null 
       });
       // Send welcome message from admin into client's chat
-      await sb.from('messages').insert({
-        chat_id: signUpData.user.id,
-        sender_id: signUpData.user.id, // placeholder — shown as received
-        text: "👋 Hey there! Welcome to Signature Digital. I'm here to assist you with any subscriptions or questions. Feel free to message me anytime! 😊",
-        is_admin_message: true
-      });
+      await sendWelcomeMessage(signUpData.user.id);
     }
     showToast('Account created! You are now logged in.');
   }
@@ -575,13 +570,12 @@ async function loadUpdates() {
   none.style.display = 'none';
   list.innerHTML = data.map(u => `
     <div class="update-card" style="margin-bottom:10px;">
-      <div class="update-meta">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);">
         <span class="update-badge">UPDATE</span>
-        <span class="update-time">${fmtTime(new Date(u.created_at))}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span style="font-size:13px;font-weight:600;color:#25D366;">Signature Digital</span>
-        <a href="tel:+94778315058" style="font-size:12px;color:rgba(0,0,0,0.45);text-decoration:none;" onclick="event.stopPropagation()">077 831 5058</a>
+        <span style="font-size:13px;font-weight:600;color:#25D366;cursor:pointer;" onclick="startOrOpenChat(currentUser?.id)">&nbsp;Signature Digital</span>
+        <span style="color:rgba(0,0,0,0.25);font-size:12px;">·</span>
+        <span style="font-size:12px;color:rgba(0,0,0,0.38);cursor:pointer;text-decoration:underline;text-underline-offset:2px;" onclick="startOrOpenChat(currentUser?.id)">077 831 5058</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--wa-text-secondary);">${fmtTime(new Date(u.created_at))}</span>
       </div>
       <div class="update-text">${esc(u.text)}</div>
       ${u.image_url ? `<img src="${u.image_url}" style="width:100%;border-radius:8px;margin-top:8px;max-height:260px;object-fit:contain;background:#f0f0f0;">` : ''}
@@ -822,6 +816,33 @@ function showToast(msg) {
 
 document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
 document.getElementById('post-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();postUpdate();} });
+
+// ── WELCOME & START CONVERSATION ─────────────────────
+const WELCOME_TEXT = "👋 Hey there! Welcome to Signature Digital. I'm here to assist you with any subscriptions or questions. Feel free to message me anytime! 😊";
+
+async function sendWelcomeMessage(userId) {
+  // check if already has welcome
+  const { data: existing } = await sb.from('messages')
+    .select('id').eq('chat_id', userId).eq('is_admin_message', true).limit(1);
+  if (existing && existing.length > 0) return;
+  await sb.from('messages').insert({
+    chat_id: userId,
+    sender_id: '00000000-0000-0000-0000-000000000000',
+    text: WELCOME_TEXT,
+    is_admin_message: true
+  });
+}
+
+async function startOrOpenChat(userId) {
+  // Check if conversation exists
+  const { data } = await sb.from('messages').select('id').eq('chat_id', userId).limit(1);
+  if (!data || data.length === 0) {
+    // Start conversation with welcome message
+    await sendWelcomeMessage(userId);
+  }
+  // Switch to chat tab and open the chat
+  switchTab('chat');
+}
 
 // ── USERNAME EDIT ─────────────────────────────────
 function openEditUsername() {
