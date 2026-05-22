@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <title>Signature Digital</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,7 +19,8 @@
     --wa-input-bg: #F0F2F5;
     --wa-online: #25D366;
   }
-  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--wa-bg); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--wa-bg); height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+  @supports (height: 100dvh) { body { height: 100dvh; } }
 
   /* AUTH */
   #auth-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; }
@@ -74,7 +75,7 @@
   #no-updates { text-align: center; padding: 40px 0; color: var(--wa-text-secondary); font-size: 14px; }
 
   /* ADMIN POST BAR */
-  #admin-post-bar { background: #fff; border-top: 1px solid var(--wa-border); flex-shrink: 0; }
+  #admin-post-bar { background: #fff; border-top: 1px solid var(--wa-border); flex-shrink: 0; position: sticky; bottom: 0; z-index: 10; }
   #admin-post-bar.hidden { display: none; }
   .admin-label { text-align: center; padding: 6px; font-size: 12px; color: var(--wa-text-secondary); background: #f0fdf4; }
   .admin-label span { color: #15803d; font-weight: 600; }
@@ -103,7 +104,7 @@
   .date-sep span { background: rgba(255,255,255,0.85); font-size: 12px; color: var(--wa-text-secondary); padding: 3px 12px; border-radius: 8px; }
 
   /* CHAT INPUT */
-  #chat-input-bar { background: var(--wa-input-bg); border-top: 1px solid var(--wa-border); padding: 8px 12px; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+  #chat-input-bar { background: var(--wa-input-bg); border-top: 1px solid var(--wa-border); padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; position: sticky; bottom: 0; z-index: 10; }
   #chat-input-bar.hidden { display: none; }
   #chat-input { flex: 1; padding: 10px 13px; background: #fff; border: none; border-radius: 22px; font-size: 14px; outline: none; resize: none; max-height: 100px; font-family: inherit; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 
@@ -256,15 +257,17 @@
     <div id="chat-messages"></div>
   </div>
   <div id="chat-input-bar" class="hidden">
-    <label class="attach-btn" title="Attach image">
-      <input type="file" id="chat-image" accept="image/*" style="display:none" onchange="previewChatImage(this)">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="#667781"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-    </label>
-    <div style="flex:1">
-      <div id="chat-img-preview" style="display:none;margin-bottom:5px"><img id="chat-preview-img" style="max-height:80px;border-radius:6px;"><button onclick="clearChatImage()" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;vertical-align:top">✕</button></div>
-      <textarea id="chat-input" placeholder="Message" rows="1"></textarea>
+    <div style="flex:1;display:flex;flex-direction:column;gap:0;">
+      <div id="chat-img-preview" style="display:none;padding:6px 0 4px;"><img id="chat-preview-img" style="max-height:80px;border-radius:6px;"><button onclick="clearChatImage()" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;vertical-align:top;margin-left:4px;">✕</button></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <label class="attach-btn" title="Attach photo" style="margin-bottom:2px;">
+          <input type="file" id="chat-image" accept="image/*" style="display:none" onchange="previewChatImage(this)">
+          <svg viewBox="0 0 24 24" width="26" height="26" style="fill:#8696a0;transition:fill .2s;" onmouseover="this.style.fill='#128C7E'" onmouseout="this.style.fill='#8696a0'"><path d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 003.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.098-.097-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 01-2.829 1.171 3.975 3.975 0 01-2.83-1.173 3.973 3.973 0 01-1.172-2.828c0-1.071.418-2.074 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 00-.834.018L3.458 11.59a5.556 5.556 0 00-1.642 3.966z"/></svg>
+        </label>
+        <textarea id="chat-input" placeholder="Message" rows="1"></textarea>
+        <button class="send-btn" onclick="sendMessage()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+      </div>
     </div>
-    <button class="send-btn" onclick="sendMessage()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
   </div>
 
   <!-- ADMIN INBOX VIEW -->
@@ -815,6 +818,16 @@ function showToast(msg) {
 }
 
 document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
+
+// Mobile keyboard fix — scroll chat to bottom when keyboard opens
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    setTimeout(() => {
+      const cv = document.getElementById('chat-view');
+      if (cv) cv.scrollTop = cv.scrollHeight;
+    }, 100);
+  });
+}
 document.getElementById('post-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();postUpdate();} });
 
 // ── WELCOME & START CONVERSATION ─────────────────────
