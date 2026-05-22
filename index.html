@@ -590,11 +590,15 @@ async function sendOTP(isResend) {
   const btn = document.getElementById('reg-btn-send');
   btn.disabled = true; btn.textContent = 'Sending...';
   try {
+    const controller1 = new AbortController();
+    const timeout1 = setTimeout(() => controller1.abort(), 10000);
     const res = await fetch(BOT_URL + '/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), session_id: getSessionId() })
+      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), session_id: getSessionId() }),
+      signal: controller1.signal
     });
+    clearTimeout(timeout1);
     const data = await res.json();
     if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
 
@@ -646,11 +650,15 @@ async function verifyOTP() {
   const btn = document.getElementById('reg-btn-verify');
   btn.disabled = true; btn.textContent = 'Verifying...';
   try {
+    const controller2 = new AbortController();
+    const timeout2 = setTimeout(() => controller2.abort(), 10000);
     const res = await fetch(BOT_URL + '/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), otp })
+      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), otp }),
+      signal: controller2.signal
     });
+    clearTimeout(timeout2);
     const data = await res.json();
     if (!res.ok || !data.valid) {
       otpAttempts++;
@@ -685,12 +693,12 @@ async function verifyOTP() {
     localStorage.removeItem('otp_lockout_count');
     showRegStep(3);
   } catch(e) {
-    setAuthError(ADMIN_ERROR);
-    btn.disabled = false; btn.textContent = 'Verify Code';
-  } finally {
-    if (!btn.disabled || otpAttempts < MAX_ATTEMPTS) {
-      btn.textContent = 'Verify Code';
+    if (e.name === 'AbortError') {
+      setAuthError('Request timed out. ' + ADMIN_ERROR);
+    } else {
+      setAuthError(ADMIN_ERROR);
     }
+    btn.disabled = false; btn.textContent = 'Verify Code';
   }
 }
 
