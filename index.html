@@ -473,12 +473,13 @@ const MAX_SENDS = 3;
 function resetOTPCounters() {
   otpAttempts = 0;
   otpSendCount = 0;
+  otpBlockedUntil = 0;
   const warn = document.getElementById('attempts-warning');
   if (warn) warn.style.display = 'none';
   const resendBtn = document.getElementById('resend-btn');
   if (resendBtn) { resendBtn.disabled = false; resendBtn.style.opacity = '1'; }
   const verifyBtn = document.getElementById('reg-btn-verify');
-  if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.style.opacity = '1'; }
+  if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.style.opacity = '1'; verifyBtn.textContent = 'Verify Code'; }
 }
 
 function showRegStep(n) {
@@ -536,10 +537,29 @@ async function sendOTP(isResend) {
   }
 }
 
+let otpBlockedUntil = 0; // timestamp when block expires
+
 async function verifyOTP() {
   const phone = document.getElementById('reg-phone').value.trim();
   const otp = document.getElementById('reg-otp').value.trim();
   if (!otp || otp.length !== 6) return setAuthError('Enter the 6-digit code');
+
+  // Check if blocked
+  if (Date.now() < otpBlockedUntil) {
+    const minsLeft = Math.ceil((otpBlockedUntil - Date.now()) / 60000);
+    setAuthError('Too many attempts. Try again in ' + minsLeft + ' min.');
+    return;
+  }
+
+  if (otpAttempts >= MAX_ATTEMPTS) {
+    otpBlockedUntil = Date.now() + 3600000; // block for 1 hour
+    setAuthError('Too many attempts. Try again in 60 min.');
+    const btn = document.getElementById('reg-btn-verify');
+    btn.disabled = true; btn.style.opacity = '0.5';
+    document.getElementById('attempts-warning').style.display = 'none';
+    return;
+  }
+
   const btn = document.getElementById('reg-btn-verify');
   btn.disabled = true; btn.textContent = 'Verifying...';
   try {
@@ -549,13 +569,40 @@ async function verifyOTP() {
       body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,''), otp })
     });
     const data = await res.json();
-    if (!res.ok || !data.valid) { setAuthError(data.error || 'Invalid OTP'); return; }
+    if (!res.ok || !data.valid) {
+      otpAttempts++;
+      const remaining = MAX_ATTEMPTS - otpAttempts;
+      setAuthError(data.error || 'Incorrect code');
+      document.getElementById('reg-otp').value = '';
+
+      const warn = document.getElementById('attempts-warning');
+      if (remaining > 0 && remaining < MAX_ATTEMPTS) {
+        // only show after first failure
+        warn.style.display = 'block';
+        warn.textContent = remaining === 1
+          ? '⚠️ Last attempt remaining'
+          : remaining + ' attempts remaining';
+      } else if (remaining <= 0) {
+        otpBlockedUntil = Date.now() + 3600000;
+        warn.style.display = 'none';
+        setAuthError('Too many attempts. Try again in 60 min.');
+        btn.disabled = true; btn.style.opacity = '0.5';
+        return;
+      }
+      btn.disabled = false; btn.textContent = 'Verify Code';
+      return;
+    }
+    // Success
     otpVerifiedPhone = phone;
+    otpAttempts = 0;
     showRegStep(3);
   } catch(e) {
     setAuthError('Could not verify. Try again.');
+    btn.disabled = false; btn.textContent = 'Verify Code';
   } finally {
-    btn.disabled = false; btn.textContent = 'Verify OTP';
+    if (!btn.disabled || otpAttempts < MAX_ATTEMPTS) {
+      btn.textContent = 'Verify Code';
+    }
   }
 }
 
