@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signature Digital</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --wa-green: #25D366;
+    --wa-dark-green: #128C7E;
+    --wa-header: #075E54;
+    --wa-sent: #DCF8C6;
+    --wa-received: #FFFFFF;
+    --wa-bg: #ECE5DD;
+    --wa-text: #111111;
+    --wa-text-secondary: #667781;
+    --wa-border: #E9EDEF;
+    --wa-input-bg: #F0F2F5;
+    --wa-online: #25D366;
+  }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--wa-bg); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* AUTH */
+  #auth-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; }
+  #auth-overlay.hidden { display: none; }
+  .auth-box { background: #fff; border-radius: 12px; width: 360px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .auth-header { background: var(--wa-header); padding: 24px; text-align: center; }
+  .auth-header .logo { font-size: 26px; font-weight: 700; color: #fff; }
+  .auth-header .sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+  .auth-tabs { display: flex; border-bottom: 1px solid var(--wa-border); }
+  .auth-tab { flex: 1; padding: 13px; text-align: center; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--wa-text-secondary); border-bottom: 2px solid transparent; transition: all .2s; }
+  .auth-tab.active { color: var(--wa-dark-green); border-bottom-color: var(--wa-dark-green); }
+  .auth-body { padding: 22px; }
+  .auth-body input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--wa-border); border-radius: 8px; font-size: 14px; margin-bottom: 11px; outline: none; transition: border-color .2s; font-family: inherit; }
+  .auth-body input:focus { border-color: var(--wa-dark-green); }
+  .ph-row { display: flex; gap: 7px; margin-bottom: 11px; align-items: center; }
+  .ph-row .prefix { background: var(--wa-input-bg); border: 1.5px solid var(--wa-border); border-radius: 8px; padding: 11px 11px; font-size: 14px; color: var(--wa-text-secondary); white-space: nowrap; }
+  .ph-row input { margin-bottom: 0; flex: 1; }
+  .auth-btn { width: 100%; padding: 12px; background: var(--wa-green); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+  .auth-btn:hover { background: var(--wa-dark-green); }
+  .auth-btn:disabled { background: #aaa; cursor: not-allowed; }
+  .auth-error { color: #e53935; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; }
+  .guest-link { text-align: center; margin-top: 11px; }
+  .guest-link button { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--wa-text-secondary); text-decoration: underline; }
+
+  /* HEADER */
+  #app-header { background: var(--wa-header); display: flex; align-items: center; padding: 0 14px; height: 58px; flex-shrink: 0; position: relative; z-index: 10; }
+  .h-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; margin-right: 11px; flex-shrink: 0; }
+  .h-info { flex: 1; }
+  .h-name { font-size: 16px; font-weight: 600; color: #fff; }
+  .h-status { font-size: 12px; color: rgba(255,255,255,0.72); display: flex; align-items: center; gap: 4px; }
+  .online-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--wa-online); }
+  .h-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.85); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+  .h-btn:hover { background: rgba(255,255,255,0.12); }
+  .h-btn svg { width: 22px; height: 22px; fill: currentColor; }
+
+  /* TABS */
+  #tabs { background: var(--wa-header); display: flex; border-bottom: 1px solid rgba(255,255,255,0.15); flex-shrink: 0; }
+  .tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); cursor: pointer; border-bottom: 3px solid transparent; letter-spacing: .5px; text-transform: uppercase; transition: all .2s; }
+  .tab.active { color: #fff; border-bottom-color: #fff; }
+
+  /* MAIN */
+  #main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* UPDATES */
+  #updates-view { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+  #updates-view.hidden { display: none; }
+  .update-card { background: #fff; border-radius: 10px; padding: 13px 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .update-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+  .update-badge { background: var(--wa-green); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .update-time { font-size: 11px; color: var(--wa-text-secondary); }
+  .update-text { font-size: 14px; color: var(--wa-text); line-height: 1.5; }
+  #no-updates { text-align: center; padding: 40px 0; color: var(--wa-text-secondary); font-size: 14px; }
+
+  /* ADMIN POST BAR */
+  #admin-post-bar { background: #fff; border-top: 1px solid var(--wa-border); flex-shrink: 0; }
+  #admin-post-bar.hidden { display: none; }
+  .admin-label { text-align: center; padding: 6px; font-size: 12px; color: var(--wa-text-secondary); background: #f0fdf4; }
+  .admin-label span { color: #15803d; font-weight: 600; }
+  .post-row { display: flex; gap: 8px; padding: 8px 14px; align-items: flex-end; }
+  #post-input { flex: 1; padding: 10px 13px; background: var(--wa-input-bg); border: none; border-radius: 22px; font-size: 14px; outline: none; resize: none; max-height: 100px; font-family: inherit; }
+  .send-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--wa-green); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s; }
+  .send-btn:hover { background: var(--wa-dark-green); }
+  .send-btn svg { width: 20px; height: 20px; fill: #fff; }
+
+  /* CHAT */
+  #chat-view { flex: 1; overflow-y: auto; padding: 12px 14px; background: var(--wa-bg); background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b2b2b2' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E"); display: flex; flex-direction: column; gap: 6px; }
+  #chat-view.hidden { display: none; }
+  .chat-gate { margin: auto; text-align: center; background: rgba(255,255,255,0.92); border-radius: 12px; padding: 24px 28px; max-width: 260px; }
+  .chat-gate p { font-size: 14px; color: var(--wa-text-secondary); margin-bottom: 13px; }
+  .chat-gate button { background: var(--wa-green); color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .msg-row { display: flex; }
+  .msg-row.sent { justify-content: flex-end; }
+  .msg-row.received { justify-content: flex-start; }
+  .msg-bubble { max-width: 68%; padding: 7px 11px 5px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+  .msg-row.sent .msg-bubble { background: var(--wa-sent); border-top-right-radius: 2px; }
+  .msg-row.received .msg-bubble { background: #fff; border-top-left-radius: 2px; }
+  .msg-text { font-size: 14px; color: var(--wa-text); line-height: 1.45; word-break: break-word; }
+  .msg-time { font-size: 11px; color: var(--wa-text-secondary); text-align: right; margin-top: 2px; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
+  .ticks { color: #53bdeb; }
+  .date-sep { text-align: center; margin: 6px 0; }
+  .date-sep span { background: rgba(255,255,255,0.85); font-size: 12px; color: var(--wa-text-secondary); padding: 3px 12px; border-radius: 8px; }
+
+  /* CHAT INPUT */
+  #chat-input-bar { background: var(--wa-input-bg); border-top: 1px solid var(--wa-border); padding: 8px 12px; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+  #chat-input-bar.hidden { display: none; }
+  #chat-input { flex: 1; padding: 10px 13px; background: #fff; border: none; border-radius: 22px; font-size: 14px; outline: none; resize: none; max-height: 100px; font-family: inherit; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+  /* PROFILE DROPDOWN */
+  #profile-menu { position: absolute; top: 58px; right: 10px; z-index: 50; background: #fff; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.2); min-width: 210px; overflow: hidden; }
+  #profile-menu.hidden { display: none; }
+  .p-info { padding: 14px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 11px; }
+  .p-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--wa-green); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; color: #fff; }
+  .p-name { font-size: 14px; font-weight: 600; color: var(--wa-text); }
+  .p-phone { font-size: 12px; color: var(--wa-text-secondary); }
+  .p-item { padding: 12px 15px; font-size: 14px; color: var(--wa-text); cursor: pointer; display: flex; align-items: center; gap: 9px; transition: background .15s; }
+  .p-item:hover { background: var(--wa-input-bg); }
+  .p-item svg { width: 17px; height: 17px; fill: var(--wa-text-secondary); }
+  .p-item.danger { color: #e53935; }
+  .p-item.danger svg { fill: #e53935; }
+
+  .attach-btn { cursor:pointer; display:flex; align-items:center; padding:0 4px; flex-shrink:0; }
+  .attach-btn:hover svg { fill: var(--wa-dark-green) !important; }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; border-radius: 8px; padding: 9px 18px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+  #toast.show { opacity: 1; }
+
+  /* ADMIN INBOX (list of client chats) */
+  #inbox-view { flex: 1; overflow-y: auto; background: #fff; display: flex; flex-direction: column; }
+  #inbox-view.hidden { display: none; }
+  .inbox-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--wa-border); cursor: pointer; transition: background .15s; }
+  .inbox-item:hover { background: var(--wa-input-bg); }
+  .inbox-item.active { background: #e8f5e9; }
+  .inbox-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--wa-dark-green); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 16px; flex-shrink: 0; }
+  .inbox-info { flex: 1; min-width: 0; }
+  .inbox-name { font-size: 15px; font-weight: 500; color: var(--wa-text); }
+  .inbox-preview { font-size: 13px; color: var(--wa-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inbox-time { font-size: 11px; color: var(--wa-text-secondary); flex-shrink: 0; }
+  .inbox-empty { text-align: center; padding: 40px 20px; color: var(--wa-text-secondary); font-size: 14px; }
+
+  /* ADMIN CHAT HEADER (back button) */
+  #admin-chat-header { background: var(--wa-header); display: flex; align-items: center; padding: 0 12px; height: 52px; flex-shrink: 0; gap: 10px; }
+  #admin-chat-header.hidden { display: none; }
+  #admin-chat-header button { background: none; border: none; cursor: pointer; color: #fff; font-size: 22px; padding: 4px 8px; }
+  #admin-chat-header .ac-name { font-size: 15px; font-weight: 600; color: #fff; }
+  #admin-chat-header .ac-phone { font-size: 12px; color: rgba(255,255,255,0.7); }
+</style>
+</head>
+<body>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-header">
+      <div class="logo">Signature Digital</div>
+      <div class="sub">Your trusted subscription partner</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-error" id="auth-error"></div>
+      <div id="login-form">
+        <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+        <input type="password" id="login-pass" placeholder="Password">
+        <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
+      </div>
+      <div id="register-form" style="display:none">
+        <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+        <input type="password" id="reg-pass" placeholder="Create password (min 6 chars)">
+        <input type="password" id="reg-pass2" placeholder="Confirm password">
+        <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
+      </div>
+      <div class="guest-link"><button onclick="continueAsGuest()">View updates without account</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MENU -->
+<div id="profile-menu" class="hidden">
+  <div class="p-info">
+    <div class="p-avatar" id="p-avatar">?</div>
+    <div><div class="p-name" id="p-name">Guest</div><div class="p-phone" id="p-phone">Not signed in</div></div>
+  </div>
+  <div id="pm-login" class="p-item" onclick="openAuth()">
+    <svg viewBox="0 0 24 24"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+    Sign In / Register
+  </div>
+  <div id="pm-logout" class="p-item danger hidden" onclick="doLogout()">
+    <svg viewBox="0 0 24 24"><path d="M17 7l-1.4 1.4 2.6 2.6H9v2h9.2l-2.6 2.6L17 17l5-5-5-5zM5 5h7V3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h7v-2H5V5z"/></svg>
+    Sign Out
+  </div>
+</div>
+
+<!-- APP HEADER -->
+<div id="app-header">
+  <div class="h-avatar">SD</div>
+  <div class="h-info">
+    <div class="h-name">Signature Digital</div>
+    <div class="h-status">
+      <div class="online-dot" id="owner-dot" style="display:none"></div>
+      <span id="owner-status">loading...</span>
+    </div>
+  </div>
+  <button class="h-btn" onclick="toggleProfileMenu()">
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.3 4-4s-1.3-4-4-4-4 1.3-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>
+  </button>
+</div>
+
+<!-- TABS -->
+<div id="tabs">
+  <div class="tab active" id="tab-updates" onclick="switchTab('updates')">Updates</div>
+  <div class="tab" id="tab-chat" onclick="switchTab('chat')">Chat</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- UPDATES VIEW -->
+  <div id="updates-view">
+    <div style="text-align:center;padding:16px 0 6px;"><p style="font-size:13px;color:var(--wa-text-secondary)">Latest from Signature Digital</p></div>
+    <div id="updates-list"></div>
+    <div id="no-updates" style="display:none" class="">No updates yet.</div>
+  </div>
+  <div id="admin-post-bar" class="hidden">
+    <div class="admin-label"><span>⚡ Admin — Post Update</span></div>
+    <div class="post-row">
+      <label class="attach-btn" title="Attach image">
+        <input type="file" id="post-image" accept="image/*" style="display:none" onchange="previewPostImage(this)">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#667781"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      </label>
+      <div style="flex:1">
+        <div id="post-img-preview" style="display:none;margin-bottom:5px"><img id="post-preview-img" style="max-height:80px;border-radius:6px;"><button onclick="clearPostImage()" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;vertical-align:top">✕</button></div>
+        <textarea id="post-input" placeholder="Post an update to all clients..." rows="1"></textarea>
+      </div>
+      <button class="send-btn" onclick="postUpdate()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+  </div>
+
+  <!-- CLIENT CHAT VIEW -->
+  <div id="chat-view" class="hidden">
+    <div id="chat-gate" class="chat-gate" style="display:none"><p>Sign in to chat with Signature Digital</p><button onclick="openAuth()">Sign In</button></div>
+    <div id="chat-messages"></div>
+  </div>
+  <div id="chat-input-bar" class="hidden">
+    <label class="attach-btn" title="Attach image">
+      <input type="file" id="chat-image" accept="image/*" style="display:none" onchange="previewChatImage(this)">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="#667781"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+    </label>
+    <div style="flex:1">
+      <div id="chat-img-preview" style="display:none;margin-bottom:5px"><img id="chat-preview-img" style="max-height:80px;border-radius:6px;"><button onclick="clearChatImage()" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;vertical-align:top">✕</button></div>
+      <textarea id="chat-input" placeholder="Message" rows="1"></textarea>
+    </div>
+    <button class="send-btn" onclick="sendMessage()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+  </div>
+
+  <!-- ADMIN INBOX VIEW -->
+  <div id="inbox-view" class="hidden">
+    <div id="inbox-list"></div>
+  </div>
+
+  <!-- ADMIN CHAT HEADER -->
+  <div id="admin-chat-header" class="hidden">
+    <button onclick="closeAdminChat()">&#8592;</button>
+    <div><div class="ac-name" id="ac-name"></div><div class="ac-phone" id="ac-phone"></div></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ════════════════════════════════════════════════
+//  🔧 SUPABASE CONFIG — Replace these two values
+// ════════════════════════════════════════════════
+const SUPABASE_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
+
+// ════════════════════════════════════════════════
+//  🔧 YOUR SETTINGS
+// ════════════════════════════════════════════════
+const ADMIN_PHONE = '0778315058'; // Your phone number (used to detect admin)
+
+// ════════════════════════════════════════════════
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let isAdmin = false;
+let currentTab = 'updates';
+let chatSub = null;
+let adminOpenChatId = null; // which client chat admin is viewing
+let statusInterval = null;
+
+// ── INIT ────────────────────────────────────────
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await onSignIn(session.user);
+  else showAuthOverlay();
+
+  sb.auth.onAuthStateChange(async (_e, session) => {
+    if (session) await onSignIn(session.user);
+    else onSignOut();
+  });
+
+  startOwnerStatusListener();
+}
+
+async function onSignIn(user) {
+  currentUser = user;
+  const phone = user.user_metadata?.phone || '';
+  const norm = p => p.replace(/\D/g,'').replace(/^94/,'').replace(/^0/,'');
+  isAdmin = norm(phone) === norm(ADMIN_PHONE);
+  updateProfileMenu(user);
+  closeAuthOverlay();
+  document.getElementById('pm-login').style.display = 'none';
+  document.getElementById('pm-logout').style.display = '';
+  if (isAdmin) setAdminOnline(true);
+  renderCurrentTab();
+}
+
+function onSignOut() {
+  currentUser = null; isAdmin = false;
+  updateProfileMenu(null);
+  document.getElementById('pm-login').style.display = '';
+  document.getElementById('pm-logout').style.display = 'none';
+  renderCurrentTab();
+}
+
+// ── AUTH ─────────────────────────────────────────
+function switchAuthTab(t) {
+  document.getElementById('login-form').style.display = t === 'login' ? '' : 'none';
+  document.getElementById('register-form').style.display = t === 'register' ? '' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((el,i) => el.classList.toggle('active', i===(t==='login'?0:1)));
+  setAuthError('');
+}
+function setAuthError(m) { document.getElementById('auth-error').textContent = m; }
+function setAuthLoading(id, loading) {
+  const b = document.getElementById(id);
+  b.disabled = loading; b.textContent = loading ? 'Please wait...' : (id==='login-btn' ? 'Login' : 'Create Account');
+}
+
+function fmtPhone(raw) {
+  let d = raw.replace(/\D/g,'');
+  if (d.startsWith('0')) d = d.substring(1);
+  return '+94' + d;
+}
+function fmtEmail(raw) {
+  let d = raw.replace(/\D/g,'');
+  if (d.startsWith('0')) d = d.substring(1);
+  return '94' + d + '@sigdig.app';
+}
+
+async function doLogin() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!phone || !pass) return setAuthError('Please fill all fields');
+  setAuthLoading('login-btn', true);
+  const { error } = await sb.auth.signInWithPassword({ email: fmtEmail(phone), password: pass });
+  setAuthLoading('login-btn', false);
+  if (error) setAuthError(error.message.includes('Invalid') ? 'Wrong phone or password' : error.message);
+  else showToast('Welcome back!');
+}
+
+async function doRegister() {
+  const phone = document.getElementById('reg-phone').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  if (!phone || !pass) return setAuthError('Please fill all fields');
+  if (pass.length < 6) return setAuthError('Password min 6 characters');
+  if (pass !== pass2) return setAuthError('Passwords do not match');
+  setAuthLoading('reg-btn', true);
+  const { error } = await sb.auth.signUp({
+    email: fmtEmail(phone), password: pass,
+    options: { data: { phone: fmtPhone(phone) } }
+  });
+  setAuthLoading('reg-btn', false);
+  if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : error.message);
+  else showToast('Account created! You are now logged in.');
+}
+
+async function doLogout() {
+  if (isAdmin) await setAdminOnline(false);
+  await sb.auth.signOut();
+  closeProfileMenu(); showToast('Signed out');
+}
+
+function showAuthOverlay() { document.getElementById('auth-overlay').classList.remove('hidden'); }
+function closeAuthOverlay() { document.getElementById('auth-overlay').classList.add('hidden'); }
+function openAuth() { showAuthOverlay(); closeProfileMenu(); }
+function continueAsGuest() { closeAuthOverlay(); renderCurrentTab(); }
+
+// ── PROFILE MENU ─────────────────────────────────
+function toggleProfileMenu() { document.getElementById('profile-menu').classList.toggle('hidden'); }
+function closeProfileMenu() { document.getElementById('profile-menu').classList.add('hidden'); }
+document.addEventListener('click', e => {
+  if (!document.getElementById('profile-menu').classList.contains('hidden') &&
+      !e.target.closest('#profile-menu') && !e.target.closest('.h-btn')) closeProfileMenu();
+});
+function updateProfileMenu(user) {
+  if (user) {
+    const ph = user.user_metadata?.phone || '';
+    document.getElementById('p-name').textContent = isAdmin ? 'Admin' : 'Client';
+    document.getElementById('p-phone').textContent = ph || 'Signed in';
+    document.getElementById('p-avatar').textContent = ph.slice(-2) || 'U';
+  } else {
+    document.getElementById('p-name').textContent = 'Guest';
+    document.getElementById('p-phone').textContent = 'Not signed in';
+    document.getElementById('p-avatar').textContent = '?';
+  }
+}
+
+// ── TABS ─────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-updates').classList.toggle('active', tab==='updates');
+  document.getElementById('tab-chat').classList.toggle('active', tab==='chat');
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  const onUpdates = currentTab === 'updates';
+  // hide all panels first
+  ['updates-view','chat-view','inbox-view','admin-chat-header','chat-input-bar'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+
+  document.getElementById('admin-post-bar').classList.add('hidden');
+  if (onUpdates) {
+    document.getElementById('updates-view').classList.remove('hidden');
+    if (isAdmin) document.getElementById('admin-post-bar').classList.remove('hidden');
+    loadUpdates();
+  } else {
+    // Chat tab
+    if (!currentUser) {
+      document.getElementById('chat-view').classList.remove('hidden');
+      document.getElementById('chat-gate').style.display = '';
+      document.getElementById('chat-messages').innerHTML = '';
+    } else if (isAdmin) {
+      // Admin sees inbox
+      if (adminOpenChatId) {
+        showAdminChat(adminOpenChatId);
+      } else {
+        document.getElementById('inbox-view').classList.remove('hidden');
+        loadInbox();
+      }
+    } else {
+      // Client sees their own chat
+      document.getElementById('chat-view').classList.remove('hidden');
+      document.getElementById('chat-gate').style.display = 'none';
+      document.getElementById('chat-input-bar').classList.remove('hidden');
+      loadChat(currentUser.id);
+    }
+  }
+}
+
+// ── OWNER STATUS ─────────────────────────────────
+async function setAdminOnline(online) {
+  await sb.from('owner_status').upsert({ id: 1, online, last_seen: new Date().toISOString() });
+}
+
+function startOwnerStatusListener() {
+  loadOwnerStatus();
+  statusInterval = setInterval(loadOwnerStatus, 30000);
+  // Realtime
+  sb.channel('owner_status').on('postgres_changes', { event: '*', schema: 'public', table: 'owner_status' }, loadOwnerStatus).subscribe();
+  window.addEventListener('beforeunload', () => { if (isAdmin) setAdminOnline(false); });
+}
+
+async function loadOwnerStatus() {
+  const { data } = await sb.from('owner_status').select('*').eq('id', 1).single();
+  const dot = document.getElementById('owner-dot');
+  const label = document.getElementById('owner-status');
+  if (!data) { label.textContent = 'last seen recently'; return; }
+  if (data.online) {
+    dot.style.display = 'block'; label.textContent = 'online';
+  } else {
+    dot.style.display = 'none';
+    label.textContent = data.last_seen ? 'last seen ' + fmtLastSeen(new Date(data.last_seen)) : 'last seen recently';
+  }
+}
+
+function fmtLastSeen(d) {
+  const diff = (Date.now() - d) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + ' min ago';
+  if (diff < 86400) return 'today at ' + d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if (diff < 172800) return 'yesterday';
+  return d.toLocaleDateString();
+}
+
+// ── UPDATES ──────────────────────────────────────
+async function loadUpdates() {
+  const { data } = await sb.from('updates').select('*').order('created_at', { ascending: true }).limit(30);
+  const list = document.getElementById('updates-list');
+  const none = document.getElementById('no-updates');
+  if (!data || !data.length) { list.innerHTML = ''; none.style.display = ''; return; }
+  none.style.display = 'none';
+  list.innerHTML = data.map(u => `
+    <div class="update-card">
+      <div class="update-meta">
+        <span class="update-badge">UPDATE</span>
+        <span class="update-time">${fmtTime(new Date(u.created_at))}</span>
+      </div>
+      <div class="update-text">${esc(u.text)}</div>
+      ${u.image_url ? `<img src="${u.image_url}" style="width:100%;border-radius:8px;margin-top:8px;max-height:260px;object-fit:contain;background:#f0f0f0;">` : ''}
+    </div>`).join('');
+}
+
+async function postUpdate() {
+  const inp = document.getElementById('post-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  let imageUrl = null;
+  if (postImageFile) {
+    try { imageUrl = await uploadImage(postImageFile, 'update-images'); }
+    catch(e) { showToast('Image upload failed: ' + e.message); return; }
+    clearPostImage();
+  }
+  if (!text && !imageUrl) return;
+  const { error } = await sb.from('updates').insert({ text: text || '', image_url: imageUrl, author_id: currentUser.id });
+  if (error) return showToast('Error: ' + error.message);
+  inp.value = '';
+  showToast('Update posted!');
+  loadUpdates();
+}
+
+// ── CLIENT CHAT ───────────────────────────────────
+let pollInterval = null;
+function loadChat(userId) {
+  if (chatSub) { chatSub.unsubscribe(); chatSub = null; }
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  fetchMessages(userId);
+  // realtime
+  chatSub = sb.channel('chat_' + userId)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${userId}` }, () => fetchMessages(userId))
+    .subscribe();
+  // polling fallback every 3s
+  pollInterval = setInterval(() => fetchMessages(userId), 3000);
+}
+
+async function fetchMessages(userId) {
+  const { data } = await sb.from('messages').select('*').eq('chat_id', userId).order('created_at', { ascending: true }).limit(100);
+  renderMessages(data || [], userId, document.getElementById('chat-messages'));
+  setTimeout(() => {
+    const cv = document.getElementById('chat-view');
+    cv.scrollTop = cv.scrollHeight;
+  }, 50);
+}
+
+function renderMessages(msgs, myId, container) {
+  let html = '', lastDate = '';
+  msgs.forEach(m => {
+    const d = new Date(m.created_at);
+    const ds = d.toLocaleDateString();
+    if (ds !== lastDate) {
+      html += `<div class="date-sep"><span>${ds === new Date().toLocaleDateString() ? 'Today' : ds}</span></div>`;
+      lastDate = ds;
+    }
+    const sent = m.sender_id === myId || (isAdmin && m.sender_id === currentUser.id);
+    html += `<div class="msg-row ${sent?'sent':'received'}">
+      <div class="msg-bubble">
+        ${m.image_url ? `<img src="${m.image_url}" style="max-width:min(220px,60vw);width:100%;border-radius:8px;margin-bottom:4px;display:block;cursor:pointer;object-fit:cover;" onclick="window.open('${m.image_url}','_blank')">` : ''}
+        <div class="msg-text">${esc(m.text)}</div>
+        <div class="msg-time">${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}${sent?'<span class="ticks"> ✓✓</span>':''}</div>
+      </div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+// Image preview helpers
+let postImageFile = null;
+let chatImageFile = null;
+
+function previewPostImage(input) {
+  if (!input.files[0]) return;
+  postImageFile = input.files[0];
+  const url = URL.createObjectURL(postImageFile);
+  document.getElementById('post-preview-img').src = url;
+  document.getElementById('post-img-preview').style.display = '';
+}
+function clearPostImage() {
+  postImageFile = null;
+  document.getElementById('post-image').value = '';
+  document.getElementById('post-img-preview').style.display = 'none';
+}
+function previewChatImage(input) {
+  if (!input.files[0]) return;
+  chatImageFile = input.files[0];
+  const url = URL.createObjectURL(chatImageFile);
+  document.getElementById('chat-preview-img').src = url;
+  document.getElementById('chat-img-preview').style.display = '';
+}
+function clearChatImage() {
+  chatImageFile = null;
+  document.getElementById('chat-image').value = '';
+  document.getElementById('chat-img-preview').style.display = 'none';
+}
+
+async function uploadImage(file, bucket) {
+  const ext = file.name.split('.').pop();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type });
+  if (error) throw error;
+  const { data } = sb.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function sendMessage() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text || !currentUser) return;
+  const chatId = isAdmin ? adminOpenChatId : currentUser.id;
+  let imageUrl = null;
+  if (chatImageFile) {
+    try { imageUrl = await uploadImage(chatImageFile, 'chat-images'); } 
+    catch(e) { showToast('Image upload failed: ' + e.message); return; }
+    clearChatImage();
+  }
+  if (!text && !imageUrl) return;
+  const { error } = await sb.from('messages').insert({ chat_id: chatId, sender_id: currentUser.id, text: text || '', image_url: imageUrl });
+  if (error) { showToast('Error: ' + error.message); return; }
+  inp.value = '';
+  fetchMessages(chatId);
+}
+
+// ── ADMIN INBOX ───────────────────────────────────
+async function loadInbox() {
+  const { data } = await sb.from('messages').select('chat_id, text, created_at, sender_id').order('created_at', { ascending: false });
+  if (!data || !data.length) {
+    document.getElementById('inbox-list').innerHTML = '<div class="inbox-empty">No client messages yet.</div>';
+    return;
+  }
+  // group by chat_id, take latest
+  const seen = {};
+  data.forEach(m => { if (!seen[m.chat_id]) seen[m.chat_id] = m; });
+  const items = Object.values(seen);
+  // fetch user phones
+  const uids = items.map(i => i.chat_id);
+  const { data: users } = await sb.from('profiles').select('id, phone').in('id', uids);
+  const phoneMap = {};
+  (users||[]).forEach(u => phoneMap[u.id] = u.phone);
+
+  document.getElementById('inbox-list').innerHTML = items.map(m => `
+    <div class="inbox-item" onclick="openAdminChat('${m.chat_id}', '${phoneMap[m.chat_id]||'Client'}')">
+      <div class="inbox-avatar">${(phoneMap[m.chat_id]||'?').slice(-2)}</div>
+      <div class="inbox-info">
+        <div class="inbox-name">${phoneMap[m.chat_id] || 'Client'}</div>
+        <div class="inbox-preview">${esc(m.text)}</div>
+      </div>
+      <div class="inbox-time">${fmtTime(new Date(m.created_at))}</div>
+    </div>`).join('');
+}
+
+function openAdminChat(chatId, phone) {
+  adminOpenChatId = chatId;
+  document.getElementById('inbox-view').classList.add('hidden');
+  document.getElementById('admin-chat-header').classList.remove('hidden');
+  document.getElementById('chat-view').classList.remove('hidden');
+  document.getElementById('chat-input-bar').classList.remove('hidden');
+  document.getElementById('chat-gate').style.display = 'none';
+  document.getElementById('ac-name').textContent = phone;
+  document.getElementById('ac-phone').textContent = 'Client';
+  loadChat(chatId);
+}
+
+function closeAdminChat() {
+  adminOpenChatId = null;
+  if (chatSub) { chatSub.unsubscribe(); chatSub = null; }
+  document.getElementById('chat-view').classList.add('hidden');
+  document.getElementById('chat-input-bar').classList.add('hidden');
+  document.getElementById('admin-chat-header').classList.add('hidden');
+  document.getElementById('inbox-view').classList.remove('hidden');
+  loadInbox();
+}
+
+// ── UTILS ─────────────────────────────────────────
+function esc(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+function fmtTime(d) {
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString();
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
+document.getElementById('post-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();postUpdate();} });
+
+init();
+</script>
+</body>
+</html>
