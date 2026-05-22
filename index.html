@@ -194,7 +194,12 @@
     <div class="auth-body">
       <div class="auth-error" id="auth-error"></div>
       <div id="login-form">
-        <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+        <div class="ph-row">
+          <div class="prefix" style="display:flex;align-items:center;gap:2px;padding:11px 8px;user-select:auto;">
+            <span style="color:var(--wa-text-secondary);">+</span><input type="tel" id="login-cc" value="94" maxlength="3" style="width:28px;border:none;outline:none;background:transparent;font-size:14px;color:var(--wa-text-secondary);font-family:inherit;padding:0;">
+          </div>
+          <input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="12">
+        </div>
         <input type="password" id="login-pass" placeholder="Password">
         <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
       </div>
@@ -212,7 +217,12 @@
         <!-- Step 1: Phone -->
         <div id="reg-step1">
           <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:10px;">Enter your WhatsApp number to receive a verification code.</p>
-          <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+          <div class="ph-row">
+            <div class="prefix" style="display:flex;align-items:center;gap:2px;padding:11px 8px;user-select:auto;">
+              <span style="color:var(--wa-text-secondary);">+</span><input type="tel" id="reg-cc" value="94" maxlength="3" style="width:28px;border:none;outline:none;background:transparent;font-size:14px;color:var(--wa-text-secondary);font-family:inherit;padding:0;">
+            </div>
+            <input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="12">
+          </div>
           <button class="auth-btn" id="reg-btn-send" onclick="sendOTP()">📲 Send OTP via WhatsApp</button>
         </div>
 
@@ -457,15 +467,19 @@ function setAuthLoading(id, loading) {
   b.disabled = loading; b.textContent = loading ? 'Please wait...' : (id==='login-btn' ? 'Login' : 'Create Account');
 }
 
-function fmtPhone(raw) {
-  let d = raw.replace(/\D/g,'');
-  if (d.startsWith('0')) d = d.substring(1);
-  return '+94' + d;
+function getCC(prefix) {
+  const el = document.getElementById(prefix + '-cc');
+  return el ? el.value.replace(/\D/g,'') || '94' : '94';
 }
-function fmtEmail(raw) {
+function fmtPhone(raw, cc) {
   let d = raw.replace(/\D/g,'');
   if (d.startsWith('0')) d = d.substring(1);
-  return '94' + d + '@sigdig.app';
+  return '+' + (cc || '94') + d;
+}
+function fmtEmail(raw, cc) {
+  let d = raw.replace(/\D/g,'');
+  if (d.startsWith('0')) d = d.substring(1);
+  return (cc || '94') + d + '@sigdig.app';
 }
 
 async function doLogin() {
@@ -474,7 +488,7 @@ async function doLogin() {
   if (!phone || !pass) return setAuthError('Please fill all fields');
   setAuthLoading('login-btn', true);
   try {
-    const { error } = await sb.auth.signInWithPassword({ email: getLoginEmail(), password: pass });
+    const { error } = await sb.auth.signInWithPassword({ email: fmtEmail(phone, getCC('login')), password: pass });
     setAuthLoading('login-btn', false);
     if (error) setAuthError(error.message.includes('Invalid') ? 'Wrong phone or password' : error.message);
     else showToast('Welcome back!');
@@ -617,7 +631,7 @@ async function sendOTP(isResend) {
     const res = await fetch(BOT_URL + '/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), session_id: getSessionId() }),
+      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value, getCC('reg')), session_id: getSessionId() }),
       signal: controller1.signal
     });
     clearTimeout(timeout1);
@@ -677,7 +691,7 @@ async function verifyOTP() {
     const res = await fetch(BOT_URL + '/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), otp }),
+      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value, getCC('reg')), otp }),
       signal: controller2.signal
     });
     clearTimeout(timeout2);
@@ -734,9 +748,10 @@ async function doRegister() {
   if (pass !== pass2) return setAuthError('Passwords do not match');
   setAuthLoading('reg-btn', true);
   const username = document.getElementById('reg-username').value.trim();
+  const cc = getCC('reg');
   const { data: signUpData, error } = await sb.auth.signUp({
-    email: getRegEmail(), password: pass,
-    options: { data: { phone: getRegPhone(), username: username || null } }
+    email: fmtEmail(document.getElementById('reg-phone').value, cc), password: pass,
+    options: { data: { phone: fmtPhone(document.getElementById('reg-phone').value, cc), username: username || null } }
   });
   setAuthLoading('reg-btn', false);
   if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : (error.message || ADMIN_ERROR));
