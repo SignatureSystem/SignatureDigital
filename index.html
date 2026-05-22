@@ -125,25 +125,25 @@
   /* PULL TO REFRESH */
   #ptr-indicator {
     position: fixed; top: 0; left: 0; right: 0; z-index: 999;
-    display: flex; align-items: center; justify-content: center;
-    height: 0px; overflow: hidden;
-    background: linear-gradient(180deg, #075E54 0%, #128C7E 100%);
-    transition: height 0.15s ease;
+    display: flex; align-items: flex-end; justify-content: center;
+    height: 0px; overflow: visible;
+    background: transparent;
     pointer-events: none;
+    padding-bottom: 6px;
   }
-  #ptr-indicator.releasing { transition: height 0.25s cubic-bezier(0.34,1.56,0.64,1); }
-  #ptr-indicator.refreshing { height: 56px !important; }
   #ptr-spinner {
-    width: 32px; height: 32px;
+    width: 36px; height: 36px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.2);
+    background: #25D366;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     display: flex; align-items: center; justify-content: center;
-    transform: rotate(0deg) scale(0.5);
-    transition: transform 0.1s ease;
+    transform: translateY(-50px) scale(0.5);
+    opacity: 0;
+    transition: none;
   }
   #ptr-spinner svg { width: 20px; height: 20px; fill: #fff; }
-  @keyframes ptr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  #ptr-spinner.spinning { animation: ptr-spin 0.7s linear infinite; transform: scale(1) !important; background: rgba(255,255,255,0.25); }
+  @keyframes ptr-spin { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(0) rotate(360deg); } }
+  #ptr-spinner.spinning { animation: ptr-spin 0.6s linear infinite; opacity: 1 !important; transform: translateY(0) scale(1) !important; }
   .attach-btn:hover svg { fill: var(--wa-dark-green) !important; }
 
   /* TOAST */
@@ -214,7 +214,7 @@
         <div id="reg-step2" style="display:none">
           <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:4px;">Code sent to your WhatsApp. Enter it below.</p>
           <p id="reg-phone-display" style="font-size:13px;font-weight:600;color:var(--wa-dark-green);margin-bottom:12px;"></p>
-          <input type="number" id="reg-otp" placeholder="Enter 6-digit code" style="letter-spacing:8px;font-size:22px;text-align:center;font-weight:700;">
+          <input type="tel" id="reg-otp" placeholder="------" maxlength="6" style="letter-spacing:10px;font-size:24px;text-align:center;font-weight:700;width:100%;box-sizing:border-box;" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)">
           <button class="auth-btn" id="reg-btn-verify" onclick="verifyOTP()">Verify Code</button>
           <div id="attempts-warning" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:#888;"></div>
           <div style="display:flex;justify-content:space-between;margin-top:10px;">
@@ -1166,10 +1166,11 @@ async function saveUsername() {
 // ── PULL TO REFRESH ──────────────────────────────────
 (function() {
   let startY = 0;
-  let startScrollTop = 0;
   let pulling = false;
   let triggered = false;
-  const THRESHOLD = 70;
+  const THRESHOLD = 65;
+  const ptr = document.getElementById('ptr-indicator');
+  const spinner = document.getElementById('ptr-spinner');
 
   function getScrollEl() {
     if (currentTab === 'updates') return document.getElementById('updates-view');
@@ -1177,64 +1178,58 @@ async function saveUsername() {
   }
 
   function setPTRHeight(h) {
-    const el = document.getElementById('ptr-indicator');
-    el.style.height = Math.min(h, THRESHOLD + 20) + 'px';
-    const spinner = document.getElementById('ptr-spinner');
     const progress = Math.min(h / THRESHOLD, 1);
-    spinner.style.transform = 'rotate(' + (progress * 180) + 'deg) scale(' + (0.4 + progress * 0.6) + ')';
+    const translateY = -50 + (progress * 56);
+    spinner.style.transform = 'translateY(' + translateY + 'px) rotate(' + (progress * 360) + 'deg) scale(' + (0.5 + progress * 0.5) + ')';
     spinner.style.opacity = progress;
+    ptr.style.height = Math.max(h * 0.4, 0) + 'px';
+  }
+
+  function doRefresh() {
+    triggered = true;
+    ptr.style.height = '50px';
+    spinner.style.transform = 'translateY(6px) scale(1)';
+    spinner.style.opacity = '1';
+    spinner.classList.add('spinning');
+    // Reload after short delay so spinner is visible
+    setTimeout(() => { window.location.reload(); }, 800);
   }
 
   document.addEventListener('touchstart', e => {
+    if (triggered) return;
     const scrollEl = getScrollEl();
-    if (!scrollEl) return;
-    startScrollTop = scrollEl.classList.contains('hidden') ? 0 : scrollEl.scrollTop;
+    const atTop = !scrollEl || scrollEl.classList.contains('hidden') || scrollEl.scrollTop <= 1;
     const fromHeader = e.target.closest('#app-header') || e.target.closest('#tabs');
-    if (!fromHeader && startScrollTop > 2) return;
+    if (!atTop && !fromHeader) return;
     startY = e.touches[0].clientY;
     pulling = true;
-    triggered = false;
-    document.getElementById('ptr-indicator').classList.remove('releasing');
-    document.getElementById('ptr-spinner').classList.remove('spinning');
+    ptr.style.transition = '';
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
     if (!pulling || triggered) return;
-    const fromHeader = e.target.closest('#app-header') || e.target.closest('#tabs');
     const scrollEl = getScrollEl();
-    if (!fromHeader && scrollEl && scrollEl.scrollTop > 2) { pulling = false; return; }
+    if (scrollEl && !scrollEl.classList.contains('hidden') && scrollEl.scrollTop > 1 && !e.target.closest('#app-header') && !e.target.closest('#tabs')) {
+      pulling = false; return;
+    }
     const dy = e.touches[0].clientY - startY;
-    if (dy <= 0) { pulling = false; return; }
-    setPTRHeight(dy * 0.5);
+    if (dy < 0) { pulling = false; ptr.style.height = '0px'; return; }
+    setPTRHeight(dy * 0.45);
   }, { passive: true });
 
-
-
-  document.addEventListener('touchend', e => {
+  document.addEventListener('touchend', () => {
     if (!pulling || triggered) { pulling = false; return; }
-    const el = document.getElementById('ptr-indicator');
-    const currentH = parseInt(el.style.height) || 0;
-    el.classList.add('releasing');
-    if (currentH >= THRESHOLD * 0.5) {
-      triggered = true;
-      el.classList.add('refreshing');
-      document.getElementById('ptr-spinner').classList.add('spinning');
-      // Refresh content
-      setTimeout(() => {
-        if (currentTab === 'updates') loadUpdates();
-        else if (currentUser) fetchMessages(currentUser.id);
-        // Hide after refresh
-        setTimeout(() => {
-          el.classList.remove('refreshing');
-          el.style.height = '0px';
-          document.getElementById('ptr-spinner').classList.remove('spinning');
-          triggered = false;
-        }, 1000);
-      }, 300);
-    } else {
-      el.style.height = '0px';
-    }
     pulling = false;
+    const currentH = parseFloat(ptr.style.height) || 0;
+    if (currentH >= THRESHOLD * 0.6) {
+      doRefresh();
+    } else {
+      spinner.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+      spinner.style.transform = 'translateY(-50px) scale(0.5)';
+      spinner.style.opacity = '0';
+      ptr.style.height = '0px';
+      setTimeout(() => { spinner.style.transition = ''; }, 250);
+    }
   }, { passive: true });
 })();
 
