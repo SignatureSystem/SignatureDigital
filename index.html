@@ -37,20 +37,9 @@
   .auth-body { padding: 22px; }
   .auth-body input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--wa-border); border-radius: 8px; font-size: 14px; margin-bottom: 11px; outline: none; transition: border-color .2s; font-family: inherit; }
   .auth-body input:focus { border-color: var(--wa-dark-green); }
-  .ph-row { display: flex; gap: 7px; margin-bottom: 11px; align-items: center; position: relative; }
-  .ph-row input { margin-bottom: 0; flex: 1; }
-  .cc-btn { background: var(--wa-input-bg); border: 1.5px solid var(--wa-border); border-radius: 8px; padding: 9px 8px; font-size: 14px; color: var(--wa-text-secondary); white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 5px; user-select: none; flex-shrink: 0; }
-  .cc-btn:hover { border-color: var(--wa-dark-green); }
-  .cc-btn .cc-arrow { font-size: 9px; color: var(--wa-text-secondary); }
-  .cc-popup { display: none; position: absolute; top: 100%; left: 0; z-index: 100; background: #fff; border: 1.5px solid var(--wa-border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); width: 200px; overflow: hidden; }
-  .cc-popup.open { display: block; }
-  .cc-popup-inner { padding: 8px; }
-  .cc-plus { display: flex; align-items: center; gap: 0; border: 1.5px solid var(--wa-border); border-radius: 6px; overflow: hidden; }
-  .cc-plus-sign { padding: 8px 6px 8px 10px; font-size: 14px; font-weight: 600; color: var(--wa-text); background: var(--wa-input-bg); border-right: 1px solid var(--wa-border); user-select: none; }
-  .cc-plus input { border: none; outline: none; padding: 8px 6px; font-size: 14px; width: 80px; font-family: inherit; background: #fff; }
-  .cc-flag-preview { margin-top: 8px; text-align: center; font-size: 22px; min-height: 30px; }
-  .cc-apply { width: 100%; margin-top: 8px; padding: 8px; background: var(--wa-green); color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .cc-apply:hover { background: var(--wa-dark-green); }
+  .ph-row { display: flex; gap: 7px; margin-bottom: 11px; align-items: center; }
+  .ph-row .prefix { background: var(--wa-input-bg); border: 1.5px solid var(--wa-border); border-radius: 8px; padding: 11px 13px; font-size: 14px; color: var(--wa-text-secondary); white-space: nowrap; flex-shrink: 0; user-select: none; }
+  .ph-row input { margin-bottom: 0; flex: 1; min-width: 0; }
   .auth-btn { width: 100%; padding: 12px; background: var(--wa-green); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
   .auth-btn:hover { background: var(--wa-dark-green); }
   .auth-btn:disabled { background: #aaa; cursor: not-allowed; }
@@ -205,60 +194,10 @@
     <div class="auth-body">
       <div class="auth-error" id="auth-error"></div>
       <div id="login-form">
-        <div class="ph-row">
-          <div class="cc-btn" onclick="toggleCC('login-cc')" id="login-cc-btn">
-            <span id="login-flag">🇱🇰</span>
-            <span id="login-code">+94</span>
-            <span class="cc-arrow">▼</span>
-          </div>
-          <div class="cc-popup" id="login-cc">
-            <div class="cc-popup-inner">
-              <div class="cc-plus">
-                <span class="cc-plus-sign">+</span>
-                <input type="tel" id="login-cc-input" placeholder="94" maxlength="4" oninput="updateCCPreview('login')" value="94">
-              </div>
-              <div class="cc-flag-preview" id="login-cc-flag">🇱🇰</div>
-              <button class="cc-apply" onclick="applyCC('login')">Apply</button>
-            </div>
-          </div>
-          <input type="tel" id="login-phone" placeholder="Phone number" maxlength="15">
-        </div>
+        <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
         <input type="password" id="login-pass" placeholder="Password">
         <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
       </div>
-      <div id="register-form" style="display:none">
-        <!-- Step indicator -->
-        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;">
-          <div id="si1" style="width:28px;height:28px;border-radius:50%;background:var(--wa-green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
-          <div style="flex:1;height:2px;background:var(--wa-border);max-width:40px;" id="si-line1"></div>
-          <div id="si2" style="width:28px;height:28px;border-radius:50%;background:var(--wa-border);color:var(--wa-text-secondary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
-          <div style="flex:1;height:2px;background:var(--wa-border);max-width:40px;" id="si-line2"></div>
-          <div id="si3" style="width:28px;height:28px;border-radius:50%;background:var(--wa-border);color:var(--wa-text-secondary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
-        </div>
-
-        <!-- Step 1: Phone -->
-        <div id="reg-step1">
-          <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:10px;">Enter your WhatsApp number to receive a verification code.</p>
-          <div class="ph-row">
-            <div class="cc-btn" onclick="toggleCC('reg-cc')" id="reg-cc-btn">
-              <span id="reg-flag">🇱🇰</span>
-              <span id="reg-code">+94</span>
-              <span class="cc-arrow">▼</span>
-            </div>
-            <div class="cc-popup" id="reg-cc">
-              <div class="cc-popup-inner">
-                <div class="cc-plus">
-                  <span class="cc-plus-sign">+</span>
-                  <input type="tel" id="reg-cc-input" placeholder="94" maxlength="4" oninput="updateCCPreview('reg')" value="94">
-                </div>
-                <div class="cc-flag-preview" id="reg-cc-flag">🇱🇰</div>
-                <button class="cc-apply" onclick="applyCC('reg')">Apply</button>
-              </div>
-            </div>
-            <input type="tel" id="reg-phone" placeholder="Phone number" maxlength="15">
-          </div>
-          <button class="auth-btn" id="reg-btn-send" onclick="sendOTP()">📲 Send OTP via WhatsApp</button>
-        </div>
 
         <!-- Step 2: OTP -->
         <div id="reg-step2" style="display:none">
@@ -654,7 +593,7 @@ async function sendOTP(isResend) {
     const res = await fetch(BOT_URL + '/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: '+' + getSelectedCode('reg') + phone.replace(/\D/g,'').replace(/^0+/,''), session_id: getSessionId() })
+      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), session_id: getSessionId() })
     });
     const data = await res.json();
     if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
@@ -710,7 +649,7 @@ async function verifyOTP() {
     const res = await fetch(BOT_URL + '/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: '+' + getSelectedCode('reg') + phone.replace(/\D/g,'').replace(/^0+/,''), otp })
+      body: JSON.stringify({ secret: OTP_SECRET, phone: fmtPhone(document.getElementById('reg-phone').value), otp })
     });
     const data = await res.json();
     if (!res.ok || !data.valid) {
@@ -1322,90 +1261,6 @@ if ('caches' in window) {
     otpAttempts = session.attempts || 0;
   }
 })();
-
-// ── COUNTRY CODE PICKER ───────────────────────────────
-const CC_MAP = {
-  '1':'🇺🇸','7':'🇷🇺','20':'🇪🇬','27':'🇿🇦','30':'🇬🇷','31':'🇳🇱','32':'🇧🇪','33':'🇫🇷',
-  '34':'🇪🇸','36':'🇭🇺','39':'🇮🇹','40':'🇷🇴','41':'🇨🇭','43':'🇦🇹','44':'🇬🇧','45':'🇩🇰',
-  '46':'🇸🇪','47':'🇳🇴','48':'🇵🇱','49':'🇩🇪','51':'🇵🇪','52':'🇲🇽','54':'🇦🇷','55':'🇧🇷',
-  '56':'🇨🇱','57':'🇨🇴','58':'🇻🇪','60':'🇲🇾','61':'🇦🇺','62':'🇮🇩','63':'🇵🇭','64':'🇳🇿',
-  '65':'🇸🇬','66':'🇹🇭','81':'🇯🇵','82':'🇰🇷','84':'🇻🇳','86':'🇨🇳','90':'🇹🇷','91':'🇮🇳',
-  '92':'🇵🇰','93':'🇦🇫','94':'🇱🇰','95':'🇲🇲','98':'🇮🇷','212':'🇲🇦','213':'🇩🇿','216':'🇹🇳',
-  '218':'🇱🇾','220':'🇬🇲','221':'🇸🇳','233':'🇬🇭','234':'🇳🇬','254':'🇰🇪','255':'🇹🇿',
-  '256':'🇺🇬','260':'🇿🇲','263':'🇿🇼','351':'🇵🇹','353':'🇮🇪','358':'🇫🇮','380':'🇺🇦',
-  '385':'🇭🇷','386':'🇸🇮','420':'🇨🇿','421':'🇸🇰','966':'🇸🇦','971':'🇦🇪','972':'🇮🇱',
-  '973':'🇧🇭','974':'🇶🇦','975':'🇧🇹','976':'🇲🇳','977':'🇳🇵','992':'🇹🇯','993':'🇹🇲',
-  '994':'🇦🇿','995':'🇬🇪','996':'🇰🇬','998':'🇺🇿'
-};
-
-function getFlagForCode(code) {
-  const digits = code.replace(/\D/g,'');
-  // Try longest match first (3 digits), then 2, then 1
-  for (let len = 3; len >= 1; len--) {
-    const key = digits.slice(0, len);
-    if (CC_MAP[key]) return CC_MAP[key];
-  }
-  return '🌍';
-}
-
-function toggleCC(id) {
-  const popup = document.getElementById(id);
-  popup.classList.toggle('open');
-  // Close other
-  ['login-cc','reg-cc'].forEach(pid => { if (pid !== id) document.getElementById(pid).classList.remove('open'); });
-}
-
-function updateCCPreview(prefix) {
-  const input = document.getElementById(prefix + '-cc-input');
-  const flagEl = document.getElementById(prefix + '-cc-flag');
-  flagEl.textContent = getFlagForCode(input.value);
-}
-
-function applyCC(prefix) {
-  const input = document.getElementById(prefix + '-cc-input');
-  const code = input.value.replace(/\D/g,'');
-  if (!code) return;
-  document.getElementById(prefix + '-code').textContent = '+' + code;
-  document.getElementById(prefix + '-flag').textContent = getFlagForCode(code);
-  document.getElementById(prefix + '-cc').classList.remove('open');
-}
-
-// Close CC popup on outside click
-document.addEventListener('click', e => {
-  if (!e.target.closest('.ph-row')) {
-    document.querySelectorAll('.cc-popup').forEach(p => p.classList.remove('open'));
-  }
-});
-
-// Override fmtPhone and fmtEmail to use selected country code
-function getSelectedCode(prefix) {
-  const codeEl = document.getElementById(prefix + '-code');
-  return codeEl ? codeEl.textContent.replace('+','') : '94';
-}
-
-// Fix login/register to use dynamic country code
-const _origDoLogin = doLogin;
-
-// Fix sendOTP phone format to use selected country code
-// Override fmtPhone for reg
-function getRegPhone() {
-  const phone = document.getElementById('reg-phone').value.trim();
-  const code = getSelectedCode('reg');
-  const digits = phone.replace(/\D/g,'').replace(/^0+/,'');
-  return '+' + code + digits;
-}
-function getRegEmail() {
-  const phone = document.getElementById('reg-phone').value.trim();
-  const code = getSelectedCode('reg');
-  const digits = phone.replace(/\D/g,'').replace(/^0+/,'');
-  return code + digits + '@sigdig.app';
-}
-function getLoginEmail() {
-  const phone = document.getElementById('login-phone').value.trim();
-  const code = getSelectedCode('login');
-  const digits = phone.replace(/\D/g,'').replace(/^0+/,'');
-  return code + digits + '@sigdig.app';
-}
 
 // Fix mobile — track visual viewport so input stays above browser nav bar
 function fixMobileHeight() {
