@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual">
 <title>Signature Digital</title>
 <style>
@@ -552,19 +555,29 @@ async function sendOTP(isResend) {
     return;
   }
 
-  // Check session — if phone changed, warn and reset
-  let session = getOTPSession();
-  if (session && session.phone && session.phone !== phone) {
-    // Different number attempted — count against global limit
-    const switchCount = parseInt(localStorage.getItem('otp_switch_count') || '0') + 1;
-    localStorage.setItem('otp_switch_count', switchCount);
-    if (switchCount >= 2) {
+  // Track all phones tried in this browser (persists across tabs/refreshes)
+  let triedPhones = [];
+  try { triedPhones = JSON.parse(localStorage.getItem('otp_tried_phones') || '[]'); } catch {}
+  const triedExpiry = parseInt(localStorage.getItem('otp_tried_expiry') || '0');
+  // Reset list after 1 hour
+  if (Date.now() > triedExpiry) {
+    triedPhones = [];
+    localStorage.removeItem('otp_tried_phones');
+    localStorage.removeItem('otp_tried_expiry');
+  }
+  if (!triedPhones.includes(phone)) {
+    if (triedPhones.length >= 2) {
       setGlobalBlock(Date.now() + 3600000);
-      localStorage.removeItem('otp_switch_count');
-      setAuthError('Suspicious activity detected. Try again in 60 min.');
+      setAuthError('Too many different numbers tried. Blocked for 60 min.');
       return;
     }
-    // Reset session for new number
+    triedPhones.push(phone);
+    localStorage.setItem('otp_tried_phones', JSON.stringify(triedPhones));
+    if (!triedExpiry) localStorage.setItem('otp_tried_expiry', Date.now() + 3600000);
+  }
+
+  let session = getOTPSession();
+  if (session && session.phone !== phone) {
     session = null;
     clearOTPSession();
     otpAttempts = 0;
@@ -672,6 +685,8 @@ async function verifyOTP() {
     otpAttempts = 0;
     clearOTPSession();
     localStorage.removeItem('otp_switch_count');
+    localStorage.removeItem('otp_tried_phones');
+    localStorage.removeItem('otp_tried_expiry');
     showRegStep(3);
   } catch(e) {
     setAuthError('Could not verify. Try again.');
@@ -1232,6 +1247,11 @@ async function saveUsername() {
     }
   }, { passive: true });
 })();
+
+// Force clear old service worker caches
+if ('caches' in window) {
+  caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
+}
 
 // Restore OTP session on page load
 (function() {
