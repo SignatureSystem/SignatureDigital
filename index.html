@@ -216,9 +216,10 @@
           <p id="reg-phone-display" style="font-size:13px;font-weight:600;color:var(--wa-dark-green);margin-bottom:12px;"></p>
           <input type="number" id="reg-otp" placeholder="Enter 6-digit code" style="letter-spacing:8px;font-size:22px;text-align:center;font-weight:700;">
           <button class="auth-btn" id="reg-btn-verify" onclick="verifyOTP()">Verify Code</button>
+          <div id="attempts-warning" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:#888;"></div>
           <div style="display:flex;justify-content:space-between;margin-top:10px;">
             <button onclick="showRegStep(1)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--wa-text-secondary);text-decoration:underline;">← Change number</button>
-            <button onclick="sendOTP(true)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--wa-dark-green);text-decoration:underline;">Resend OTP</button>
+            <button id="resend-btn" onclick="sendOTP(true)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--wa-dark-green);text-decoration:underline;">Resend OTP</button>
           </div>
         </div>
 
@@ -429,6 +430,7 @@ function onSignOut() {
 
 // ── AUTH ─────────────────────────────────────────
 function switchAuthTab(t) {
+  if (t === 'register') { resetOTPCounters(); if(document.getElementById('reg-otp')) document.getElementById('reg-otp').value=''; }
   document.getElementById('login-form').style.display = t === 'login' ? '' : 'none';
   document.getElementById('register-form').style.display = t === 'register' ? '' : 'none';
   document.querySelectorAll('.auth-tab').forEach((el,i) => el.classList.toggle('active', i===(t==='login'?0:1)));
@@ -463,8 +465,24 @@ async function doLogin() {
 }
 
 let otpVerifiedPhone = null;
+let otpAttempts = 0;
+let otpSendCount = 0;
+const MAX_ATTEMPTS = 3;
+const MAX_SENDS = 3;
+
+function resetOTPCounters() {
+  otpAttempts = 0;
+  otpSendCount = 0;
+  const warn = document.getElementById('attempts-warning');
+  if (warn) warn.style.display = 'none';
+  const resendBtn = document.getElementById('resend-btn');
+  if (resendBtn) { resendBtn.disabled = false; resendBtn.style.opacity = '1'; }
+  const verifyBtn = document.getElementById('reg-btn-verify');
+  if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.style.opacity = '1'; }
+}
 
 function showRegStep(n) {
+  if (n === 1) resetOTPCounters();
   document.getElementById('reg-step1').style.display = n === 1 ? '' : 'none';
   document.getElementById('reg-step2').style.display = n === 2 ? '' : 'none';
   document.getElementById('reg-step3').style.display = n === 3 ? '' : 'none';
@@ -483,6 +501,12 @@ function showRegStep(n) {
 async function sendOTP(isResend) {
   const phone = document.getElementById('reg-phone').value.trim();
   if (!phone || phone.length < 9) return setAuthError('Enter a valid phone number');
+  if (isResend && otpSendCount >= MAX_SENDS) {
+    setAuthError('Maximum OTP requests reached. Please try again later.');
+    const resendBtn = document.getElementById('resend-btn');
+    if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; }
+    return;
+  }
   const btn = document.getElementById('reg-btn-send');
   btn.disabled = true; btn.textContent = 'Sending...';
   try {
@@ -493,10 +517,18 @@ async function sendOTP(isResend) {
     });
     const data = await res.json();
     if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
+    otpSendCount++;
+    otpAttempts = 0;
+    document.getElementById('attempts-warning').style.display = 'none';
+    // update resend button if near limit
+    if (otpSendCount >= MAX_SENDS) {
+      const resendBtn = document.getElementById('resend-btn');
+      if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; resendBtn.title = 'Maximum OTPs sent'; }
+    }
     const phoneDisplay = document.getElementById('reg-phone-display');
     if (phoneDisplay) phoneDisplay.textContent = '+94 ' + phone;
     showRegStep(2);
-    showToast(isResend ? 'New OTP sent!' : 'OTP sent to your WhatsApp!');
+    showToast(isResend ? 'New OTP sent! (' + otpSendCount + '/' + MAX_SENDS + ' used)' : 'OTP sent to your WhatsApp!');
   } catch(e) {
     setAuthError('Could not reach server. Try again.');
   } finally {
