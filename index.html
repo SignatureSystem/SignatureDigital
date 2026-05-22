@@ -139,6 +139,8 @@
   .inbox-preview { font-size: 13px; color: var(--wa-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inbox-time { font-size: 11px; color: var(--wa-text-secondary); flex-shrink: 0; }
   .inbox-empty { text-align: center; padding: 40px 20px; color: var(--wa-text-secondary); font-size: 14px; }
+  .unread-badge { background: #25D366; color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
+  .tab-badge { background: #e53935; color: #fff; font-size: 10px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; margin-left: 5px; vertical-align: middle; }
 
   /* ADMIN CHAT HEADER (back button) */
   #admin-chat-header { background: var(--wa-header); display: flex; align-items: center; padding: 0 12px; height: 52px; flex-shrink: 0; gap: 10px; }
@@ -221,7 +223,7 @@
 <!-- TABS -->
 <div id="tabs">
   <div class="tab active" id="tab-updates" onclick="switchTab('updates')">Updates</div>
-  <div class="tab" id="tab-chat" onclick="switchTab('chat')">Chat</div>
+  <div class="tab" id="tab-chat" onclick="switchTab('chat')">Chat<span class="tab-badge" id="tab-chat-badge" style="display:none"></span></div>
 </div>
 
 <!-- MAIN -->
@@ -335,6 +337,7 @@ async function init() {
   });
 
   startOwnerStatusListener();
+  startInboxPoller();
 }
 
 async function onSignIn(user) {
@@ -410,8 +413,20 @@ async function doRegister() {
   setAuthLoading('reg-btn', false);
   if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : error.message);
   else {
-    if (username && signUpData?.user) {
-      await sb.from('profiles').upsert({ id: signUpData.user.id, phone: fmtPhone(phone), username });
+    if (signUpData?.user) {
+      // Save profile
+      await sb.from('profiles').upsert({ 
+        id: signUpData.user.id, 
+        phone: fmtPhone(phone), 
+        username: username || null 
+      });
+      // Send welcome message from admin into client's chat
+      await sb.from('messages').insert({
+        chat_id: signUpData.user.id,
+        sender_id: signUpData.user.id, // placeholder — shown as received
+        text: "👋 Hey there! Welcome to Signature Digital. I'm here to assist you with any subscriptions or questions. Feel free to message me anytime! 😊",
+        is_admin_message: true
+      });
     }
     showToast('Account created! You are now logged in.');
   }
@@ -505,6 +520,7 @@ function renderCurrentTab() {
       document.getElementById('chat-view').classList.remove('hidden');
       document.getElementById('chat-gate').style.display = 'none';
       document.getElementById('chat-input-bar').classList.remove('hidden');
+      updateTabBadge(0);
       loadChat(currentUser.id);
     }
   }
@@ -513,6 +529,11 @@ function renderCurrentTab() {
 // ── OWNER STATUS ─────────────────────────────────
 async function setAdminOnline(online) {
   await sb.from('owner_status').upsert({ id: 1, online, last_seen: new Date().toISOString() });
+}
+
+function startInboxPoller() {
+  if (!isAdmin) return;
+  setInterval(() => { if (currentTab === 'chat' && !adminOpenChatId) loadInbox(); }, 5000);
 }
 
 function startOwnerStatusListener() {
@@ -602,6 +623,11 @@ async function fetchMessages(userId) {
     const cv = document.getElementById('chat-view');
     cv.scrollTop = cv.scrollHeight;
   }, 50);
+  // client unread = messages not sent by them (admin messages) — only show badge when not on chat tab
+  if (!isAdmin && currentTab !== 'chat') {
+    const unread = (data||[]).filter(m => m.sender_id !== userId || m.is_admin_message).length;
+    updateTabBadge(unread);
+  }
 }
 
 function renderMessages(msgs, myId, container) {
@@ -613,7 +639,7 @@ function renderMessages(msgs, myId, container) {
       html += `<div class="date-sep"><span>${ds === new Date().toLocaleDateString() ? 'Today' : ds}</span></div>`;
       lastDate = ds;
     }
-    const sent = m.sender_id === myId || (isAdmin && m.sender_id === currentUser.id);
+    const sent = !m.is_admin_message && (m.sender_id === myId || (isAdmin && m.sender_id === currentUser.id));
     html += `<div class="msg-row ${sent?'sent':'received'}">
       <div class="msg-bubble">
         ${m.image_url ? `<img src="${m.image_url}" style="max-width:min(220px,60vw);width:100%;border-radius:8px;margin-bottom:4px;display:block;cursor:pointer;object-fit:cover;" onclick="window.open('${m.image_url}','_blank')">` : ''}
@@ -682,14 +708,22 @@ async function sendMessage() {
 
 // ── ADMIN INBOX ───────────────────────────────────
 async function loadInbox() {
-  const { data } = await sb.from('messages').select('chat_id, text, created_at, sender_id').order('created_at', { ascending: false });
+  const { data } = await sb.from('messages').select('chat_id, text, created_at, sender_id, is_admin_message').order('created_at', { ascending: false });
   if (!data || !data.length) {
     document.getElementById('inbox-list').innerHTML = '<div class="inbox-empty">No client messages yet.</div>';
+    updateTabBadge(0);
     return;
   }
-  // group by chat_id, take latest
+  // group by chat_id, take latest + count unread (client messages not read by admin)
   const seen = {};
-  data.forEach(m => { if (!seen[m.chat_id]) seen[m.chat_id] = m; });
+  const unreadCount = {};
+  data.forEach(m => {
+    if (!seen[m.chat_id]) seen[m.chat_id] = m;
+    // unread = messages from client (not admin, not is_admin_message) that are unread
+    if (!m.is_admin_message && m.sender_id === m.chat_id) {
+      unreadCount[m.chat_id] = (unreadCount[m.chat_id] || 0) + 1;
+    }
+  });
   const items = Object.values(seen);
   // fetch user phones
   const uids = items.map(i => i.chat_id);
@@ -698,16 +732,37 @@ async function loadInbox() {
   const usernameMap = {};
   (users||[]).forEach(u => { phoneMap[u.id] = u.phone; usernameMap[u.id] = u.username; });
 
-  document.getElementById('inbox-list').innerHTML = items.map(m => `
+  // total unread for tab badge
+  const totalUnread = Object.values(unreadCount).reduce((a,b) => a+b, 0);
+  updateTabBadge(totalUnread);
+
+  document.getElementById('inbox-list').innerHTML = items.map(m => {
+    const count = unreadCount[m.chat_id] || 0;
+    const badgeStr = count > 99 ? '99+' : count > 0 ? String(count) : '';
+    return `
     <div class="inbox-item" onclick="openAdminChat('${m.chat_id}', '${usernameMap[m.chat_id]||phoneMap[m.chat_id]||'Client'}', '${phoneMap[m.chat_id]||''}')">
       <div class="inbox-avatar">${(usernameMap[m.chat_id]||phoneMap[m.chat_id]||'?').slice(-2).toUpperCase()}</div>
       <div class="inbox-info">
         <div class="inbox-name">${usernameMap[m.chat_id] ? usernameMap[m.chat_id] : (phoneMap[m.chat_id] || 'Client')}</div>
         <div class="inbox-preview" style="font-size:12px;color:#aaa;">${phoneMap[m.chat_id]||''}</div>
-        <div class="inbox-preview">${esc(m.text)}</div>
+        <div class="inbox-preview">${esc(m.text||'📷 Photo')}</div>
       </div>
-      <div class="inbox-time">${fmtTime(new Date(m.created_at))}</div>
-    </div>`).join('');
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
+        <div class="inbox-time">${fmtTime(new Date(m.created_at))}</div>
+        ${badgeStr ? `<div class="unread-badge">${badgeStr}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateTabBadge(count) {
+  const badge = document.getElementById('tab-chat-badge');
+  if (count > 0) {
+    badge.style.display = 'inline-flex';
+    badge.textContent = count > 99 ? '99+' : count;
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 function openAdminChat(chatId, name, phone) {
