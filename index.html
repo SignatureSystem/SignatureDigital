@@ -430,28 +430,23 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const APP_VERSION = '20260523_2026';
+const APP_VERSION = '20260523_2029';
 
-// Register service worker — handles cache busting automatically
+// Register service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js?v=20260523_2026').then(reg => {
-    // Check for updates every time page loads
+  navigator.serviceWorker.register('/sw.js?v=20260523_2029').then(function(reg) {
     reg.update();
-    // If new SW is waiting, activate it and reload
-    reg.addEventListener('updatefound', () => {
-      const sw = reg.installing;
-      sw.addEventListener('statechange', () => {
+    reg.addEventListener('updatefound', function() {
+      var sw = reg.installing;
+      sw.addEventListener('statechange', function() {
         if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-          // New version available — reload all clients
-          navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
           location.reload(true);
         }
       });
     });
-  }).catch(()=>{});
-  // Reload when new SW takes control
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
+  }).catch(function() {});
+  var refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
     if (!refreshing) { refreshing = true; location.reload(true); }
   });
 }
