@@ -1014,18 +1014,18 @@ async function loadUpdates() {
 }
 
 async function postUpdate() {
+  if (!isAdmin) return;
   const inp = document.getElementById('post-input');
   const text = inp.value.trim();
-  if (!text) return;
   let imageUrl = null;
   if (postImageFile) {
     try { imageUrl = await uploadImage(postImageFile, 'update-images'); }
     catch(e) { showToast('Image upload failed: ' + e.message); return; }
     clearPostImage();
   }
-  if (!text && !imageUrl) return;
+  if (!text && !imageUrl) return showToast('Write a message or attach an image first.');
   const { error } = await sb.from('updates').insert({ text: text || '', image_url: imageUrl, author_id: currentUser.id });
-  if (error) return showToast('Error: ' + error.message);
+  if (error) { showToast('Error posting update: ' + error.message); return; }
   inp.value = '';
   showToast('Update posted!');
   loadUpdates();
@@ -1047,14 +1047,15 @@ function loadChat(userId) {
 
 async function fetchMessages(userId) {
   const { data } = await sb.from('messages').select('*').eq('chat_id', userId).order('created_at', { ascending: true }).limit(100);
-  renderMessages(data || [], userId, document.getElementById('chat-messages'));
+  const msgs = data || [];
+  renderMessages(msgs, userId, document.getElementById('chat-messages'));
   setTimeout(() => {
     const cv = document.getElementById('chat-view');
-    cv.scrollTop = cv.scrollHeight;
+    if (cv) cv.scrollTop = cv.scrollHeight;
   }, 50);
-  // client unread = messages not sent by them (admin messages) — only show badge when not on chat tab
+  // Badge: count admin messages (unread for client) only when not on chat tab
   if (!isAdmin && currentTab !== 'chat') {
-    const unread = (data||[]).filter(m => m.sender_id !== userId || m.is_admin_message).length;
+    const unread = msgs.filter(m => m.is_admin_message).length;
     updateTabBadge(unread);
   }
 }
@@ -1068,7 +1069,14 @@ function renderMessages(msgs, myId, container) {
       html += `<div class="date-sep"><span>${ds === new Date().toLocaleDateString() ? 'Today' : ds}</span></div>`;
       lastDate = ds;
     }
-    const sent = !m.is_admin_message && (m.sender_id === myId || (isAdmin && m.sender_id === currentUser.id));
+    // Admin view: messages from admin (is_admin_message OR sender is current user who is admin) → sent (right)
+    // Client view: messages from client themselves → sent (right); admin messages → received (left)
+    let sent;
+    if (isAdmin) {
+      sent = m.is_admin_message || m.sender_id === currentUser.id;
+    } else {
+      sent = !m.is_admin_message && m.sender_id === myId;
+    }
     html += `<div class="msg-row ${sent?'sent':'received'}">
       <div class="msg-bubble">
         ${m.image_url ? `<img src="${m.image_url}" style="max-width:min(220px,60vw);width:100%;border-radius:8px;margin-bottom:4px;display:block;cursor:pointer;object-fit:cover;" onclick="window.open('${m.image_url}','_blank')">` : ''}
@@ -1120,8 +1128,9 @@ async function uploadImage(file, bucket) {
 async function sendMessage() {
   const inp = document.getElementById('chat-input');
   const text = inp.value.trim();
-  if (!text || !currentUser) return;
+  if (!currentUser) return;
   const chatId = isAdmin ? adminOpenChatId : currentUser.id;
+  if (!chatId) return;
   let imageUrl = null;
   if (chatImageFile) {
     try { imageUrl = await uploadImage(chatImageFile, 'chat-images'); } 
@@ -1129,7 +1138,13 @@ async function sendMessage() {
     clearChatImage();
   }
   if (!text && !imageUrl) return;
-  const { error } = await sb.from('messages').insert({ chat_id: chatId, sender_id: currentUser.id, text: text || '', image_url: imageUrl });
+  const { error } = await sb.from('messages').insert({
+    chat_id: chatId,
+    sender_id: currentUser.id,
+    text: text || '',
+    image_url: imageUrl,
+    is_admin_message: isAdmin   // ← mark admin replies so client sees them correctly
+  });
   if (error) { showToast('Error: ' + error.message); return; }
   inp.value = '';
   fetchMessages(chatId);
@@ -1137,35 +1152,48 @@ async function sendMessage() {
 
 // ── ADMIN INBOX ───────────────────────────────────
 async function loadInbox() {
-  const { data } = await sb.from('messages').select('chat_id, text, created_at, sender_id, is_admin_message').order('created_at', { ascending: false });
+  // Fetch last 200 messages to build per-chat previews
+  const { data, error } = await sb.from('messages')
+    .select('chat_id, text, created_at, sender_id, is_admin_message')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) { console.error('Inbox load error:', error.message); return; }
   if (!data || !data.length) {
     document.getElementById('inbox-list').innerHTML = '<div class="inbox-empty">No client messages yet.</div>';
     updateTabBadge(0);
     return;
   }
-  // group by chat_id, take latest + count unread (client messages not read by admin)
-  const seen = {};
-  const unreadCount = {};
+
+  // Group by chat_id — latest message + count unread (client messages after last admin reply)
+  const latestMsg = {};      // chat_id → latest message obj
+  const lastAdminAt = {};    // chat_id → timestamp of last admin message
+  const clientMsgCount = {}; // chat_id → count of client messages after lastAdminAt
+
+  // data is newest-first; collect latest per chat and last admin reply time
   data.forEach(m => {
-    if (!seen[m.chat_id]) seen[m.chat_id] = m;
-    // unread = messages from client (not admin, not is_admin_message) that are unread
-    if (!m.is_admin_message && m.sender_id === m.chat_id) {
-      unreadCount[m.chat_id] = (unreadCount[m.chat_id] || 0) + 1;
+    if (!latestMsg[m.chat_id]) latestMsg[m.chat_id] = m;
+    if (m.is_admin_message && !lastAdminAt[m.chat_id]) {
+      lastAdminAt[m.chat_id] = m.created_at;
     }
   });
-  const items = Object.values(seen);
-  // fetch user phones
+  // Count client messages AFTER the last admin reply (= unread from admin's perspective)
+  data.forEach(m => {
+    if (!m.is_admin_message && m.sender_id !== currentUser.id) {
+      const adminTs = lastAdminAt[m.chat_id];
+      if (!adminTs || m.created_at > adminTs) {
+        clientMsgCount[m.chat_id] = (clientMsgCount[m.chat_id] || 0) + 1;
+      }
+    }
+  });
+
+  const items = Object.values(latestMsg);
   const uids = items.map(i => i.chat_id);
   const { data: users } = await sb.from('profiles').select('id, phone, username').in('id', uids);
-  const phoneMap = {};
-  const usernameMap = {};
+  const phoneMap = {}, usernameMap = {};
   (users||[]).forEach(u => { phoneMap[u.id] = u.phone; usernameMap[u.id] = u.username; });
 
-  // Sort: most recent first, but pin admin's own initiated chats at top
   items.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-
-  // total unread for tab badge
-  const totalUnread = Object.values(unreadCount).reduce((a,b) => a+b, 0);
+  const totalUnread = Object.values(clientMsgCount).reduce((a,b) => a+b, 0);
   updateTabBadge(totalUnread);
 
   const pinnedCard = `<div style="background:#e8f5e9;padding:13px 16px;border-bottom:2px solid #25D366;display:flex;align-items:center;gap:12px;">
@@ -1177,14 +1205,16 @@ async function loadInbox() {
   </div>`;
 
   document.getElementById('inbox-list').innerHTML = pinnedCard + items.map(m => {
-    const count = unreadCount[m.chat_id] || 0;
+    const count = clientMsgCount[m.chat_id] || 0;
     const badgeStr = count > 99 ? '99+' : count > 0 ? String(count) : '';
+    const name = usernameMap[m.chat_id] || phoneMap[m.chat_id] || 'Client';
+    const phone = phoneMap[m.chat_id] || '';
     return `
-    <div class="inbox-item" onclick="openAdminChat('${m.chat_id}', '${usernameMap[m.chat_id]||phoneMap[m.chat_id]||'Client'}', '${phoneMap[m.chat_id]||''}')">
-      <div class="inbox-avatar">${(usernameMap[m.chat_id]||phoneMap[m.chat_id]||'?').slice(-2).toUpperCase()}</div>
+    <div class="inbox-item" onclick="openAdminChat('${m.chat_id}', '${esc(usernameMap[m.chat_id]||phoneMap[m.chat_id]||'Client')}', '${esc(phone)}')">
+      <div class="inbox-avatar">${name.slice(-2).toUpperCase()}</div>
       <div class="inbox-info">
-        <div class="inbox-name">${usernameMap[m.chat_id] ? usernameMap[m.chat_id] : (phoneMap[m.chat_id] || 'Client')}</div>
-        <div class="inbox-preview" style="font-size:12px;color:#aaa;">${phoneMap[m.chat_id]||''}</div>
+        <div class="inbox-name">${esc(name)}</div>
+        <div class="inbox-preview" style="font-size:12px;color:#aaa;">${esc(phone)}</div>
         <div class="inbox-preview">${esc(m.text||'📷 Photo')}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
