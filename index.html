@@ -268,7 +268,10 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);
       <!-- LOGIN -->
       <div id="login-form">
         <div class="ph-row">
-          <div class="ph-prefix"><span>+</span><input class="cc-input" id="login-cc" type="tel" value="94" maxlength="3" placeholder="94"></div>
+          <div class="ph-prefix" style="cursor:text;" onclick="this.querySelector('input').focus()">
+            <span style="color:var(--sub);font-size:13px;user-select:none;">+</span>
+            <input class="cc-input" id="login-cc" type="tel" value="94" maxlength="3" placeholder="94" style="cursor:text;">
+          </div>
           <input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="12">
         </div>
         <input type="password" id="login-pass" placeholder="Password">
@@ -288,7 +291,10 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);
         <div id="rs1">
           <p style="font-size:12px;color:var(--sub);margin-bottom:10px;">Enter your WhatsApp number to receive a verification code.</p>
           <div class="ph-row">
-            <div class="ph-prefix"><span>+</span><input class="cc-input" id="reg-cc" type="tel" value="94" maxlength="3" placeholder="94"></div>
+            <div class="ph-prefix" style="cursor:text;" onclick="this.querySelector('input').focus()">
+              <span style="color:var(--sub);font-size:13px;user-select:none;">+</span>
+              <input class="cc-input" id="reg-cc" type="tel" value="94" maxlength="3" placeholder="94" style="cursor:text;">
+            </div>
             <input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="12">
           </div>
           <button class="auth-btn" id="otp-send-btn" onclick="sendOTP()">📲 Send OTP via WhatsApp</button>
@@ -544,9 +550,47 @@ function authTab(t) {
 
 function setErr(m) { document.getElementById('auth-err').innerHTML = m || ''; }
 
+// Countries where leading 0 in local number should be stripped
+const STRIP_LEADING_ZERO = new Set([
+  '94',  // Sri Lanka
+  '44',  // UK
+  '61',  // Australia
+  '33',  // France
+  '49',  // Germany
+  '39',  // Italy
+  '34',  // Spain
+  '31',  // Netherlands
+  '32',  // Belgium
+  '351', // Portugal
+  '353', // Ireland
+  '41',  // Switzerland
+  '43',  // Austria
+  '47',  // Norway
+  '46',  // Sweden
+  '45',  // Denmark
+  '358', // Finland
+  '48',  // Poland
+  '420', // Czech Republic
+  '36',  // Hungary
+  '40',  // Romania
+  '30',  // Greece
+  '90',  // Turkey
+  '98',  // Iran
+  '92',  // Pakistan
+  '234', // Nigeria
+  '233', // Ghana
+  '254', // Kenya
+  '256', // Uganda
+]);
+
 function normPhone(cc, num) {
-  const d = num.replace(/\D/g,'').replace(/^0+/,'');
-  return cc.replace(/\D/g,'') + d;
+  const cleanCC  = cc.replace(/\D/g,'');
+  let   cleanNum = num.replace(/\D/g,'');
+  // Strip leading zero if this country requires it
+  if (STRIP_LEADING_ZERO.has(cleanCC) && cleanNum.startsWith('0')) {
+    cleanNum = cleanNum.substring(1);
+  }
+  return cleanCC + cleanNum;
 }
 function toEmail(cc, num) { return normPhone(cc, num) + '@sigdig.app'; }
 function toPhone(cc, num) { return '+' + normPhone(cc, num); }
@@ -598,7 +642,7 @@ async function doLogin() {
   btn.disabled = true; btn.textContent = 'Logging in...';
   try {
     const { error } = await sb.auth.signInWithPassword({ email: toEmail(cc, num), password: pw });
-    if (error) setErr(error.message.includes('Invalid') ? 'Wrong number or password' : error.message);
+    if (error) setErr(error.message.includes('Invalid') ? 'Password is incorrect. Try again.' : error.message);
     else showToast('Welcome back!');
   } catch(e) { setErr(ADMIN_ERR); }
   finally { btn.disabled = false; btn.textContent = 'Login'; }
@@ -643,7 +687,19 @@ async function sendOTP(isResend) {
   if (!num || num.replace(/\D/g,'').length < 6) return setErr('Enter a valid phone number');
   if (otpSends >= MAX_SENDS) return setErr('Maximum OTPs sent. Try again later.');
   const btn = isResend ? document.getElementById('resend-btn') : document.getElementById('otp-send-btn');
-  btn.disabled = true; btn.textContent = 'Sending...';
+  btn.disabled = true; btn.textContent = 'Checking...';
+  // Check if account already exists
+  if (!isResend) {
+    try {
+      const { data: existing } = await sb.from('profiles').select('id').eq('phone', toPhone(cc, num)).limit(1);
+      if (existing && existing.length > 0) {
+        setErr('You already have an account. <a href="#" onclick="authTab('login');return false;" style="color:var(--dg);font-weight:600;">Sign in to continue.</a>');
+        btn.disabled = false; btn.textContent = '📲 Send OTP via WhatsApp';
+        return;
+      }
+    } catch(e) {}
+  }
+  btn.textContent = 'Sending...';
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 12000);
