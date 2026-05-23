@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <title>Signature Digital</title>
@@ -379,7 +379,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);
 <!-- TABS -->
 <div id="tabs">
   <div class="tab active" id="tab-updates" onclick="switchTab('updates')">Updates</div>
-  <div class="tab" id="tab-chat" onclick="switchTab('chat')">Chat<span class="tab-badge" id="chat-badge" style="display:none"></span></div>
+  <div class="tab" id="tab-chat" onclick="switchTab('chat')">Signature Digital<span class="tab-badge" id="chat-badge" style="display:none"></span></div>
 </div>
 
 <!-- MAIN -->
@@ -483,7 +483,7 @@ const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
 const OTP_SECRET = 'SGD_OTP_2026';
 const ADMIN_PHONE = '0778315058';
-const ADMIN_NUMBERS = ['94778315058','94765813386','94763824563'];
+const ADMIN_NUMBERS = ['94778315058'];
 const WELCOME_MSG = "👋 Hey there! Welcome to Signature Digital. I'm here to assist you with any subscriptions or questions. Feel free to message me anytime! 😊";
 const ADMIN_ERR = 'Something went wrong. <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;">Report Admin</a> for assistance.';
 
@@ -566,12 +566,19 @@ async function onSignIn(u) {
   document.getElementById('pm-edit-uname').style.display = '';
   await refreshProfileMenu(u);
   if (isAdmin) setAdminOnline(true);
+  // Update chat tab label
+  const chatTab = document.getElementById('tab-chat');
+  const badge = document.getElementById('chat-badge');
+  chatTab.innerHTML = (isAdmin ? 'Chat' : 'Signature Digital') + badge.outerHTML;
   renderTab();
   if (isAdmin) startInboxPoll();
 }
 
 function onSignOut() {
   user = null; isAdmin = false;
+  const chatTab = document.getElementById('tab-chat');
+  const badge = document.getElementById('chat-badge');
+  chatTab.innerHTML = 'Signature Digital' + badge.outerHTML;
   document.getElementById('pm-signin').style.display = '';
   document.getElementById('pm-signout').style.display = 'none';
   document.getElementById('pm-edit-uname').style.display = 'none';
@@ -795,8 +802,25 @@ function switchTab(t) {
   curTab = t;
   document.getElementById('tab-updates').classList.toggle('active', t==='updates');
   document.getElementById('tab-chat').classList.toggle('active', t==='chat');
-  if (t==='chat') setBadge(0);
+  // Update tab label based on role
+  const chatTabLabel = document.getElementById('tab-chat');
+  const badge = document.getElementById('chat-badge');
+  chatTabLabel.innerHTML = (isAdmin ? 'Chat' : 'Signature Digital') + (badge.outerHTML);
+  if (t==='chat') {
+    setBadge(0);
+    markChatSeen();
+  }
   renderTab();
+}
+
+function markChatSeen() {
+  if (!user) return;
+  localStorage.setItem('chat_seen_' + user.id, Date.now());
+}
+
+function getLastSeen() {
+  if (!user) return 0;
+  return parseInt(localStorage.getItem('chat_seen_' + user.id) || '0');
 }
 
 function renderTab() {
@@ -822,7 +846,8 @@ function renderTab() {
       document.getElementById('chat-gate').style.display = 'none';
       document.getElementById('chat-bar').classList.remove('hidden');
       setBadge(0);
-      loadChat(user.id);
+      markChatSeen();
+      loadChat(user.id); // always use own user.id, never adminChatId
     }
   }
 }
@@ -877,6 +902,7 @@ async function loadUpdates() {
 }
 
 async function postUpdate() {
+  if (!isAdmin) return; // hard block non-admins
   const txt = document.getElementById('post-input').value.trim();
   let imgUrl = null;
   if (postImgFile) { try { imgUrl = await uploadImg(postImgFile,'update-images'); } catch(e) { showToast('Image upload failed'); return; } clearPostImg(); }
@@ -905,9 +931,23 @@ function loadChat(uid) {
 }
 
 async function fetchMsgs(uid) {
-  const { data } = await sb.from('messages').select('*').eq('chat_id',uid).order('created_at',{ascending:true}).limit(100);
+  // For non-admin users, always enforce their own uid as chat_id
+  const safeUid = (!isAdmin && user) ? user.id : uid;
+  const { data } = await sb.from('messages').select('*').eq('chat_id',safeUid).order('created_at',{ascending:true}).limit(100);
   renderMsgs(data||[], uid, document.getElementById('chat-msgs'));
   setTimeout(()=>{ const v=document.getElementById('chat-view'); if(v) v.scrollTop=v.scrollHeight; },60);
+  // Update badge — count messages not sent by me and after last seen
+  if (!isAdmin && curTab !== 'chat') {
+    const lastSeen = getLastSeen();
+    const unseen = (data||[]).filter(m =>
+      m.sender_id !== user?.id &&
+      new Date(m.created_at).getTime() > lastSeen
+    ).length;
+    setBadge(unseen);
+  } else if (curTab === 'chat') {
+    setBadge(0);
+    markChatSeen();
+  }
 }
 
 function renderMsgs(msgs, myId, container) {
@@ -916,7 +956,7 @@ function renderMsgs(msgs, myId, container) {
     const d = new Date(m.created_at);
     const ds = d.toLocaleDateString();
     if (ds!==lastDate) { html+=`<div class="date-sep"><span>${ds===new Date().toLocaleDateString()?'Today':ds}</span></div>`; lastDate=ds; }
-    const sent = !m.is_admin_msg && (m.sender_id===myId || (isAdmin && m.sender_id===user?.id));
+    const sent = !m.is_admin_msg && m.sender_id === user?.id;
     html += `<div class="msg-row ${sent?'sent':'recv'}"><div class="msg-bubble">
       ${m.image_url?`<img class="msg-img" src="${m.image_url}" onclick="window.open('${m.image_url}','_blank')">`:''}
       ${m.text?`<div class="msg-txt">${esc(m.text)}</div>`:''}
@@ -930,7 +970,7 @@ async function sendMsg() {
   const txt = document.getElementById('chat-input').value.trim();
   let imgUrl = null;
   if (!user) return;
-  const cid = isAdmin ? adminChatId : user.id;
+  const cid = (isAdmin && adminChatId) ? adminChatId : user.id;
   if (chatImgFile) { try { imgUrl=await uploadImg(chatImgFile,'chat-images'); } catch(e){ showToast('Image upload failed'); return; } clearChatImg(); }
   if (!txt && !imgUrl) return;
   const { error } = await sb.from('messages').insert({ chat_id:cid, sender_id:user.id, text:txt||'', image_url:imgUrl });
@@ -951,7 +991,12 @@ async function loadInbox() {
   const seen={}, unread={};
   data.forEach(m=>{
     if(!seen[m.chat_id]) seen[m.chat_id]=m;
-    if(!m.is_admin_msg && m.sender_id===m.chat_id) unread[m.chat_id]=(unread[m.chat_id]||0)+1;
+    if(!m.is_admin_msg && m.sender_id===m.chat_id) {
+      const lastSeen = parseInt(localStorage.getItem('admin_seen_' + m.chat_id) || '0');
+      if (new Date(m.created_at).getTime() > lastSeen) {
+        unread[m.chat_id] = (unread[m.chat_id]||0) + 1;
+      }
+    }
   });
   const items = Object.values(seen).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const uids = items.map(i=>i.chat_id);
@@ -983,6 +1028,7 @@ async function loadInbox() {
 
 function showAdminChat(cid, name) {
   adminChatId = cid; adminChatName = name;
+  localStorage.setItem('admin_seen_' + cid, Date.now());
   ['inbox-view'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.getElementById('admin-chat-hdr').classList.remove('hidden');
   document.getElementById('chat-view').classList.remove('hidden');
