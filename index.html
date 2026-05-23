@@ -485,6 +485,7 @@ const OTP_SECRET = 'SGD_OTP_2026';
 const ADMIN_PHONE = '0778315058';
 const ADMIN_NUMBERS = ['94778315058'];
 const WELCOME_MSG = "👋 Hey there! Welcome to Signature Digital. I'm here to assist you with any subscriptions or questions. Feel free to message me anytime! 😊";
+const PUSH_SECRET = 'SGD_PUSH_2026';
 const ADMIN_ERR = 'Something went wrong. <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;">Report Admin</a> for assistance.';
 
 const { createClient } = supabase;
@@ -566,6 +567,8 @@ async function onSignIn(u) {
   document.getElementById('pm-edit-uname').style.display = '';
   await refreshProfileMenu(u);
   if (isAdmin) setAdminOnline(true);
+  // Register push notifications
+  setTimeout(registerPush, 1000);
   // Update chat tab label
   const chatTab = document.getElementById('tab-chat');
   const badge = document.getElementById('chat-badge');
@@ -603,6 +606,7 @@ async function doLogin() {
 
 async function doLogout() {
   if (isAdmin) await setAdminOnline(false);
+  await unregisterPush();
   await sb.auth.signOut();
   closeProfileMenu(); showToast('Signed out');
 }
@@ -847,6 +851,7 @@ function renderTab() {
       document.getElementById('chat-bar').classList.remove('hidden');
       setBadge(0);
       markChatSeen();
+      markMessagesAsSeen(user.id);
       loadChat(user.id); // always use own user.id, never adminChatId
     }
   }
@@ -886,6 +891,10 @@ async function loadUpdates() {
   const none = document.getElementById('no-updates');
   if (!data || !data.length) { list.innerHTML=''; none.style.display=''; return; }
   none.style.display = 'none';
+  // Play sound if new updates arrived
+  const prevUpdateCount = parseInt(localStorage.getItem('prev_update_count') || '0');
+  if (prevUpdateCount > 0 && data.length > prevUpdateCount) playNotifSound();
+  localStorage.setItem('prev_update_count', data.length);
   list.innerHTML = data.map(u => `
     <div class="update-card">
       <div class="update-meta">
@@ -897,7 +906,13 @@ async function loadUpdates() {
       </div>
       <div class="update-text">${esc(u.text)}</div>
       ${u.image_url?`<img class="update-img" src="${u.image_url}" onclick="window.open('${u.image_url}','_blank')">`:''}
+      <div style="display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:6px;border-top:1px solid rgba(0,0,0,.05);">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="#aaa"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        <span style="font-size:11px;color:#aaa;" id="views-${u.id}">${u.views||0}</span>
+      </div>
     </div>`).join('');
+  // Track views for each update
+  data.forEach(u => trackView(u.id));
   setTimeout(() => { const v=document.getElementById('updates-view'); v.scrollTop=v.scrollHeight; }, 60);
 }
 
@@ -912,6 +927,21 @@ async function postUpdate() {
   document.getElementById('post-input').value='';
   showToast('Update posted!');
   loadUpdates();
+  triggerPush(null, '📢 Signature Digital Update', txt || '📷 Photo', 'client');
+}
+
+async function trackView(updateId) {
+  // Use localStorage to track if this device already viewed
+  const key = 'viewed_' + updateId;
+  if (localStorage.getItem(key)) return;
+  localStorage.setItem(key, '1');
+  // Increment view count
+  const { data } = await sb.from('updates').select('views').eq('id', updateId).single();
+  const newViews = (data?.views || 0) + 1;
+  await sb.from('updates').update({ views: newViews }).eq('id', updateId);
+  // Update display
+  const el = document.getElementById('views-' + updateId);
+  if (el) el.textContent = newViews;
 }
 
 async function startOrOpenChat() {
@@ -934,6 +964,18 @@ async function fetchMsgs(uid) {
   // For non-admin users, always enforce their own uid as chat_id
   const safeUid = (!isAdmin && user) ? user.id : uid;
   const { data } = await sb.from('messages').select('*').eq('chat_id',safeUid).order('created_at',{ascending:true}).limit(100);
+  // Check for new messages and play sound
+  const key = 'msgs_' + safeUid;
+  const prevCount = lastMsgCount[key] || 0;
+  const newCount = (data||[]).length;
+  if (prevCount > 0 && newCount > prevCount) {
+    // Only play if the new message is not from me
+    const newest = data[data.length - 1];
+    if (newest && newest.sender_id !== user?.id) {
+      playNotifSound();
+    }
+  }
+  lastMsgCount[key] = newCount;
   renderMsgs(data||[], uid, document.getElementById('chat-msgs'));
   setTimeout(()=>{ const v=document.getElementById('chat-view'); if(v) v.scrollTop=v.scrollHeight; },60);
   // Update badge — count messages not sent by me and after last seen
@@ -941,8 +983,8 @@ async function fetchMsgs(uid) {
     const lastSeen = getLastSeen();
     const unseen = (data||[]).filter(m =>
       m.sender_id !== user?.id &&
-      new Date(m.created_at).getTime() > lastSeen
-    ).length;
+      !m.is_admin_msg === false || (m.sender_id !== user?.id && new Date(m.created_at).getTime() > lastSeen)
+    ).filter(m => m.sender_id !== user?.id && new Date(m.created_at).getTime() > lastSeen).length;
     setBadge(unseen);
   } else if (curTab === 'chat') {
     setBadge(0);
@@ -957,13 +999,27 @@ function renderMsgs(msgs, myId, container) {
     const ds = d.toLocaleDateString();
     if (ds!==lastDate) { html+=`<div class="date-sep"><span>${ds===new Date().toLocaleDateString()?'Today':ds}</span></div>`; lastDate=ds; }
     const sent = !m.is_admin_msg && m.sender_id === user?.id;
+    const seenStatus = sent ? (m.seen_at ?
+      `<span style="color:#25D366;font-size:11px;">✓ Seen</span>` :
+      `<span style="color:#aaa;font-size:11px;">Not seen</span>`) : '';
     html += `<div class="msg-row ${sent?'sent':'recv'}"><div class="msg-bubble">
       ${m.image_url?`<img class="msg-img" src="${m.image_url}" onclick="window.open('${m.image_url}','_blank')">`:''}
       ${m.text?`<div class="msg-txt">${esc(m.text)}</div>`:''}
-      <div class="msg-time">${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}${sent?'<span class="msg-ticks">✓✓</span>':''}</div>
+      <div class="msg-time">${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+      ${seenStatus ? `<div style="text-align:right;margin-top:1px;">${seenStatus}</div>` : ''}
     </div></div>`;
   });
   container.innerHTML = html;
+}
+
+async function markMessagesAsSeen(chatId) {
+  if (!user) return;
+  // Mark all unseen messages in this chat (not sent by me) as seen
+  await sb.from('messages')
+    .update({ seen_at: new Date().toISOString() })
+    .eq('chat_id', chatId)
+    .neq('sender_id', user.id)
+    .is('seen_at', null);
 }
 
 async function sendMsg() {
@@ -977,6 +1033,12 @@ async function sendMsg() {
   if (error) return showToast('Error: '+error.message);
   document.getElementById('chat-input').value='';
   fetchMsgs(cid);
+  // Push notification to recipient
+  if (isAdmin && adminChatId) {
+    triggerPush(adminChatId, 'Signature Digital', txt || '📷 Photo', 'client');
+  } else if (!isAdmin) {
+    triggerPush(null, 'New Message', txt || '📷 Photo', 'admin');
+  }
 }
 
 // ── ADMIN INBOX ───────────────────────────
@@ -991,7 +1053,7 @@ async function loadInbox() {
   const seen={}, unread={};
   data.forEach(m=>{
     if(!seen[m.chat_id]) seen[m.chat_id]=m;
-    if(!m.is_admin_msg && m.sender_id===m.chat_id) {
+    if(!m.is_admin_msg && m.sender_id !== user?.id) {
       const lastSeen = parseInt(localStorage.getItem('admin_seen_' + m.chat_id) || '0');
       if (new Date(m.created_at).getTime() > lastSeen) {
         unread[m.chat_id] = (unread[m.chat_id]||0) + 1;
@@ -1004,6 +1066,9 @@ async function loadInbox() {
   const pMap={}, uMap={};
   (profiles||[]).forEach(p=>{ pMap[p.id]=p.phone; uMap[p.id]=p.username; });
   const total = Object.values(unread).reduce((a,b)=>a+b,0);
+  const prevTotal = parseInt(localStorage.getItem('prev_inbox_total') || '0');
+  if (total > prevTotal) playNotifSound();
+  localStorage.setItem('prev_inbox_total', total);
   setBadge(total);
   document.getElementById('inbox-list').innerHTML = items.map(m=>{
     const name = uMap[m.chat_id]||pMap[m.chat_id]||'Client';
@@ -1029,6 +1094,7 @@ async function loadInbox() {
 function showAdminChat(cid, name) {
   adminChatId = cid; adminChatName = name;
   localStorage.setItem('admin_seen_' + cid, Date.now());
+  markMessagesAsSeen(cid);
   ['inbox-view'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.getElementById('admin-chat-hdr').classList.remove('hidden');
   document.getElementById('chat-view').classList.remove('hidden');
