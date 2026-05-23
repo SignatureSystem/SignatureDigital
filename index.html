@@ -1,18 +1,3 @@
-<!--
-  Signature Digital — Website
-  Last updated: 2026-05-23 09:50
-  Changes:
-    - Full rebuild from scratch (clean codebase)
-    - WhatsApp-style UI with green theme
-    - OTP registration via WhatsApp bot (3 attempts, 1hr/6hr block, admin bypass)
-    - Admin inbox with unread badges + pinned SD card
-    - Client chat with realtime + 4s polling fallback
-    - Pull-to-refresh from header/tabs
-    - Image upload for updates and chat
-    - Username setup on register + editable via profile menu
-    - Owner online/last seen status
-    - CORS fixed on bot, all OTP loopholes closed
--->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -512,7 +497,7 @@ function fixViewport() {
   document.body.style.height = h + 'px';
 }
 
-function showAuthIfNeeded() { /* don't auto-show, only on demand */ }
+function showAuthIfNeeded() { document.getElementById('auth-overlay').classList.remove('hidden'); }
 
 // ── AUTH ─────────────────────────────────
 function openAuth() { document.getElementById('auth-overlay').classList.remove('hidden'); closeProfileMenu(); }
@@ -718,8 +703,17 @@ async function doRegister() {
       if (!ex || ex.length === 0) {
         await sb.from('messages').insert({ chat_id: sd.user.id, sender_id: '00000000-0000-0000-0000-000000000000', text: WELCOME_MSG, is_admin_msg: true });
       }
+      // manually sign in since email confirmation is disabled
+      const { data: loginData, error: loginErr } = await sb.auth.signInWithPassword({
+        email: toEmail(cc, num), password: pw
+      });
+      if (!loginErr && loginData?.user) {
+        showToast('Account created! Welcome!');
+        return; // onAuthStateChange will handle the rest
+      }
     }
-    showToast('Account created!');
+    showToast('Account created! Please log in.');
+    authTab('login');
   } catch(e) { setErr(ADMIN_ERR); }
   finally { btn.disabled = false; btn.textContent = 'Create Account'; }
 }
