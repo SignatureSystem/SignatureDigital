@@ -461,7 +461,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);
 // ════════════════════════════════════════
 // VERSION — bump this on every deploy
 // ════════════════════════════════════════
-const APP_VERSION = '20260523_1550';
+const APP_VERSION = '20260523_2015';
 
 // Force reload if cached version is outdated
 (function() {
@@ -930,6 +930,7 @@ async function loadOwnerStatus() {
   if (!data) { lbl.textContent = 'last seen recently'; return; }
   if (data.online) { dot.style.display='block'; lbl.textContent='online'; }
   else { dot.style.display='none'; lbl.textContent = data.last_seen ? 'last seen ' + fmtLastSeen(new Date(data.last_seen)) : 'last seen recently'; }
+  } catch(e) { document.getElementById('owner-status').textContent = 'last seen recently'; }
 }
 function fmtLastSeen(d) {
   const s = (Date.now()-d)/1000;
