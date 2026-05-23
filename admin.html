@@ -130,26 +130,60 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);min-he
 <script>
 const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
-const ADMIN_PWD = 'SGD@Admin2026'; // Change this to your password
+const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 var imgFile = null;
 
-function doAdminLogin(){
-  var pwd = document.getElementById('apwd').value;
-  if(pwd === ADMIN_PWD){
-    document.getElementById('login-screen').classList.add('hidden');
-    localStorage.setItem('sgd_admin','1');
-    loadUpdates();
-  } else {
-    document.getElementById('lerr').textContent='Incorrect password';
+// Session token stored locally — verified against bot on each load
+var SESSION_TOKEN = localStorage.getItem('sgd_admin_token') || '';
+
+async function doAdminLogin(){
+  var pwd = document.getElementById('apwd').value.trim();
+  if(!pwd) return;
+  var btn = document.querySelector('.lbtn');
+  btn.textContent = 'Verifying...'; btn.disabled = true;
+  try {
+    var ctrl = new AbortController();
+    setTimeout(function(){ ctrl.abort(); }, 8000);
+    var res = await fetch(BOT_URL + '/admin-login', {
+      method: 'POST', signal: ctrl.signal,
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({password: pwd})
+    });
+    var data = await res.json();
+    if(res.ok && data.token) {
+      SESSION_TOKEN = data.token;
+      localStorage.setItem('sgd_admin_token', data.token);
+      document.getElementById('login-screen').classList.add('hidden');
+      loadUpdates();
+    } else {
+      document.getElementById('lerr').textContent = 'Incorrect password';
+    }
+  } catch(e) {
+    document.getElementById('lerr').textContent = 'Could not reach server. Try again.';
   }
+  btn.textContent = 'Login'; btn.disabled = false;
 }
 
-// Check if already logged in
-if(localStorage.getItem('sgd_admin')==='1'){
-  document.getElementById('login-screen').classList.add('hidden');
-  document.addEventListener('DOMContentLoaded', loadUpdates);
+async function checkSession() {
+  if(!SESSION_TOKEN) return;
+  try {
+    var res = await fetch(BOT_URL + '/admin-verify', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({token: SESSION_TOKEN})
+    });
+    if(res.ok) {
+      document.getElementById('login-screen').classList.add('hidden');
+      loadUpdates();
+    } else {
+      localStorage.removeItem('sgd_admin_token');
+      SESSION_TOKEN = '';
+    }
+  } catch(e) {}
 }
+
+checkSession();
 
 function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 function fmtTime(d){ var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),yest=new Date(today-86400000),md=new Date(d.getFullYear(),d.getMonth(),d.getDate()),t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); if(md.getTime()===today.getTime()) return t; if(md.getTime()===yest.getTime()) return 'Yesterday '+t; return d.toLocaleDateString()+' '+t; }
