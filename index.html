@@ -1,276 +1,392 @@
+<!--
+  Signature Digital — Website
+  Last updated: 2026-05-23 09:50
+  Changes:
+    - Full rebuild from scratch (clean codebase)
+    - WhatsApp-style UI with green theme
+    - OTP registration via WhatsApp bot (3 attempts, 1hr/6hr block, admin bypass)
+    - Admin inbox with unread badges + pinned SD card
+    - Client chat with realtime + 4s polling fallback
+    - Pull-to-refresh from header/tabs
+    - Image upload for updates and chat
+    - Username setup on register + editable via profile menu
+    - Owner online/last seen status
+    - CORS fixed on bot, all OTP loopholes closed
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>Signature Digital</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --wa-green: #25D366;
-    --wa-dark-green: #128C7E;
-    --wa-header: #075E54;
-    --wa-sent: #DCF8C6;
-    --wa-received: #FFFFFF;
-    --wa-bg: #ECE5DD;
-    --wa-text: #111111;
-    --wa-text-secondary: #667781;
-    --wa-border: #E9EDEF;
-    --wa-input-bg: #F0F2F5;
-    --wa-online: #25D366;
-  }
-  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--wa-bg); height: 100%; max-height: 100%; overflow: hidden; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; bottom: 0; }
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --g:#25D366;--dg:#128C7E;--hdr:#075E54;
+  --sent:#DCF8C6;--recv:#fff;--bg:#ECE5DD;
+  --txt:#111;--sub:#667781;--bdr:#E9EDEF;--inp:#F0F2F5;
+}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);
+  position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;overflow:hidden;}
 
-  /* AUTH */
-  #auth-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; }
-  #auth-overlay.hidden { display: none; }
-  .auth-box { background: #fff; border-radius: 12px; width: 360px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-  .auth-header { background: var(--wa-header); padding: 24px; text-align: center; }
-  .auth-header .logo { font-size: 26px; font-weight: 700; color: #fff; }
-  .auth-header .sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
-  .auth-tabs { display: flex; border-bottom: 1px solid var(--wa-border); }
-  .auth-tab { flex: 1; padding: 13px; text-align: center; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--wa-text-secondary); border-bottom: 2px solid transparent; transition: all .2s; }
-  .auth-tab.active { color: var(--wa-dark-green); border-bottom-color: var(--wa-dark-green); }
-  .auth-body { padding: 22px; }
-  .auth-body input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--wa-border); border-radius: 8px; font-size: 14px; margin-bottom: 11px; outline: none; transition: border-color .2s; font-family: inherit; }
-  .auth-body input:focus { border-color: var(--wa-dark-green); }
-  .ph-row { display: flex; gap: 7px; margin-bottom: 11px; align-items: center; }
-  .ph-row .prefix { background: var(--wa-input-bg); border: 1.5px solid var(--wa-border); border-radius: 8px; padding: 11px 11px; font-size: 14px; color: var(--wa-text-secondary); white-space: nowrap; }
-  .ph-row input { margin-bottom: 0; flex: 1; }
-  .auth-btn { width: 100%; padding: 12px; background: var(--wa-green); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
-  .auth-btn:hover { background: var(--wa-dark-green); }
-  .auth-btn:disabled { background: #aaa; cursor: not-allowed; }
-  .auth-error { color: #e53935; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 18px; }
-  .guest-link { text-align: center; margin-top: 11px; }
-  .guest-link button { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--wa-text-secondary); text-decoration: underline; }
+/* ── AUTH OVERLAY ── */
+#auth-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.6);
+  display:flex;align-items:center;justify-content:center;}
+#auth-overlay.hidden{display:none;}
+.auth-box{background:#fff;border-radius:14px;width:340px;max-width:calc(100vw - 32px);
+  overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.35);}
+.auth-hdr{background:var(--hdr);padding:22px 20px 18px;text-align:center;position:relative;}
+.auth-hdr .logo{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;}
+.auth-hdr .sub{font-size:12px;color:rgba(255,255,255,.65);margin-top:3px;}
+.auth-close{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.15);
+  border:none;cursor:pointer;width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.auth-close:hover{background:rgba(255,255,255,.28);}
+.auth-close svg{width:14px;height:14px;fill:#fff;}
+.auth-tabs{display:flex;border-bottom:1px solid var(--bdr);}
+.auth-tab{flex:1;padding:12px;text-align:center;font-size:13px;font-weight:600;
+  cursor:pointer;color:var(--sub);border-bottom:2px solid transparent;transition:all .2s;}
+.auth-tab.active{color:var(--dg);border-bottom-color:var(--dg);}
+.auth-body{padding:20px;}
+.auth-body input{width:100%;padding:11px 13px;border:1.5px solid var(--bdr);border-radius:8px;
+  font-size:14px;margin-bottom:10px;outline:none;transition:border-color .2s;font-family:inherit;}
+.auth-body input:focus{border-color:var(--dg);}
+.ph-row{display:flex;gap:6px;margin-bottom:10px;align-items:stretch;}
+.ph-prefix{background:var(--inp);border:1.5px solid var(--bdr);border-radius:8px;
+  padding:11px 10px;font-size:14px;color:var(--sub);white-space:nowrap;
+  display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.ph-prefix .cc-input{border:none;outline:none;background:transparent;font-size:14px;
+  width:32px;font-family:inherit;color:var(--txt);padding:0;}
+.ph-row input{margin-bottom:0;flex:1;min-width:0;}
+.auth-btn{width:100%;padding:11px;background:var(--g);color:#fff;border:none;
+  border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:2px;}
+.auth-btn:hover{background:var(--dg);}
+.auth-btn:disabled{background:#aaa;cursor:not-allowed;}
+.auth-err{color:#e53935;font-size:12px;margin-bottom:8px;text-align:center;min-height:16px;line-height:1.4;}
+.step-dots{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:14px;}
+.step-dot{width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:all .3s;}
+.step-dot.active{background:var(--g);color:#fff;}
+.step-dot.done{background:var(--dg);color:#fff;}
+.step-dot.idle{background:var(--bdr);color:var(--sub);}
+.step-line{flex:1;height:2px;max-width:36px;background:var(--bdr);transition:background .3s;}
+.step-line.done{background:var(--dg);}
+.warn-txt{font-size:12px;color:#888;text-align:center;margin-top:6px;margin-bottom:0;min-height:16px;}
+.otp-input{letter-spacing:8px;font-size:22px;text-align:center;font-weight:700 !important;}
 
-  /* HEADER */
-  #app-header { background: var(--wa-header); display: flex; align-items: center; padding: 0 14px; height: 58px; flex-shrink: 0; position: relative; z-index: 10; }
-  .h-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; margin-right: 11px; flex-shrink: 0; }
-  .h-info { flex: 1; }
-  .h-name { font-size: 16px; font-weight: 600; color: #fff; }
-  .h-status { font-size: 12px; color: rgba(255,255,255,0.72); display: flex; align-items: center; gap: 4px; }
-  .online-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--wa-online); }
-  .h-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.85); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background .15s; }
-  .h-btn:hover { background: rgba(255,255,255,0.12); }
-  .h-btn svg { width: 22px; height: 22px; fill: currentColor; }
+/* ── HEADER ── */
+#app-hdr{background:var(--hdr);display:flex;align-items:center;padding:0 14px;
+  height:56px;flex-shrink:0;position:relative;z-index:10;}
+.hdr-av{width:38px;height:38px;border-radius:50%;background:var(--g);display:flex;
+  align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;
+  margin-right:10px;flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-name{font-size:15px;font-weight:600;color:#fff;}
+.hdr-status{font-size:11px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:3px;}
+.online-dot{width:6px;height:6px;border-radius:50%;background:var(--g);}
+.hdr-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.85);
+  padding:7px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.hdr-btn:hover{background:rgba(255,255,255,.12);}
+.hdr-btn svg{width:20px;height:20px;fill:currentColor;}
 
-  /* TABS */
-  #tabs { background: var(--wa-header); display: flex; border-bottom: 1px solid rgba(255,255,255,0.15); flex-shrink: 0; }
-  .tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); cursor: pointer; border-bottom: 3px solid transparent; letter-spacing: .5px; text-transform: uppercase; transition: all .2s; }
-  .tab.active { color: #fff; border-bottom-color: #fff; }
+/* ── TABS ── */
+#tabs{background:var(--hdr);display:flex;border-bottom:1px solid rgba(255,255,255,.15);flex-shrink:0;}
+.tab{flex:1;padding:11px;text-align:center;font-size:12px;font-weight:700;
+  color:rgba(255,255,255,.55);cursor:pointer;border-bottom:3px solid transparent;
+  letter-spacing:.6px;text-transform:uppercase;transition:all .2s;position:relative;}
+.tab.active{color:#fff;border-bottom-color:#fff;}
+.tab-badge{background:#e53935;color:#fff;font-size:10px;font-weight:700;
+  min-width:16px;height:16px;border-radius:8px;display:inline-flex;
+  align-items:center;justify-content:center;padding:0 3px;margin-left:4px;vertical-align:middle;}
 
-  /* MAIN */
-  #main { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+/* ── MAIN ── */
+#main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 
-  /* UPDATES */
-  #updates-view { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
-  #updates-view.hidden { display: none; }
-  .update-card { background: #fff; border-radius: 10px; padding: 13px 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  .update-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
-  .update-badge { background: var(--wa-green); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
-  .update-time { font-size: 11px; color: var(--wa-text-secondary); }
-  .update-text { font-size: 14px; color: var(--wa-text); line-height: 1.5; }
-  #no-updates { text-align: center; padding: 40px 0; color: var(--wa-text-secondary); font-size: 14px; }
+/* ── UPDATES ── */
+#updates-view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:10px 12px;display:flex;flex-direction:column;gap:0;}
+#updates-view.hidden{display:none;}
+.update-card{background:#fff;border-radius:10px;padding:12px 14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:10px;}
+.update-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;
+  padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,.06);}
+.update-badge{background:var(--g);color:#fff;font-size:10px;font-weight:700;
+  padding:2px 7px;border-radius:9px;flex-shrink:0;}
+.update-author{font-size:12px;font-weight:600;color:var(--g);cursor:pointer;}
+.update-phone{font-size:11px;color:rgba(0,0,0,.35);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+.update-time{font-size:11px;color:var(--sub);margin-left:auto;flex-shrink:0;}
+.update-text{font-size:14px;color:var(--txt);line-height:1.5;}
+.update-img{width:100%;border-radius:8px;margin-top:8px;max-height:260px;object-fit:contain;background:#f5f5f5;}
+#no-updates{text-align:center;padding:40px 0;color:var(--sub);font-size:14px;}
 
-  /* ADMIN POST BAR */
-  #admin-post-bar { background: #fff; border-top: 1px solid var(--wa-border); flex-shrink: 0; position: sticky; bottom: 0; z-index: 20; padding-bottom: env(safe-area-inset-bottom, 0px); }
-  #admin-post-bar.hidden { display: none; }
-  .admin-label { text-align: center; padding: 6px; font-size: 12px; color: var(--wa-text-secondary); background: #f0fdf4; }
-  .admin-label span { color: #15803d; font-weight: 600; }
-  .post-row { display: flex; gap: 8px; padding: 8px 14px; align-items: flex-end; }
-  #post-input { flex: 1; padding: 10px 13px; background: var(--wa-input-bg); border: none; border-radius: 22px; font-size: 14px; outline: none; resize: none; max-height: 100px; font-family: inherit; }
-  .send-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--wa-green); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s; }
-  .send-btn:hover { background: var(--wa-dark-green); }
-  .send-btn svg { width: 20px; height: 20px; fill: #fff; }
+/* ── ADMIN POST BAR ── */
+#admin-bar{background:#fff;border-top:1px solid var(--bdr);flex-shrink:0;position:sticky;bottom:0;z-index:10;}
+#admin-bar.hidden{display:none;}
+.admin-bar-lbl{text-align:center;padding:5px;font-size:11px;color:#15803d;font-weight:600;background:#f0fdf4;}
+.admin-bar-row{display:flex;gap:8px;padding:8px 12px;align-items:flex-end;}
+#post-input{flex:1;padding:9px 12px;background:var(--inp);border:none;border-radius:20px;
+  font-size:14px;outline:none;resize:none;max-height:90px;font-family:inherit;}
+.img-preview-wrap{padding:0 12px 4px;display:none;}
+.img-preview-wrap img{max-height:70px;border-radius:6px;}
+.img-clear{background:none;border:none;cursor:pointer;color:#e53935;font-size:16px;vertical-align:top;margin-left:4px;}
+.attach-lbl{cursor:pointer;display:flex;align-items:center;padding:0 2px;flex-shrink:0;}
+.attach-lbl svg{width:24px;height:24px;fill:#8696a0;}
+.attach-lbl:hover svg{fill:var(--dg);}
+.send-btn{width:40px;height:40px;border-radius:50%;background:var(--g);border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;}
+.send-btn:hover{background:var(--dg);}
+.send-btn svg{width:18px;height:18px;fill:#fff;}
 
-  /* CHAT */
-  #chat-view { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px; background: var(--wa-bg); background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b2b2b2' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E"); display: flex; flex-direction: column; gap: 6px; }
-  #chat-view.hidden { display: none; }
-  .chat-gate { margin: auto; text-align: center; background: rgba(255,255,255,0.92); border-radius: 12px; padding: 24px 28px; max-width: 260px; }
-  .chat-gate p { font-size: 14px; color: var(--wa-text-secondary); margin-bottom: 13px; }
-  .chat-gate button { background: var(--wa-green); color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .msg-row { display: flex; }
-  .msg-row.sent { justify-content: flex-end; }
-  .msg-row.received { justify-content: flex-start; }
-  .msg-bubble { max-width: 68%; padding: 7px 11px 5px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-  .msg-row.sent .msg-bubble { background: var(--wa-sent); border-top-right-radius: 2px; }
-  .msg-row.received .msg-bubble { background: #fff; border-top-left-radius: 2px; }
-  .msg-text { font-size: 14px; color: var(--wa-text); line-height: 1.45; word-break: break-word; }
-  .msg-time { font-size: 11px; color: var(--wa-text-secondary); text-align: right; margin-top: 2px; display: flex; justify-content: flex-end; align-items: center; gap: 3px; }
-  .ticks { color: #53bdeb; }
-  .date-sep { text-align: center; margin: 6px 0; }
-  .date-sep span { background: rgba(255,255,255,0.85); font-size: 12px; color: var(--wa-text-secondary); padding: 3px 12px; border-radius: 8px; }
+/* ── CHAT ── */
+#chat-view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:10px 12px;background:var(--bg);
+  background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b2b2b2' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+  display:flex;flex-direction:column;gap:5px;}
+#chat-view.hidden{display:none;}
+.chat-gate{margin:auto;text-align:center;background:rgba(255,255,255,.92);
+  border-radius:12px;padding:22px 26px;max-width:240px;}
+.chat-gate p{font-size:13px;color:var(--sub);margin-bottom:12px;}
+.chat-gate button{background:var(--g);color:#fff;border:none;border-radius:8px;
+  padding:9px 22px;font-size:14px;font-weight:600;cursor:pointer;}
+.msg-row{display:flex;}
+.msg-row.sent{justify-content:flex-end;}
+.msg-row.recv{justify-content:flex-start;}
+.msg-bubble{max-width:70%;padding:7px 11px 5px;border-radius:8px;
+  box-shadow:0 1px 2px rgba(0,0,0,.1);}
+.msg-row.sent .msg-bubble{background:var(--sent);border-top-right-radius:2px;}
+.msg-row.recv .msg-bubble{background:#fff;border-top-left-radius:2px;}
+.msg-txt{font-size:14px;color:var(--txt);line-height:1.45;word-break:break-word;}
+.msg-time{font-size:10px;color:var(--sub);text-align:right;margin-top:2px;
+  display:flex;justify-content:flex-end;align-items:center;gap:3px;}
+.msg-ticks{color:#53bdeb;font-size:13px;}
+.msg-img{max-width:min(220px,60vw);width:100%;border-radius:8px;margin-bottom:4px;
+  display:block;cursor:pointer;object-fit:cover;}
+.date-sep{text-align:center;margin:6px 0;}
+.date-sep span{background:rgba(255,255,255,.85);font-size:11px;color:var(--sub);
+  padding:3px 10px;border-radius:7px;}
 
-  /* CHAT INPUT */
-  #chat-input-bar { background: var(--wa-input-bg); border-top: 1px solid var(--wa-border); padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; z-index: 20; }
-  #chat-input-bar.hidden { display: none; }
-  #chat-input { flex: 1; padding: 10px 13px; background: #fff; border: none; border-radius: 22px; font-size: 14px; outline: none; resize: none; max-height: 100px; font-family: inherit; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+/* ── CHAT INPUT ── */
+#chat-bar{background:var(--inp);border-top:1px solid var(--bdr);
+  padding:7px 10px;padding-bottom:max(7px,env(safe-area-inset-bottom));
+  display:flex;gap:7px;align-items:flex-end;flex-shrink:0;z-index:10;}
+#chat-bar.hidden{display:none;}
+#chat-bar .inner{flex:1;display:flex;flex-direction:column;gap:0;}
+#chat-bar .img-preview-wrap{padding:4px 0 2px;}
+#chat-input{flex:1;padding:9px 12px;background:#fff;border:none;border-radius:20px;
+  font-size:14px;outline:none;resize:none;max-height:90px;font-family:inherit;
+  box-shadow:0 1px 2px rgba(0,0,0,.08);}
 
-  /* PROFILE DROPDOWN */
-  #profile-menu { position: absolute; top: 58px; right: 10px; z-index: 50; background: #fff; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.2); min-width: 210px; overflow: hidden; }
-  #profile-menu.hidden { display: none; }
-  .p-info { padding: 14px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 11px; }
-  .p-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--wa-green); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; color: #fff; }
-  .p-name { font-size: 14px; font-weight: 600; color: var(--wa-text); }
-  .p-phone { font-size: 12px; color: var(--wa-text-secondary); }
-  .p-item { padding: 12px 15px; font-size: 14px; color: var(--wa-text); cursor: pointer; display: flex; align-items: center; gap: 9px; transition: background .15s; }
-  .p-item:hover { background: var(--wa-input-bg); }
-  .p-item svg { width: 17px; height: 17px; fill: var(--wa-text-secondary); }
-  .p-item.danger { color: #e53935; }
-  .p-item.danger svg { fill: #e53935; }
+/* ── INBOX (admin) ── */
+#inbox-view{flex:1;overflow-y:auto;background:#fff;display:flex;flex-direction:column;}
+#inbox-view.hidden{display:none;}
+.inbox-pin{background:#e8f5e9;padding:12px 14px;border-bottom:2px solid var(--g);
+  display:flex;align-items:center;gap:11px;}
+.inbox-pin-av{width:44px;height:44px;border-radius:50%;background:var(--hdr);
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;flex-shrink:0;}
+.inbox-pin-name{font-size:14px;font-weight:600;color:var(--hdr);}
+.inbox-pin-sub{font-size:12px;color:var(--sub);}
+.inbox-item{display:flex;align-items:center;gap:11px;padding:12px 14px;
+  border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .15s;}
+.inbox-item:hover{background:var(--inp);}
+.inbox-av{width:44px;height:44px;border-radius:50%;background:var(--dg);
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;flex-shrink:0;}
+.inbox-info{flex:1;min-width:0;}
+.inbox-name{font-size:14px;font-weight:500;color:var(--txt);}
+.inbox-phone{font-size:11px;color:#aaa;}
+.inbox-preview{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.inbox-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.inbox-time{font-size:10px;color:var(--sub);}
+.unread-badge{background:var(--g);color:#fff;font-size:10px;font-weight:700;
+  min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.inbox-empty{text-align:center;padding:40px 20px;color:var(--sub);font-size:14px;}
 
-  .attach-btn { cursor:pointer; display:flex; align-items:center; padding:0 4px; flex-shrink:0; }
+/* ── ADMIN CHAT HEADER ── */
+#admin-chat-hdr{background:var(--hdr);display:flex;align-items:center;padding:0 12px;
+  height:50px;flex-shrink:0;gap:9px;}
+#admin-chat-hdr.hidden{display:none;}
+#admin-chat-hdr button{background:none;border:none;cursor:pointer;color:#fff;font-size:20px;padding:4px 6px;}
+.ac-name{font-size:14px;font-weight:600;color:#fff;}
+.ac-phone{font-size:11px;color:rgba(255,255,255,.65);}
 
-  /* PULL TO REFRESH */
-  #ptr-indicator {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
-    display: flex; align-items: center; justify-content: center;
-    height: 0px; overflow: hidden;
-    background: linear-gradient(180deg, #075E54 0%, #128C7E 100%);
-    transition: height 0.15s ease;
-    pointer-events: none;
-  }
-  #ptr-indicator.releasing { transition: height 0.25s cubic-bezier(0.34,1.56,0.64,1); }
-  #ptr-indicator.refreshing { height: 56px !important; }
-  #ptr-spinner {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    display: flex; align-items: center; justify-content: center;
-    transform: rotate(0deg) scale(0.5);
-    transition: transform 0.1s ease;
-  }
-  #ptr-spinner svg { width: 20px; height: 20px; fill: #fff; }
-  @keyframes ptr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  #ptr-spinner.spinning { animation: ptr-spin 0.7s linear infinite; transform: scale(1) !important; background: rgba(255,255,255,0.25); }
-  .attach-btn:hover svg { fill: var(--wa-dark-green) !important; }
+/* ── PROFILE MENU ── */
+#profile-menu{position:absolute;top:56px;right:10px;z-index:100;background:#fff;
+  border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2);min-width:200px;overflow:hidden;}
+#profile-menu.hidden{display:none;}
+.pm-info{padding:13px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;}
+.pm-av{width:42px;height:42px;border-radius:50%;background:var(--g);display:flex;
+  align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;}
+.pm-name{font-size:14px;font-weight:600;color:var(--txt);}
+.pm-phone{font-size:12px;color:var(--sub);}
+.pm-uname{font-size:12px;color:var(--g);font-weight:500;margin-top:1px;}
+.pm-item{padding:11px 14px;font-size:13px;color:var(--txt);cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:background .15s;}
+.pm-item:hover{background:var(--inp);}
+.pm-item svg{width:16px;height:16px;fill:var(--sub);}
+.pm-item.danger{color:#e53935;}
+.pm-item.danger svg{fill:#e53935;}
 
-  /* TOAST */
-  #toast { position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; border-radius: 8px; padding: 9px 18px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
-  #toast.show { opacity: 1; }
+/* ── USERNAME MODAL ── */
+#uname-modal{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);
+  display:none;align-items:center;justify-content:center;}
+.uname-box{background:#fff;border-radius:12px;width:300px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+.uname-hdr{background:var(--hdr);padding:16px 18px;}
+.uname-hdr p{color:#fff;font-size:15px;font-weight:600;}
+.uname-body{padding:18px;}
+.uname-body p{font-size:12px;color:var(--sub);margin-bottom:10px;}
+.uname-body input{width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;
+  font-size:14px;outline:none;font-family:inherit;margin-bottom:12px;}
+.uname-body input:focus{border-color:var(--dg);}
+.uname-btns{display:flex;gap:7px;}
+.uname-btns button{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.uname-cancel{background:var(--inp);color:var(--txt);}
+.uname-save{background:var(--g);color:#fff;}
 
-  /* ADMIN INBOX (list of client chats) */
-  #inbox-view { flex: 1; overflow-y: auto; background: #fff; display: flex; flex-direction: column; }
-  #inbox-view.hidden { display: none; }
-  .inbox-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--wa-border); cursor: pointer; transition: background .15s; }
-  .inbox-item:hover { background: var(--wa-input-bg); }
-  .inbox-item.active { background: #e8f5e9; }
-  .inbox-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--wa-dark-green); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 16px; flex-shrink: 0; }
-  .inbox-info { flex: 1; min-width: 0; }
-  .inbox-name { font-size: 15px; font-weight: 500; color: var(--wa-text); }
-  .inbox-preview { font-size: 13px; color: var(--wa-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .inbox-time { font-size: 11px; color: var(--wa-text-secondary); flex-shrink: 0; }
-  .inbox-empty { text-align: center; padding: 40px 20px; color: var(--wa-text-secondary); font-size: 14px; }
-  .unread-badge { background: #25D366; color: #fff; font-size: 11px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
-  .tab-badge { background: #e53935; color: #fff; font-size: 10px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; margin-left: 5px; vertical-align: middle; }
+/* ── PTR ── */
+#ptr{position:fixed;top:0;left:0;right:0;z-index:150;display:flex;
+  align-items:flex-end;justify-content:center;height:0;overflow:visible;pointer-events:none;padding-bottom:6px;}
+#ptr-spinner{width:34px;height:34px;border-radius:50%;background:var(--g);
+  box-shadow:0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;
+  transform:translateY(-50px) scale(.4);opacity:0;transition:none;}
+#ptr-spinner svg{width:18px;height:18px;fill:#fff;}
+@keyframes ptr-spin{to{transform:translateY(0) rotate(360deg);}}
+#ptr-spinner.spinning{animation:ptr-spin .65s linear infinite;opacity:1!important;transform:translateY(0) scale(1)!important;}
 
-  /* ADMIN CHAT HEADER (back button) */
-  #admin-chat-header { background: var(--wa-header); display: flex; align-items: center; padding: 0 12px; height: 52px; flex-shrink: 0; gap: 10px; }
-  #admin-chat-header.hidden { display: none; }
-  #admin-chat-header button { background: none; border: none; cursor: pointer; color: #fff; font-size: 22px; padding: 4px 8px; }
-  #admin-chat-header .ac-name { font-size: 15px; font-weight: 600; color: #fff; }
-  #admin-chat-header .ac-phone { font-size: 12px; color: rgba(255,255,255,0.7); }
+/* ── TOAST ── */
+#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  background:#333;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;
+  z-index:400;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
-<!-- AUTH OVERLAY -->
-<div id="auth-overlay">
+<!-- PTR -->
+<div id="ptr"><div id="ptr-spinner"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></div></div>
+
+<!-- AUTH -->
+<div id="auth-overlay" class="hidden">
   <div class="auth-box">
-    <div class="auth-header">
+    <div class="auth-hdr">
+      <button class="auth-close" onclick="closeAuth()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
       <div class="logo">Signature Digital</div>
-      <div class="sub">Your trusted subscription partner</div>
+      <div class="sub">Genuine Softwares at Affordable Prices</div>
     </div>
     <div class="auth-tabs">
-      <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
-      <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
+      <div class="auth-tab active" onclick="authTab('login')">Login</div>
+      <div class="auth-tab" onclick="authTab('register')">Register</div>
     </div>
     <div class="auth-body">
-      <div class="auth-error" id="auth-error"></div>
+      <div class="auth-err" id="auth-err"></div>
+
+      <!-- LOGIN -->
       <div id="login-form">
-        <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
+        <div class="ph-row">
+          <div class="ph-prefix"><span>+</span><input class="cc-input" id="login-cc" type="tel" value="94" maxlength="3" placeholder="94"></div>
+          <input type="tel" id="login-phone" placeholder="7X XXX XXXX" maxlength="12">
+        </div>
         <input type="password" id="login-pass" placeholder="Password">
         <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
       </div>
-      <div id="register-form" style="display:none">
-        <!-- Step indicator -->
-        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;">
-          <div id="si1" style="width:28px;height:28px;border-radius:50%;background:var(--wa-green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
-          <div style="flex:1;height:2px;background:var(--wa-border);max-width:40px;" id="si-line1"></div>
-          <div id="si2" style="width:28px;height:28px;border-radius:50%;background:var(--wa-border);color:var(--wa-text-secondary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">2</div>
-          <div style="flex:1;height:2px;background:var(--wa-border);max-width:40px;" id="si-line2"></div>
-          <div id="si3" style="width:28px;height:28px;border-radius:50%;background:var(--wa-border);color:var(--wa-text-secondary);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">3</div>
+
+      <!-- REGISTER -->
+      <div id="reg-form" style="display:none">
+        <div class="step-dots">
+          <div class="step-dot active" id="sd1">1</div>
+          <div class="step-line" id="sl1"></div>
+          <div class="step-dot idle" id="sd2">2</div>
+          <div class="step-line" id="sl2"></div>
+          <div class="step-dot idle" id="sd3">3</div>
         </div>
 
-        <!-- Step 1: Phone -->
-        <div id="reg-step1">
-          <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:10px;">Enter your WhatsApp number to receive a verification code.</p>
-          <div class="ph-row"><span class="prefix">🇱🇰 +94</span><input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="10"></div>
-          <button class="auth-btn" id="reg-btn-send" onclick="sendOTP()">📲 Send OTP via WhatsApp</button>
+        <div id="rs1">
+          <p style="font-size:12px;color:var(--sub);margin-bottom:10px;">Enter your WhatsApp number to receive a verification code.</p>
+          <div class="ph-row">
+            <div class="ph-prefix"><span>+</span><input class="cc-input" id="reg-cc" type="tel" value="94" maxlength="3" placeholder="94"></div>
+            <input type="tel" id="reg-phone" placeholder="7X XXX XXXX" maxlength="12">
+          </div>
+          <button class="auth-btn" id="otp-send-btn" onclick="sendOTP()">📲 Send OTP via WhatsApp</button>
         </div>
 
-        <!-- Step 2: OTP -->
-        <div id="reg-step2" style="display:none">
-          <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:4px;">Code sent to your WhatsApp. Enter it below.</p>
-          <p id="reg-phone-display" style="font-size:13px;font-weight:600;color:var(--wa-dark-green);margin-bottom:12px;"></p>
-          <input type="number" id="reg-otp" placeholder="Enter 6-digit code" style="letter-spacing:8px;font-size:22px;text-align:center;font-weight:700;">
-          <button class="auth-btn" id="reg-btn-verify" onclick="verifyOTP()">Verify Code</button>
-          <div id="attempts-warning" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:#888;"></div>
-          <div style="display:flex;justify-content:space-between;margin-top:10px;">
-            <button onclick="showRegStep(1)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--wa-text-secondary);text-decoration:underline;">← Change number</button>
-            <button id="resend-btn" onclick="sendOTP(true)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--wa-dark-green);text-decoration:underline;">Resend OTP</button>
+        <div id="rs2" style="display:none">
+          <p style="font-size:12px;color:var(--sub);margin-bottom:4px;">Code sent to your WhatsApp:</p>
+          <p id="otp-phone-disp" style="font-size:13px;font-weight:600;color:var(--dg);margin-bottom:10px;"></p>
+          <input type="tel" id="reg-otp" class="otp-input" placeholder="------" maxlength="6"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)">
+          <button class="auth-btn" id="otp-verify-btn" onclick="verifyOTP()">Verify Code</button>
+          <p class="warn-txt" id="attempts-warn"></p>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;">
+            <button onclick="regStep(1)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--sub);text-decoration:underline;">← Change number</button>
+            <button id="resend-btn" onclick="sendOTP(true)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--dg);text-decoration:underline;">Resend OTP</button>
           </div>
         </div>
 
-        <!-- Step 3: Password + Username -->
-        <div id="reg-step3" style="display:none">
-          <div style="background:#f0fdf4;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#15803d;display:flex;align-items:center;gap:6px;">✅ Phone verified!</div>
+        <div id="rs3" style="display:none">
+          <div style="background:#f0fdf4;border-radius:7px;padding:9px 11px;margin-bottom:12px;font-size:12px;color:#15803d;">✅ Phone verified!</div>
           <input type="password" id="reg-pass" placeholder="Create password (min 6 chars)">
           <input type="password" id="reg-pass2" placeholder="Confirm password">
-          <div style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:11px;">
-            <p style="font-size:13px;color:#15803d;margin-bottom:8px;">👋 What should we call you?</p>
-            <input type="text" id="reg-username" placeholder="Your name or nickname" style="margin-bottom:0">
+          <div style="background:#f0fdf4;border-radius:7px;padding:11px;margin-bottom:10px;">
+            <p style="font-size:12px;color:#15803d;margin-bottom:7px;">👋 What should we call you?</p>
+            <input type="text" id="reg-uname" placeholder="Your name or nickname" style="margin-bottom:0;">
           </div>
           <button class="auth-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
         </div>
       </div>
-      <div class="guest-link"><button onclick="continueAsGuest()">View updates without account</button></div>
     </div>
   </div>
 </div>
 
 <!-- PROFILE MENU -->
 <div id="profile-menu" class="hidden">
-  <div class="p-info">
-    <div class="p-avatar" id="p-avatar">?</div>
-    <div><div class="p-name" id="p-name">Guest</div><div class="p-phone" id="p-phone">Not signed in</div></div>
+  <div class="pm-info">
+    <div class="pm-av" id="pm-av">?</div>
+    <div>
+      <div class="pm-name" id="pm-name">Guest</div>
+      <div class="pm-phone" id="pm-phone">Not signed in</div>
+      <div class="pm-uname" id="pm-uname" style="display:none"></div>
+    </div>
   </div>
-  <div id="pm-login" class="p-item" onclick="openAuth()">
+  <div id="pm-signin" class="pm-item" onclick="openAuth()">
     <svg viewBox="0 0 24 24"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
     Sign In / Register
   </div>
-  <div id="pm-edit-username" class="p-item" style="display:none" onclick="openEditUsername()">
+  <div id="pm-edit-uname" class="pm-item" style="display:none" onclick="openUnameModal()">
     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
     Edit Username
   </div>
-  <div id="pm-logout" class="p-item danger" style="display:none" onclick="doLogout()">
+  <div id="pm-signout" class="pm-item danger" style="display:none" onclick="doLogout()">
     <svg viewBox="0 0 24 24"><path d="M17 7l-1.4 1.4 2.6 2.6H9v2h9.2l-2.6 2.6L17 17l5-5-5-5zM5 5h7V3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h7v-2H5V5z"/></svg>
     Sign Out
   </div>
 </div>
 
-<!-- APP HEADER -->
-<div id="app-header">
-  <div class="h-avatar">SD</div>
-  <div class="h-info">
-    <div class="h-name">Signature Digital</div>
-    <div class="h-status">
+<!-- USERNAME MODAL -->
+<div id="uname-modal">
+  <div class="uname-box">
+    <div class="uname-hdr"><p>Edit Username</p></div>
+    <div class="uname-body">
+      <p>This name is visible to admin when you chat.</p>
+      <input type="text" id="uname-inp" placeholder="Your name or nickname">
+      <div class="uname-btns">
+        <button class="uname-cancel" onclick="closeUnameModal()">Cancel</button>
+        <button class="uname-save" onclick="saveUname()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="app-hdr">
+  <div class="hdr-av">SD</div>
+  <div class="hdr-info">
+    <div class="hdr-name">Signature Digital</div>
+    <div class="hdr-status">
       <div class="online-dot" id="owner-dot" style="display:none"></div>
       <span id="owner-status">loading...</span>
     </div>
   </div>
-  <button class="h-btn" onclick="toggleProfileMenu()">
+  <button class="hdr-btn" onclick="toggleProfileMenu()">
     <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.3 4-4s-1.3-4-4-4-4 1.3-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>
   </button>
 </div>
@@ -278,440 +394,189 @@
 <!-- TABS -->
 <div id="tabs">
   <div class="tab active" id="tab-updates" onclick="switchTab('updates')">Updates</div>
-  <div class="tab" id="tab-chat" onclick="switchTab('chat')">Chat<span class="tab-badge" id="tab-chat-badge" style="display:none"></span></div>
+  <div class="tab" id="tab-chat" onclick="switchTab('chat')">Chat<span class="tab-badge" id="chat-badge" style="display:none"></span></div>
 </div>
 
 <!-- MAIN -->
 <div id="main">
-
-  <!-- UPDATES VIEW -->
+  <!-- UPDATES -->
   <div id="updates-view">
-    <div style="text-align:center;padding:16px 0 6px;"><p style="font-size:13px;color:var(--wa-text-secondary)">Latest from Signature Digital</p></div>
+    <div style="text-align:center;padding:14px 0 4px;"><p style="font-size:12px;color:var(--sub);">Latest from Signature Digital</p></div>
     <div id="updates-list"></div>
-    <div id="no-updates" style="display:none" class="">No updates yet.</div>
+    <div id="no-updates" style="display:none;">No updates yet.</div>
   </div>
-  <div id="admin-post-bar" class="hidden">
-    <div class="admin-label"><span>⚡ Admin — Post Update</span></div>
-    <div class="post-row">
-      <label class="attach-btn" title="Attach image">
-        <input type="file" id="post-image" accept="image/*" style="display:none" onchange="previewPostImage(this)">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="#667781"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+  <div id="admin-bar" class="hidden">
+    <div class="admin-bar-lbl">⚡ Admin — Post Update</div>
+    <div class="img-preview-wrap" id="post-img-preview">
+      <img id="post-preview-img" src=""><button class="img-clear" onclick="clearPostImg()">✕</button>
+    </div>
+    <div class="admin-bar-row">
+      <label class="attach-lbl">
+        <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="previewPostImg(this)">
+        <svg viewBox="0 0 24 24"><path d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 003.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 01-2.829 1.171 3.975 3.975 0 01-2.83-1.173 3.973 3.973 0 01-1.172-2.828c0-1.071.418-2.074 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 00-.834.018L3.458 11.59a5.556 5.556 0 00-1.642 3.966z"/></svg>
       </label>
-      <div style="flex:1">
-        <div id="post-img-preview" style="display:none;margin-bottom:5px"><img id="post-preview-img" style="max-height:80px;border-radius:6px;"><button onclick="clearPostImage()" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;vertical-align:top">✕</button></div>
-        <textarea id="post-input" placeholder="Post an update to all clients..." rows="1"></textarea>
-      </div>
+      <textarea id="post-input" placeholder="Post an update to all clients..." rows="1"></textarea>
       <button class="send-btn" onclick="postUpdate()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
     </div>
   </div>
 
-  <!-- CLIENT CHAT VIEW -->
+  <!-- CHAT (client) -->
   <div id="chat-view" class="hidden">
-    <div id="chat-gate" class="chat-gate" style="display:none"><p>Sign in to chat with Signature Digital</p><button onclick="openAuth()">Sign In</button></div>
-    <div id="chat-messages"></div>
-  </div>
-  <div id="chat-input-bar" class="hidden">
-    <div style="flex:1;display:flex;flex-direction:column;gap:0;">
-      <div id="chat-img-preview" style="display:none;padding:6px 0 4px;"><img id="chat-preview-img" style="max-height:80px;border-radius:6px;"><button onclick="clearChatImage()" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;vertical-align:top;margin-left:4px;">✕</button></div>
-      <div style="display:flex;gap:8px;align-items:flex-end;">
-        <label class="attach-btn" title="Attach photo" style="margin-bottom:2px;">
-          <input type="file" id="chat-image" accept="image/*" style="display:none" onchange="previewChatImage(this)">
-          <svg viewBox="0 0 24 24" width="26" height="26" style="fill:#8696a0;transition:fill .2s;" onmouseover="this.style.fill='#128C7E'" onmouseout="this.style.fill='#8696a0'"><path d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 003.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.098-.097-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 01-2.829 1.171 3.975 3.975 0 01-2.83-1.173 3.973 3.973 0 01-1.172-2.828c0-1.071.418-2.074 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 00-.834.018L3.458 11.59a5.556 5.556 0 00-1.642 3.966z"/></svg>
-        </label>
-        <textarea id="chat-input" placeholder="Message" rows="1"></textarea>
-        <button class="send-btn" onclick="sendMessage()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
-      </div>
+    <div id="chat-gate" class="chat-gate" style="display:none">
+      <p>Sign in to chat with Signature Digital</p>
+      <button onclick="openAuth()">Sign In</button>
     </div>
+    <div id="chat-msgs"></div>
+  </div>
+  <div id="chat-bar" class="hidden">
+    <label class="attach-lbl">
+      <input type="file" id="chat-img-input" accept="image/*" style="display:none" onchange="previewChatImg(this)">
+      <svg viewBox="0 0 24 24"><path d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 003.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 01-2.829 1.171 3.975 3.975 0 01-2.83-1.173 3.973 3.973 0 01-1.172-2.828c0-1.071.418-2.074 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 00-.834.018L3.458 11.59a5.556 5.556 0 00-1.642 3.966z"/></svg>
+    </label>
+    <div class="inner">
+      <div class="img-preview-wrap" id="chat-img-preview">
+        <img id="chat-preview-img" src=""><button class="img-clear" onclick="clearChatImg()">✕</button>
+      </div>
+      <textarea id="chat-input" placeholder="Message" rows="1"></textarea>
+    </div>
+    <button class="send-btn" onclick="sendMsg()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
   </div>
 
-  <!-- ADMIN INBOX VIEW -->
+  <!-- INBOX (admin) -->
   <div id="inbox-view" class="hidden">
+    <div class="inbox-pin">
+      <div class="inbox-pin-av">SD</div>
+      <div>
+        <div class="inbox-pin-name">Signature Digital</div>
+        <div class="inbox-pin-sub">077 831 5058 — Admin</div>
+      </div>
+    </div>
     <div id="inbox-list"></div>
   </div>
-
-  <!-- ADMIN CHAT HEADER -->
-  <div id="admin-chat-header" class="hidden">
-    <button onclick="closeAdminChat()">&#8592;</button>
-    <div><div class="ac-name" id="ac-name"></div><div class="ac-phone" id="ac-phone"></div></div>
-  </div>
-
-</div>
-
-<!-- USERNAME EDIT MODAL -->
-<div id="username-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:12px;width:320px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-    <div style="background:var(--wa-header);padding:18px 20px;">
-      <p style="color:#fff;font-size:16px;font-weight:600;">Edit Username</p>
+  <div id="admin-chat-hdr" class="hidden">
+    <button onclick="closeAdminChat()">←</button>
+    <div>
+      <div class="ac-name" id="ac-name"></div>
+      <div class="ac-phone" id="ac-phone"></div>
     </div>
-    <div style="padding:20px;">
-      <p style="font-size:13px;color:var(--wa-text-secondary);margin-bottom:12px;">This name will be visible to admin when you chat.</p>
-      <input type="text" id="username-input" placeholder="Your name or nickname" style="width:100%;padding:11px 13px;border:1.5px solid var(--wa-border);border-radius:8px;font-size:14px;outline:none;font-family:inherit;margin-bottom:14px;">
-      <div style="display:flex;gap:8px;">
-        <button onclick="closeEditUsername()" style="flex:1;padding:11px;background:var(--wa-input-bg);border:none;border-radius:8px;font-size:14px;cursor:pointer;">Cancel</button>
-        <button onclick="saveUsername()" style="flex:1;padding:11px;background:var(--wa-green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- PULL TO REFRESH -->
-<div id="ptr-indicator">
-  <div id="ptr-spinner">
-    <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
   </div>
 </div>
 
 <div id="toast"></div>
 
-<!-- Supabase SDK -->
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-// ════════════════════════════════════════════════
-//  🔧 SUPABASE CONFIG — Replace these two values
-// ════════════════════════════════════════════════
-const SUPABASE_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
-
-// ════════════════════════════════════════════════
-//  🔧 YOUR SETTINGS
-// ════════════════════════════════════════════════
-const ADMIN_PHONE = '0778315058';
+// ════════════════════════════════════════
+// CONFIG — replace with your values
+// ════════════════════════════════════════
+const SB_URL  = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
 const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
-const OTP_SECRET = 'SGD_OTP_2026'; // Your phone number (used to detect admin)
+const OTP_SECRET = 'SGD_OTP_2026';
+const ADMIN_PHONE = '0778315058';
+const ADMIN_NUMBERS = ['94778315058','94765813386','94763824563'];
+const WELCOME_MSG = "👋 Hey there! Welcome to Signature Digital. I'm here to assist you with any subscriptions or questions. Feel free to message me anytime! 😊";
+const ADMIN_ERR = 'Something went wrong. <a href="https://wa.me/94778315058" target="_blank" style="color:#e53935;text-decoration:underline;">Report Admin</a> for assistance.';
 
-// ════════════════════════════════════════════════
 const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = createClient(SB_URL, SB_KEY);
 
-let currentUser = null;
-let isAdmin = false;
-let currentTab = 'updates';
-let chatSub = null;
-let adminOpenChatId = null; // which client chat admin is viewing
-let statusInterval = null;
+// ── STATE ────────────────────────────────
+let user = null, isAdmin = false, curTab = 'updates';
+let chatSub = null, pollInt = null, inboxPoll = null;
+let adminChatId = null, adminChatName = null;
+let postImgFile = null, chatImgFile = null;
 
-// ── INIT ────────────────────────────────────────
+// ── OTP STATE ────────────────────────────
+let otpPhone = '', otpCC = '94', otpAttempts = 0, otpSends = 0, otpVerifiedPhone = null;
+let otpBlockedUntil = 0;
+const MAX_ATT = 3, MAX_SENDS = 3;
+
+// ── INIT ─────────────────────────────────
 async function init() {
+  if ('caches' in window) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
   const { data: { session } } = await sb.auth.getSession();
-  if (session) await onSignIn(session.user);
-  else showAuthOverlay();
-
-  sb.auth.onAuthStateChange(async (_e, session) => {
-    if (session) await onSignIn(session.user);
-    else onSignOut();
+  if (session) await onSignIn(session.user); else showAuthIfNeeded();
+  sb.auth.onAuthStateChange(async (_, sess) => {
+    if (sess) await onSignIn(sess.user); else onSignOut();
   });
-
-  startOwnerStatusListener();
-  startInboxPoller();
+  startOwnerStatus();
+  initPTR();
+  fixViewport();
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fixViewport);
 }
 
-async function onSignIn(user) {
-  currentUser = user;
-  const phone = user.user_metadata?.phone || '';
-  const norm = p => p.replace(/\D/g,'').replace(/^94/,'').replace(/^0/,'');
-  isAdmin = norm(phone) === norm(ADMIN_PHONE);
-  closeAuthOverlay();
-  document.getElementById('pm-login').style.display = 'none';
-  document.getElementById('pm-logout').style.display = '';
-  document.getElementById('pm-edit-username').style.display = '';
-  await updateProfileMenu(user);
+function fixViewport() {
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.body.style.height = h + 'px';
+}
+
+function showAuthIfNeeded() { /* don't auto-show, only on demand */ }
+
+// ── AUTH ─────────────────────────────────
+function openAuth() { document.getElementById('auth-overlay').classList.remove('hidden'); closeProfileMenu(); }
+function closeAuth() { document.getElementById('auth-overlay').classList.add('hidden'); }
+
+function authTab(t) {
+  document.getElementById('login-form').style.display = t === 'login' ? '' : 'none';
+  document.getElementById('reg-form').style.display = t === 'register' ? '' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((el,i) => el.classList.toggle('active', i===(t==='login'?0:1)));
+  setErr('');
+  if (t === 'register') { resetOTP(); regStep(1); }
+}
+
+function setErr(m) { document.getElementById('auth-err').innerHTML = m || ''; }
+
+function normPhone(cc, num) {
+  const d = num.replace(/\D/g,'').replace(/^0+/,'');
+  return cc.replace(/\D/g,'') + d;
+}
+function toEmail(cc, num) { return normPhone(cc, num) + '@sigdig.app'; }
+function toPhone(cc, num) { return '+' + normPhone(cc, num); }
+
+async function onSignIn(u) {
+  user = u;
+  const ph = u.user_metadata?.phone || '';
+  const norm = p => p.replace(/\D/g,'').replace(/^0+/,'');
+  isAdmin = ADMIN_NUMBERS.some(a => a === norm(ph).replace(/^94/,'94'));
+  // also check by email
+  if (!isAdmin && u.email) {
+    const emailNum = u.email.replace('@sigdig.app','');
+    isAdmin = ADMIN_NUMBERS.includes(emailNum);
+  }
+  closeAuth();
+  document.getElementById('pm-signin').style.display = 'none';
+  document.getElementById('pm-signout').style.display = '';
+  document.getElementById('pm-edit-uname').style.display = '';
+  await refreshProfileMenu(u);
   if (isAdmin) setAdminOnline(true);
-  renderCurrentTab();
+  renderTab();
+  if (isAdmin) startInboxPoll();
 }
 
 function onSignOut() {
-  currentUser = null; isAdmin = false;
-  updateProfileMenu(null);
-  document.getElementById('pm-login').style.display = '';
-  document.getElementById('pm-logout').style.display = 'none';
-  renderCurrentTab();
-}
-
-// ── AUTH ─────────────────────────────────────────
-function switchAuthTab(t) {
-  if (t === 'register') { resetOTPCounters(); if(document.getElementById('reg-otp')) document.getElementById('reg-otp').value=''; }
-  document.getElementById('login-form').style.display = t === 'login' ? '' : 'none';
-  document.getElementById('register-form').style.display = t === 'register' ? '' : 'none';
-  document.querySelectorAll('.auth-tab').forEach((el,i) => el.classList.toggle('active', i===(t==='login'?0:1)));
-  setAuthError('');
-}
-function setAuthError(m) { document.getElementById('auth-error').textContent = m; }
-function setAuthLoading(id, loading) {
-  const b = document.getElementById(id);
-  b.disabled = loading; b.textContent = loading ? 'Please wait...' : (id==='login-btn' ? 'Login' : 'Create Account');
-}
-
-function fmtPhone(raw) {
-  let d = raw.replace(/\D/g,'');
-  if (d.startsWith('0')) d = d.substring(1);
-  return '+94' + d;
-}
-function fmtEmail(raw) {
-  let d = raw.replace(/\D/g,'');
-  if (d.startsWith('0')) d = d.substring(1);
-  return '94' + d + '@sigdig.app';
+  user = null; isAdmin = false;
+  document.getElementById('pm-signin').style.display = '';
+  document.getElementById('pm-signout').style.display = 'none';
+  document.getElementById('pm-edit-uname').style.display = 'none';
+  refreshProfileMenu(null);
+  renderTab();
 }
 
 async function doLogin() {
-  const phone = document.getElementById('login-phone').value.trim();
-  const pass = document.getElementById('login-pass').value;
-  if (!phone || !pass) return setAuthError('Please fill all fields');
-  setAuthLoading('login-btn', true);
-  const { error } = await sb.auth.signInWithPassword({ email: fmtEmail(phone), password: pass });
-  setAuthLoading('login-btn', false);
-  if (error) setAuthError(error.message.includes('Invalid') ? 'Wrong phone or password' : error.message);
-  else showToast('Welcome back!');
-}
-
-let otpVerifiedPhone = null;
-let otpAttempts = 0;
-let otpSendCount = 0;
-const MAX_ATTEMPTS = 3;
-const MAX_SENDS = 3;
-
-// ── OTP ABUSE PREVENTION ─────────────────────────────
-// Stores: { phone, sends, attempts, blockedUntil, sessionId }
-function getOTPSession() {
+  const cc  = document.getElementById('login-cc').value.trim() || '94';
+  const num = document.getElementById('login-phone').value.trim();
+  const pw  = document.getElementById('login-pass').value;
+  if (!num || !pw) return setErr('Please fill all fields');
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
   try {
-    const raw = sessionStorage.getItem('otp_session');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-function saveOTPSession(data) {
-  try { sessionStorage.setItem('otp_session', JSON.stringify(data)); } catch {}
-}
-function clearOTPSession() {
-  try { sessionStorage.removeItem('otp_session'); } catch {}
-}
-function getGlobalBlock() {
-  try {
-    const raw = localStorage.getItem('otp_global_block');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-function setGlobalBlock(until) {
-  try { localStorage.setItem('otp_global_block', JSON.stringify({ until, ts: Date.now() })); } catch {}
-}
-function checkGlobalBlock() {
-  const block = getGlobalBlock();
-  if (!block) return null;
-  if (Date.now() > block.until) { localStorage.removeItem('otp_global_block'); return null; }
-  return block.until;
-}
-
-// Generate a session fingerprint to track this browser
-function getSessionId() {
-  let sid = localStorage.getItem('otp_sid');
-  if (!sid) {
-    sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem('otp_sid', sid);
-  }
-  return sid;
-}
-
-function resetOTPCounters() {
-  otpAttempts = 0;
-  otpSendCount = 0;
-  otpBlockedUntil = 0;
-  clearOTPSession();
-  const warn = document.getElementById('attempts-warning');
-  if (warn) warn.style.display = 'none';
-  const resendBtn = document.getElementById('resend-btn');
-  if (resendBtn) { resendBtn.disabled = false; resendBtn.style.opacity = '1'; }
-  const verifyBtn = document.getElementById('reg-btn-verify');
-  if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.style.opacity = '1'; verifyBtn.textContent = 'Verify Code'; }
-}
-
-function showRegStep(n) {
-  if (n === 1) resetOTPCounters();
-  document.getElementById('reg-step1').style.display = n === 1 ? '' : 'none';
-  document.getElementById('reg-step2').style.display = n === 2 ? '' : 'none';
-  document.getElementById('reg-step3').style.display = n === 3 ? '' : 'none';
-  setAuthError('');
-  // Update step indicators
-  [1,2,3].forEach(i => {
-    const el = document.getElementById('si' + i);
-    const active = i <= n;
-    el.style.background = active ? 'var(--wa-green)' : 'var(--wa-border)';
-    el.style.color = active ? '#fff' : 'var(--wa-text-secondary)';
-  });
-  if (document.getElementById('si-line1')) document.getElementById('si-line1').style.background = n >= 2 ? 'var(--wa-green)' : 'var(--wa-border)';
-  if (document.getElementById('si-line2')) document.getElementById('si-line2').style.background = n >= 3 ? 'var(--wa-green)' : 'var(--wa-border)';
-}
-
-async function sendOTP(isResend) {
-  const phone = document.getElementById('reg-phone').value.trim();
-  if (!phone || phone.length < 9) return setAuthError('Enter a valid phone number');
-
-  // Check global block (browser-level)
-  const blockedUntil = checkGlobalBlock();
-  if (blockedUntil) {
-    const minsLeft = Math.ceil((blockedUntil - Date.now()) / 60000);
-    setAuthError('Too many attempts. Try again in ' + minsLeft + ' min.');
-    return;
-  }
-
-  // Check session — if phone changed, warn and reset
-  let session = getOTPSession();
-  if (session && session.phone && session.phone !== phone) {
-    // Different number attempted — count against global limit
-    const switchCount = parseInt(localStorage.getItem('otp_switch_count') || '0') + 1;
-    localStorage.setItem('otp_switch_count', switchCount);
-    if (switchCount >= 2) {
-      setGlobalBlock(Date.now() + 3600000);
-      localStorage.removeItem('otp_switch_count');
-      setAuthError('Suspicious activity detected. Try again in 60 min.');
-      return;
-    }
-    // Reset session for new number
-    session = null;
-    clearOTPSession();
-    otpAttempts = 0;
-    otpSendCount = 0;
-  }
-
-  const sends = session ? session.sends : 0;
-  if (sends >= MAX_SENDS) {
-    setAuthError('Maximum ' + MAX_SENDS + ' OTPs allowed per number. Try again later.');
-    const resendBtn = document.getElementById('resend-btn');
-    if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; }
-    return;
-  }
-
-  const btn = document.getElementById('reg-btn-send');
-  btn.disabled = true; btn.textContent = 'Sending...';
-  try {
-    const res = await fetch(BOT_URL + '/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,''), session_id: getSessionId() })
-    });
-    const data = await res.json();
-    if (!res.ok) { setAuthError(data.error || 'Failed to send OTP'); return; }
-
-    // Save session
-    const newSends = sends + 1;
-    otpSendCount = newSends;
-    otpAttempts = 0;
-    saveOTPSession({ phone, sends: newSends, attempts: 0, sessionId: getSessionId() });
-
-    document.getElementById('attempts-warning').style.display = 'none';
-    if (newSends >= MAX_SENDS) {
-      const resendBtn = document.getElementById('resend-btn');
-      if (resendBtn) { resendBtn.disabled = true; resendBtn.style.opacity = '0.4'; resendBtn.title = 'Maximum OTPs sent'; }
-    }
-    const phoneDisplay = document.getElementById('reg-phone-display');
-    if (phoneDisplay) phoneDisplay.textContent = '+94 ' + phone;
-    showRegStep(2);
-    showToast(isResend ? 'New OTP sent! (' + newSends + '/' + MAX_SENDS + ' used)' : 'OTP sent to your WhatsApp!');
-  } catch(e) {
-    setAuthError('Could not reach server. Try again.');
-  } finally {
-    btn.disabled = false; btn.textContent = '📲 Send OTP via WhatsApp';
-  }
-}
-
-let otpBlockedUntil = 0;
-
-async function verifyOTP() {
-  const phone = document.getElementById('reg-phone').value.trim();
-  const otp = document.getElementById('reg-otp').value.trim();
-  if (!otp || otp.length !== 6) return setAuthError('Enter the 6-digit code');
-
-  // Check if blocked
-  if (Date.now() < otpBlockedUntil) {
-    const minsLeft = Math.ceil((otpBlockedUntil - Date.now()) / 60000);
-    setAuthError('Too many attempts. Try again in ' + minsLeft + ' min.');
-    return;
-  }
-
-  if (otpAttempts >= MAX_ATTEMPTS) {
-    otpBlockedUntil = Date.now() + 3600000; // block for 1 hour
-    setAuthError('Too many attempts. Try again in 60 min.');
-    const btn = document.getElementById('reg-btn-verify');
-    btn.disabled = true; btn.style.opacity = '0.5';
-    document.getElementById('attempts-warning').style.display = 'none';
-    return;
-  }
-
-  const btn = document.getElementById('reg-btn-verify');
-  btn.disabled = true; btn.textContent = 'Verifying...';
-  try {
-    const res = await fetch(BOT_URL + '/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: OTP_SECRET, phone: '0' + phone.replace(/^0+/,''), otp })
-    });
-    const data = await res.json();
-    if (!res.ok || !data.valid) {
-      otpAttempts++;
-      const remaining = MAX_ATTEMPTS - otpAttempts;
-      setAuthError(data.error || 'Incorrect code');
-      document.getElementById('reg-otp').value = '';
-
-      const warn = document.getElementById('attempts-warning');
-      if (remaining > 0 && remaining < MAX_ATTEMPTS) {
-        // only show after first failure
-        warn.style.display = 'block';
-        warn.textContent = remaining === 1
-          ? '⚠️ Last attempt remaining'
-          : remaining + ' attempts remaining';
-      } else if (remaining <= 0) {
-        otpBlockedUntil = Date.now() + 3600000;
-        warn.style.display = 'none';
-        setAuthError('Too many attempts. Try again in 60 min.');
-        btn.disabled = true; btn.style.opacity = '0.5';
-        return;
-      }
-      btn.disabled = false; btn.textContent = 'Verify Code';
-      return;
-    }
-    // Success
-    otpVerifiedPhone = phone;
-    otpAttempts = 0;
-    clearOTPSession();
-    localStorage.removeItem('otp_switch_count');
-    showRegStep(3);
-  } catch(e) {
-    setAuthError('Could not verify. Try again.');
-    btn.disabled = false; btn.textContent = 'Verify Code';
-  } finally {
-    if (!btn.disabled || otpAttempts < MAX_ATTEMPTS) {
-      btn.textContent = 'Verify Code';
-    }
-  }
-}
-
-async function doRegister() {
-  if (!otpVerifiedPhone) return setAuthError('Please verify your phone first');
-  const phone = otpVerifiedPhone;
-  const pass = document.getElementById('reg-pass').value;
-  const pass2 = document.getElementById('reg-pass2').value;
-  if (!phone || !pass) return setAuthError('Please fill all fields');
-  if (pass.length < 6) return setAuthError('Password min 6 characters');
-  if (pass !== pass2) return setAuthError('Passwords do not match');
-  setAuthLoading('reg-btn', true);
-  const username = document.getElementById('reg-username').value.trim();
-  const { data: signUpData, error } = await sb.auth.signUp({
-    email: fmtEmail(phone), password: pass,
-    options: { data: { phone: fmtPhone(phone), username: username || null } }
-  });
-  setAuthLoading('reg-btn', false);
-  if (error) setAuthError(error.message.includes('already') ? 'Phone already registered' : error.message);
-  else {
-    if (signUpData?.user) {
-      // Save profile
-      await sb.from('profiles').upsert({ 
-        id: signUpData.user.id, 
-        phone: fmtPhone(phone), 
-        username: username || null 
-      });
-      // Send welcome message from admin into client's chat
-      await sendWelcomeMessage(signUpData.user.id);
-    }
-    showToast('Account created! You are now logged in.');
-  }
+    const { error } = await sb.auth.signInWithPassword({ email: toEmail(cc, num), password: pw });
+    if (error) setErr(error.message.includes('Invalid') ? 'Wrong number or password' : error.message);
+    else showToast('Welcome back!');
+  } catch(e) { setErr(ADMIN_ERR); }
+  finally { btn.disabled = false; btn.textContent = 'Login'; }
 }
 
 async function doLogout() {
@@ -720,548 +585,483 @@ async function doLogout() {
   closeProfileMenu(); showToast('Signed out');
 }
 
-function showAuthOverlay() { document.getElementById('auth-overlay').classList.remove('hidden'); }
-function closeAuthOverlay() { document.getElementById('auth-overlay').classList.add('hidden'); }
-function openAuth() { showAuthOverlay(); closeProfileMenu(); }
-function continueAsGuest() { closeAuthOverlay(); renderCurrentTab(); }
+// ── OTP FLOW ─────────────────────────────
+function resetOTP() {
+  otpAttempts = 0; otpSends = 0; otpVerifiedPhone = null; otpBlockedUntil = 0;
+  const w = document.getElementById('attempts-warn'); if(w) w.textContent='';
+  const vb = document.getElementById('otp-verify-btn'); if(vb){ vb.disabled=false; vb.textContent='Verify Code'; vb.style.opacity='1'; }
+  const rb = document.getElementById('resend-btn'); if(rb){ rb.disabled=false; rb.style.opacity='1'; }
+}
 
-// ── PROFILE MENU ─────────────────────────────────
+function regStep(n) {
+  [1,2,3].forEach(i => {
+    const s = document.getElementById('rs'+i);
+    if(s) s.style.display = i===n ? '' : 'none';
+  });
+  // update step dots
+  [1,2,3].forEach(i => {
+    const d = document.getElementById('sd'+i);
+    if(!d) return;
+    d.className = 'step-dot ' + (i < n ? 'done' : i === n ? 'active' : 'idle');
+  });
+  [1,2].forEach(i => {
+    const l = document.getElementById('sl'+i);
+    if(l) l.className = 'step-line' + (i < n ? ' done' : '');
+  });
+  setErr('');
+}
+
+async function sendOTP(isResend) {
+  const cc  = document.getElementById('reg-cc').value.trim() || '94';
+  const num = document.getElementById('reg-phone').value.trim();
+  if (!num || num.replace(/\D/g,'').length < 6) return setErr('Enter a valid phone number');
+  if (otpSends >= MAX_SENDS) return setErr('Maximum OTPs sent. Try again later.');
+  const btn = isResend ? document.getElementById('resend-btn') : document.getElementById('otp-send-btn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 12000);
+    const res = await fetch(BOT_URL + '/send-otp', {
+      method: 'POST', signal: ctrl.signal,
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ secret: OTP_SECRET, phone: toPhone(cc, num) })
+    });
+    const data = await res.json();
+    if (!res.ok) return setErr(data.error || ADMIN_ERR);
+    otpCC = cc; otpPhone = num; otpSends++;
+    document.getElementById('otp-phone-disp').textContent = '+' + cc + ' ' + num;
+    if (otpSends >= MAX_SENDS) {
+      const rb = document.getElementById('resend-btn');
+      rb.disabled = true; rb.style.opacity = '0.4';
+    }
+    regStep(2);
+    showToast(isResend ? 'New OTP sent!' : 'OTP sent to your WhatsApp!');
+  } catch(e) {
+    setErr(e.name==='AbortError' ? 'Request timed out. ' + ADMIN_ERR : ADMIN_ERR);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = isResend ? 'Resend OTP' : '📲 Send OTP via WhatsApp';
+  }
+}
+
+async function verifyOTP() {
+  if (Date.now() < otpBlockedUntil) {
+    const m = Math.ceil((otpBlockedUntil - Date.now())/60000);
+    return setErr('Too many attempts. Try again in ' + m + ' min.');
+  }
+  if (otpAttempts >= MAX_ATT) {
+    otpBlockedUntil = Date.now() + 3600000;
+    const vb = document.getElementById('otp-verify-btn');
+    vb.disabled = true; vb.style.opacity = '0.5';
+    return setErr('Too many failed attempts. Please try again later.');
+  }
+  const otp = document.getElementById('reg-otp').value.trim();
+  if (!otp || otp.length !== 6) return setErr('Enter the 6-digit code');
+  const btn = document.getElementById('otp-verify-btn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 12000);
+    const res = await fetch(BOT_URL + '/verify-otp', {
+      method: 'POST', signal: ctrl.signal,
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ secret: OTP_SECRET, phone: toPhone(otpCC, otpPhone), otp })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.valid) {
+      otpAttempts++;
+      document.getElementById('reg-otp').value = '';
+      const rem = MAX_ATT - otpAttempts;
+      setErr(data.error || 'Incorrect code');
+      const w = document.getElementById('attempts-warn');
+      if (rem > 0 && rem < MAX_ATT) {
+        w.textContent = rem === 1 ? '⚠️ Last attempt remaining' : rem + ' attempts remaining';
+      } else if (rem <= 0) {
+        otpBlockedUntil = Date.now() + 3600000;
+        w.textContent = '';
+        btn.disabled = true; btn.style.opacity = '0.5';
+        setErr('Too many failed attempts. Please try again later.');
+        return;
+      }
+      btn.disabled = false; btn.textContent = 'Verify Code';
+      return;
+    }
+    otpVerifiedPhone = { cc: otpCC, num: otpPhone };
+    regStep(3);
+  } catch(e) {
+    setErr(e.name==='AbortError' ? 'Request timed out. ' + ADMIN_ERR : ADMIN_ERR);
+    btn.disabled = false; btn.textContent = 'Verify Code';
+  }
+}
+
+async function doRegister() {
+  if (!otpVerifiedPhone) return setErr('Please verify your phone first');
+  const { cc, num } = otpVerifiedPhone;
+  const pw   = document.getElementById('reg-pass').value;
+  const pw2  = document.getElementById('reg-pass2').value;
+  const uname = document.getElementById('reg-uname').value.trim();
+  if (!pw) return setErr('Enter a password');
+  if (pw.length < 6) return setErr('Password must be at least 6 characters');
+  if (pw !== pw2) return setErr('Passwords do not match');
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try {
+    const { data: sd, error } = await sb.auth.signUp({
+      email: toEmail(cc, num), password: pw,
+      options: { data: { phone: toPhone(cc, num), username: uname || null } }
+    });
+    if (error) { setErr(error.message.includes('already') ? 'Phone already registered' : error.message); return; }
+    if (sd?.user) {
+      await sb.from('profiles').upsert({ id: sd.user.id, phone: toPhone(cc, num), username: uname || null });
+      // send welcome message
+      const { data: ex } = await sb.from('messages').select('id').eq('chat_id', sd.user.id).eq('is_admin_msg', true).limit(1);
+      if (!ex || ex.length === 0) {
+        await sb.from('messages').insert({ chat_id: sd.user.id, sender_id: '00000000-0000-0000-0000-000000000000', text: WELCOME_MSG, is_admin_msg: true });
+      }
+    }
+    showToast('Account created!');
+  } catch(e) { setErr(ADMIN_ERR); }
+  finally { btn.disabled = false; btn.textContent = 'Create Account'; }
+}
+
+// ── PROFILE MENU ─────────────────────────
 function toggleProfileMenu() { document.getElementById('profile-menu').classList.toggle('hidden'); }
 function closeProfileMenu() { document.getElementById('profile-menu').classList.add('hidden'); }
 document.addEventListener('click', e => {
   if (!document.getElementById('profile-menu').classList.contains('hidden') &&
-      !e.target.closest('#profile-menu') && !e.target.closest('.h-btn')) closeProfileMenu();
+      !e.target.closest('#profile-menu') && !e.target.closest('.hdr-btn')) closeProfileMenu();
 });
-async function updateProfileMenu(user) {
-  if (user) {
-    const ph = user.user_metadata?.phone || '';
-    document.getElementById('p-name').textContent = isAdmin ? 'Admin' : 'Client';
-    document.getElementById('p-phone').textContent = ph || 'Signed in';
-    document.getElementById('p-avatar').textContent = ph.slice(-2) || 'U';
-    // Load username from profiles
-    const { data } = await sb.from('profiles').select('username').eq('id', user.id).single();
-    if (data?.username) {
-      document.getElementById('p-phone').textContent = ph;
-      // show username below phone
-      let unEl = document.getElementById('p-username');
-      if (!unEl) {
-        unEl = document.createElement('div');
-        unEl.id = 'p-username';
-        unEl.style.cssText = 'font-size:12px;color:var(--wa-green);font-weight:500;margin-top:2px;';
-        document.getElementById('p-phone').after(unEl);
-      }
-      unEl.textContent = data.username;
-    }
-    document.getElementById('pm-edit-username').style.display = '';
-  } else {
-    document.getElementById('p-name').textContent = 'Guest';
-    document.getElementById('p-phone').textContent = 'Not signed in';
-    document.getElementById('p-avatar').textContent = '?';
-    document.getElementById('pm-edit-username').style.display = 'none';
-    const unEl = document.getElementById('p-username');
-    if (unEl) unEl.remove();
+
+async function refreshProfileMenu(u) {
+  if (!u) {
+    document.getElementById('pm-name').textContent = 'Guest';
+    document.getElementById('pm-phone').textContent = 'Not signed in';
+    document.getElementById('pm-av').textContent = '?';
+    document.getElementById('pm-uname').style.display = 'none';
+    return;
   }
+  const ph = u.user_metadata?.phone || '';
+  document.getElementById('pm-name').textContent = isAdmin ? 'Admin' : 'Client';
+  document.getElementById('pm-phone').textContent = ph || 'Signed in';
+  document.getElementById('pm-av').textContent = ph.slice(-2) || 'U';
+  const { data } = await sb.from('profiles').select('username').eq('id', u.id).single();
+  const unEl = document.getElementById('pm-uname');
+  if (data?.username) { unEl.textContent = data.username; unEl.style.display = ''; }
+  else { unEl.style.display = 'none'; }
 }
 
-// ── TABS ─────────────────────────────────────────
-function switchTab(tab) {
-  currentTab = tab;
-  document.getElementById('tab-updates').classList.toggle('active', tab==='updates');
-  document.getElementById('tab-chat').classList.toggle('active', tab==='chat');
-  renderCurrentTab();
+function openUnameModal() {
+  closeProfileMenu();
+  const cur = document.getElementById('pm-uname').textContent;
+  document.getElementById('uname-inp').value = cur || '';
+  document.getElementById('uname-modal').style.display = 'flex';
+}
+function closeUnameModal() { document.getElementById('uname-modal').style.display = 'none'; }
+async function saveUname() {
+  const v = document.getElementById('uname-inp').value.trim();
+  if (!v) return showToast('Enter a username');
+  const { error } = await sb.from('profiles').upsert({ id: user.id, username: v, phone: user.user_metadata?.phone });
+  if (error) return showToast('Error saving');
+  closeUnameModal(); showToast('Username saved!');
+  refreshProfileMenu(user);
 }
 
-function renderCurrentTab() {
-  const onUpdates = currentTab === 'updates';
-  // hide all panels first
-  ['updates-view','chat-view','inbox-view','admin-chat-header','chat-input-bar'].forEach(id => {
+// ── TABS ─────────────────────────────────
+function switchTab(t) {
+  curTab = t;
+  document.getElementById('tab-updates').classList.toggle('active', t==='updates');
+  document.getElementById('tab-chat').classList.toggle('active', t==='chat');
+  if (t==='chat') setBadge(0);
+  renderTab();
+}
+
+function renderTab() {
+  const onU = curTab === 'updates';
+  // hide all
+  ['updates-view','admin-bar','chat-view','chat-bar','inbox-view','admin-chat-hdr'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
-
-  document.getElementById('admin-post-bar').classList.add('hidden');
-  if (onUpdates) {
+  if (onU) {
     document.getElementById('updates-view').classList.remove('hidden');
-    if (isAdmin) document.getElementById('admin-post-bar').classList.remove('hidden');
+    if (isAdmin) document.getElementById('admin-bar').classList.remove('hidden');
     loadUpdates();
   } else {
-    // Chat tab
-    if (!currentUser) {
+    if (!user) {
       document.getElementById('chat-view').classList.remove('hidden');
       document.getElementById('chat-gate').style.display = '';
-      document.getElementById('chat-messages').innerHTML = '';
+      document.getElementById('chat-msgs').innerHTML = '';
     } else if (isAdmin) {
-      // Admin sees inbox
-      if (adminOpenChatId) {
-        showAdminChat(adminOpenChatId);
-      } else {
-        document.getElementById('inbox-view').classList.remove('hidden');
-        loadInbox();
-      }
+      if (adminChatId) showAdminChat(adminChatId, adminChatName);
+      else { document.getElementById('inbox-view').classList.remove('hidden'); loadInbox(); }
     } else {
-      // Client sees their own chat
       document.getElementById('chat-view').classList.remove('hidden');
       document.getElementById('chat-gate').style.display = 'none';
-      document.getElementById('chat-input-bar').classList.remove('hidden');
-      updateTabBadge(0);
-      loadChat(currentUser.id);
+      document.getElementById('chat-bar').classList.remove('hidden');
+      setBadge(0);
+      loadChat(user.id);
     }
   }
 }
 
-// ── OWNER STATUS ─────────────────────────────────
-async function setAdminOnline(online) {
-  await sb.from('owner_status').upsert({ id: 1, online, last_seen: new Date().toISOString() });
+// ── OWNER STATUS ─────────────────────────
+async function setAdminOnline(on) {
+  await sb.from('owner_status').upsert({ id: 1, online: on, last_seen: new Date().toISOString() });
 }
-
-function startInboxPoller() {
-  if (!isAdmin) return;
-  setInterval(() => { if (currentTab === 'chat' && !adminOpenChatId) loadInbox(); }, 5000);
-}
-
-function startOwnerStatusListener() {
+function startOwnerStatus() {
   loadOwnerStatus();
-  statusInterval = setInterval(loadOwnerStatus, 30000);
-  // Realtime
-  sb.channel('owner_status').on('postgres_changes', { event: '*', schema: 'public', table: 'owner_status' }, loadOwnerStatus).subscribe();
+  setInterval(loadOwnerStatus, 30000);
+  sb.channel('owner_status_ch').on('postgres_changes', { event: '*', schema: 'public', table: 'owner_status' }, loadOwnerStatus).subscribe();
   window.addEventListener('beforeunload', () => { if (isAdmin) setAdminOnline(false); });
 }
-
 async function loadOwnerStatus() {
   const { data } = await sb.from('owner_status').select('*').eq('id', 1).single();
   const dot = document.getElementById('owner-dot');
-  const label = document.getElementById('owner-status');
-  if (!data) { label.textContent = 'last seen recently'; return; }
-  if (data.online) {
-    dot.style.display = 'block'; label.textContent = 'online';
-  } else {
-    dot.style.display = 'none';
-    label.textContent = data.last_seen ? 'last seen ' + fmtLastSeen(new Date(data.last_seen)) : 'last seen recently';
-  }
+  const lbl = document.getElementById('owner-status');
+  if (!data) { lbl.textContent = 'last seen recently'; return; }
+  if (data.online) { dot.style.display='block'; lbl.textContent='online'; }
+  else { dot.style.display='none'; lbl.textContent = data.last_seen ? 'last seen ' + fmtLastSeen(new Date(data.last_seen)) : 'last seen recently'; }
 }
-
 function fmtLastSeen(d) {
-  const diff = (Date.now() - d) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return Math.floor(diff/60) + ' min ago';
-  if (diff < 86400) return 'today at ' + d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  if (diff < 172800) return 'yesterday';
+  const s = (Date.now()-d)/1000;
+  if (s<60) return 'just now';
+  if (s<3600) return Math.floor(s/60)+' min ago';
+  if (s<86400) return 'today at '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if (s<172800) return 'yesterday';
   return d.toLocaleDateString();
 }
 
-// ── UPDATES ──────────────────────────────────────
+// ── UPDATES ─────────────────────────────
 async function loadUpdates() {
-  const { data } = await sb.from('updates').select('*').order('created_at', { ascending: true }).limit(30);
+  const { data } = await sb.from('updates').select('*').order('created_at', {ascending:true}).limit(50);
   const list = document.getElementById('updates-list');
   const none = document.getElementById('no-updates');
-  if (!data || !data.length) { list.innerHTML = ''; none.style.display = ''; return; }
+  if (!data || !data.length) { list.innerHTML=''; none.style.display=''; return; }
   none.style.display = 'none';
   list.innerHTML = data.map(u => `
-    <div class="update-card" style="margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);">
+    <div class="update-card">
+      <div class="update-meta">
         <span class="update-badge">UPDATE</span>
-        <span style="font-size:13px;font-weight:600;color:#25D366;cursor:pointer;" onclick="startOrOpenChat(currentUser?.id)">&nbsp;Signature Digital</span>
-        <span style="color:rgba(0,0,0,0.25);font-size:12px;">·</span>
-        <span style="font-size:12px;color:rgba(0,0,0,0.38);cursor:pointer;text-decoration:underline;text-underline-offset:2px;" onclick="startOrOpenChat(currentUser?.id)">077 831 5058</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--wa-text-secondary);">${fmtTime(new Date(u.created_at))}</span>
+        <span class="update-author" onclick="startOrOpenChat()">Signature Digital</span>
+        <span style="color:rgba(0,0,0,.3);font-size:11px;">·</span>
+        <span class="update-phone" onclick="startOrOpenChat()">077 831 5058</span>
+        <span class="update-time">${fmtTime(new Date(u.created_at))}</span>
       </div>
       <div class="update-text">${esc(u.text)}</div>
-      ${u.image_url ? `<img src="${u.image_url}" style="width:100%;border-radius:8px;margin-top:8px;max-height:260px;object-fit:contain;background:#f0f0f0;">` : ''}
+      ${u.image_url?`<img class="update-img" src="${u.image_url}" onclick="window.open('${u.image_url}','_blank')">`:''}
     </div>`).join('');
+  setTimeout(() => { const v=document.getElementById('updates-view'); v.scrollTop=v.scrollHeight; }, 60);
 }
 
 async function postUpdate() {
-  const inp = document.getElementById('post-input');
-  const text = inp.value.trim();
-  if (!text) return;
-  let imageUrl = null;
-  if (postImageFile) {
-    try { imageUrl = await uploadImage(postImageFile, 'update-images'); }
-    catch(e) { showToast('Image upload failed: ' + e.message); return; }
-    clearPostImage();
-  }
-  if (!text && !imageUrl) return;
-  const { error } = await sb.from('updates').insert({ text: text || '', image_url: imageUrl, author_id: currentUser.id });
-  if (error) return showToast('Error: ' + error.message);
-  inp.value = '';
+  const txt = document.getElementById('post-input').value.trim();
+  let imgUrl = null;
+  if (postImgFile) { try { imgUrl = await uploadImg(postImgFile,'update-images'); } catch(e) { showToast('Image upload failed'); return; } clearPostImg(); }
+  if (!txt && !imgUrl) return;
+  const { error } = await sb.from('updates').insert({ text: txt||'', image_url: imgUrl, author_id: user.id });
+  if (error) return showToast('Error: '+error.message);
+  document.getElementById('post-input').value='';
   showToast('Update posted!');
   loadUpdates();
 }
 
-// ── CLIENT CHAT ───────────────────────────────────
-let pollInterval = null;
-function loadChat(userId) {
-  if (chatSub) { chatSub.unsubscribe(); chatSub = null; }
-  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-  fetchMessages(userId);
-  // realtime
-  chatSub = sb.channel('chat_' + userId)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${userId}` }, () => fetchMessages(userId))
+async function startOrOpenChat() {
+  if (!user) { openAuth(); return; }
+  switchTab('chat');
+}
+
+// ── CHAT ─────────────────────────────────
+function loadChat(uid) {
+  if (chatSub) { chatSub.unsubscribe(); chatSub=null; }
+  if (pollInt) { clearInterval(pollInt); pollInt=null; }
+  fetchMsgs(uid);
+  chatSub = sb.channel('chat_'+uid)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`chat_id=eq.${uid}`},()=>fetchMsgs(uid))
     .subscribe();
-  // polling fallback every 3s
-  pollInterval = setInterval(() => fetchMessages(userId), 3000);
+  pollInt = setInterval(() => fetchMsgs(uid), 4000);
 }
 
-async function fetchMessages(userId) {
-  const { data } = await sb.from('messages').select('*').eq('chat_id', userId).order('created_at', { ascending: true }).limit(100);
-  renderMessages(data || [], userId, document.getElementById('chat-messages'));
-  setTimeout(() => {
-    const cv = document.getElementById('chat-view');
-    cv.scrollTop = cv.scrollHeight;
-  }, 50);
-  // client unread = messages not sent by them (admin messages) — only show badge when not on chat tab
-  if (!isAdmin && currentTab !== 'chat') {
-    const unread = (data||[]).filter(m => m.sender_id !== userId || m.is_admin_message).length;
-    updateTabBadge(unread);
-  }
+async function fetchMsgs(uid) {
+  const { data } = await sb.from('messages').select('*').eq('chat_id',uid).order('created_at',{ascending:true}).limit(100);
+  renderMsgs(data||[], uid, document.getElementById('chat-msgs'));
+  setTimeout(()=>{ const v=document.getElementById('chat-view'); if(v) v.scrollTop=v.scrollHeight; },60);
 }
 
-function renderMessages(msgs, myId, container) {
-  let html = '', lastDate = '';
+function renderMsgs(msgs, myId, container) {
+  let html='', lastDate='';
   msgs.forEach(m => {
     const d = new Date(m.created_at);
     const ds = d.toLocaleDateString();
-    if (ds !== lastDate) {
-      html += `<div class="date-sep"><span>${ds === new Date().toLocaleDateString() ? 'Today' : ds}</span></div>`;
-      lastDate = ds;
-    }
-    const sent = !m.is_admin_message && (m.sender_id === myId || (isAdmin && m.sender_id === currentUser.id));
-    html += `<div class="msg-row ${sent?'sent':'received'}">
-      <div class="msg-bubble">
-        ${m.image_url ? `<img src="${m.image_url}" style="max-width:min(220px,60vw);width:100%;border-radius:8px;margin-bottom:4px;display:block;cursor:pointer;object-fit:cover;" onclick="window.open('${m.image_url}','_blank')">` : ''}
-        <div class="msg-text">${esc(m.text)}</div>
-        <div class="msg-time">${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}${sent?'<span class="ticks"> ✓✓</span>':''}</div>
-      </div></div>`;
+    if (ds!==lastDate) { html+=`<div class="date-sep"><span>${ds===new Date().toLocaleDateString()?'Today':ds}</span></div>`; lastDate=ds; }
+    const sent = !m.is_admin_msg && (m.sender_id===myId || (isAdmin && m.sender_id===user?.id));
+    html += `<div class="msg-row ${sent?'sent':'recv'}"><div class="msg-bubble">
+      ${m.image_url?`<img class="msg-img" src="${m.image_url}" onclick="window.open('${m.image_url}','_blank')">`:''}
+      ${m.text?`<div class="msg-txt">${esc(m.text)}</div>`:''}
+      <div class="msg-time">${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}${sent?'<span class="msg-ticks">✓✓</span>':''}</div>
+    </div></div>`;
   });
   container.innerHTML = html;
 }
 
-// Image preview helpers
-let postImageFile = null;
-let chatImageFile = null;
-
-function previewPostImage(input) {
-  if (!input.files[0]) return;
-  postImageFile = input.files[0];
-  const url = URL.createObjectURL(postImageFile);
-  document.getElementById('post-preview-img').src = url;
-  document.getElementById('post-img-preview').style.display = '';
-}
-function clearPostImage() {
-  postImageFile = null;
-  document.getElementById('post-image').value = '';
-  document.getElementById('post-img-preview').style.display = 'none';
-}
-function previewChatImage(input) {
-  if (!input.files[0]) return;
-  chatImageFile = input.files[0];
-  const url = URL.createObjectURL(chatImageFile);
-  document.getElementById('chat-preview-img').src = url;
-  document.getElementById('chat-img-preview').style.display = '';
-}
-function clearChatImage() {
-  chatImageFile = null;
-  document.getElementById('chat-image').value = '';
-  document.getElementById('chat-img-preview').style.display = 'none';
+async function sendMsg() {
+  const txt = document.getElementById('chat-input').value.trim();
+  let imgUrl = null;
+  if (!user) return;
+  const cid = isAdmin ? adminChatId : user.id;
+  if (chatImgFile) { try { imgUrl=await uploadImg(chatImgFile,'chat-images'); } catch(e){ showToast('Image upload failed'); return; } clearChatImg(); }
+  if (!txt && !imgUrl) return;
+  const { error } = await sb.from('messages').insert({ chat_id:cid, sender_id:user.id, text:txt||'', image_url:imgUrl });
+  if (error) return showToast('Error: '+error.message);
+  document.getElementById('chat-input').value='';
+  fetchMsgs(cid);
 }
 
-async function uploadImage(file, bucket) {
-  const ext = file.name.split('.').pop();
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type });
-  if (error) throw error;
-  const { data } = sb.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+// ── ADMIN INBOX ───────────────────────────
+function startInboxPoll() {
+  if (inboxPoll) clearInterval(inboxPoll);
+  inboxPoll = setInterval(() => { if(curTab==='chat' && !adminChatId) loadInbox(); }, 5000);
 }
 
-async function sendMessage() {
-  const inp = document.getElementById('chat-input');
-  const text = inp.value.trim();
-  if (!text || !currentUser) return;
-  const chatId = isAdmin ? adminOpenChatId : currentUser.id;
-  let imageUrl = null;
-  if (chatImageFile) {
-    try { imageUrl = await uploadImage(chatImageFile, 'chat-images'); } 
-    catch(e) { showToast('Image upload failed: ' + e.message); return; }
-    clearChatImage();
-  }
-  if (!text && !imageUrl) return;
-  const { error } = await sb.from('messages').insert({ chat_id: chatId, sender_id: currentUser.id, text: text || '', image_url: imageUrl });
-  if (error) { showToast('Error: ' + error.message); return; }
-  inp.value = '';
-  fetchMessages(chatId);
-}
-
-// ── ADMIN INBOX ───────────────────────────────────
 async function loadInbox() {
-  const { data } = await sb.from('messages').select('chat_id, text, created_at, sender_id, is_admin_message').order('created_at', { ascending: false });
-  if (!data || !data.length) {
-    document.getElementById('inbox-list').innerHTML = '<div class="inbox-empty">No client messages yet.</div>';
-    updateTabBadge(0);
-    return;
-  }
-  // group by chat_id, take latest + count unread (client messages not read by admin)
-  const seen = {};
-  const unreadCount = {};
-  data.forEach(m => {
-    if (!seen[m.chat_id]) seen[m.chat_id] = m;
-    // unread = messages from client (not admin, not is_admin_message) that are unread
-    if (!m.is_admin_message && m.sender_id === m.chat_id) {
-      unreadCount[m.chat_id] = (unreadCount[m.chat_id] || 0) + 1;
-    }
+  const { data } = await sb.from('messages').select('chat_id,text,created_at,sender_id,is_admin_msg,image_url').order('created_at',{ascending:false});
+  if (!data||!data.length) { document.getElementById('inbox-list').innerHTML='<div class="inbox-empty">No client messages yet.</div>'; setBadge(0); return; }
+  const seen={}, unread={};
+  data.forEach(m=>{
+    if(!seen[m.chat_id]) seen[m.chat_id]=m;
+    if(!m.is_admin_msg && m.sender_id===m.chat_id) unread[m.chat_id]=(unread[m.chat_id]||0)+1;
   });
-  const items = Object.values(seen);
-  // fetch user phones
-  const uids = items.map(i => i.chat_id);
-  const { data: users } = await sb.from('profiles').select('id, phone, username').in('id', uids);
-  const phoneMap = {};
-  const usernameMap = {};
-  (users||[]).forEach(u => { phoneMap[u.id] = u.phone; usernameMap[u.id] = u.username; });
-
-  // Sort: most recent first, but pin admin's own initiated chats at top
-  items.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-
-  // total unread for tab badge
-  const totalUnread = Object.values(unreadCount).reduce((a,b) => a+b, 0);
-  updateTabBadge(totalUnread);
-
-  const pinnedCard = `<div style="background:#e8f5e9;padding:13px 16px;border-bottom:2px solid #25D366;display:flex;align-items:center;gap:12px;">
-    <div style="width:46px;height:46px;border-radius:50%;background:#075E54;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px;flex-shrink:0;">SD</div>
-    <div>
-      <div style="font-size:15px;font-weight:600;color:#075E54;">Signature Digital</div>
-      <div style="font-size:12px;color:#667781;">077 831 5058 — You (Admin)</div>
-    </div>
-  </div>`;
-
-  document.getElementById('inbox-list').innerHTML = pinnedCard + items.map(m => {
-    const count = unreadCount[m.chat_id] || 0;
-    const badgeStr = count > 99 ? '99+' : count > 0 ? String(count) : '';
-    return `
-    <div class="inbox-item" onclick="openAdminChat('${m.chat_id}', '${usernameMap[m.chat_id]||phoneMap[m.chat_id]||'Client'}', '${phoneMap[m.chat_id]||''}')">
-      <div class="inbox-avatar">${(usernameMap[m.chat_id]||phoneMap[m.chat_id]||'?').slice(-2).toUpperCase()}</div>
+  const items = Object.values(seen).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const uids = items.map(i=>i.chat_id);
+  const { data: profiles } = await sb.from('profiles').select('id,phone,username').in('id',uids);
+  const pMap={}, uMap={};
+  (profiles||[]).forEach(p=>{ pMap[p.id]=p.phone; uMap[p.id]=p.username; });
+  const total = Object.values(unread).reduce((a,b)=>a+b,0);
+  setBadge(total);
+  document.getElementById('inbox-list').innerHTML = items.map(m=>{
+    const name = uMap[m.chat_id]||pMap[m.chat_id]||'Client';
+    const ph   = pMap[m.chat_id]||'';
+    const cnt  = unread[m.chat_id]||0;
+    const badge = cnt>99?'99+':cnt>0?String(cnt):'';
+    const preview = m.image_url&&!m.text?'📷 Photo':esc(m.text||'');
+    return `<div class="inbox-item" onclick="showAdminChat('${m.chat_id}','${esc(name)}')">
+      <div class="inbox-av">${name.slice(0,2).toUpperCase()}</div>
       <div class="inbox-info">
-        <div class="inbox-name">${usernameMap[m.chat_id] ? usernameMap[m.chat_id] : (phoneMap[m.chat_id] || 'Client')}</div>
-        <div class="inbox-preview" style="font-size:12px;color:#aaa;">${phoneMap[m.chat_id]||''}</div>
-        <div class="inbox-preview">${esc(m.text||'📷 Photo')}</div>
+        <div class="inbox-name">${esc(name)}</div>
+        <div class="inbox-phone">${ph}</div>
+        <div class="inbox-preview">${preview}</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
+      <div class="inbox-right">
         <div class="inbox-time">${fmtTime(new Date(m.created_at))}</div>
-        ${badgeStr ? `<div class="unread-badge">${badgeStr}</div>` : ''}
+        ${badge?`<div class="unread-badge">${badge}</div>`:''}
       </div>
     </div>`;
   }).join('');
 }
 
-function updateTabBadge(count) {
-  const badge = document.getElementById('tab-chat-badge');
-  if (count > 0) {
-    badge.style.display = 'inline-flex';
-    badge.textContent = count > 99 ? '99+' : count;
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-function openAdminChat(chatId, name, phone) {
-  adminOpenChatId = chatId;
-  document.getElementById('inbox-view').classList.add('hidden');
-  document.getElementById('admin-chat-header').classList.remove('hidden');
+function showAdminChat(cid, name) {
+  adminChatId = cid; adminChatName = name;
+  ['inbox-view'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('admin-chat-hdr').classList.remove('hidden');
   document.getElementById('chat-view').classList.remove('hidden');
-  document.getElementById('chat-input-bar').classList.remove('hidden');
-  document.getElementById('chat-gate').style.display = 'none';
+  document.getElementById('chat-bar').classList.remove('hidden');
+  document.getElementById('chat-gate').style.display='none';
   document.getElementById('ac-name').textContent = name;
-  document.getElementById('ac-phone').textContent = phone || 'Client';
-  loadChat(chatId);
+  document.getElementById('ac-phone').textContent = '';
+  loadChat(cid);
 }
 
 function closeAdminChat() {
-  adminOpenChatId = null;
-  if (chatSub) { chatSub.unsubscribe(); chatSub = null; }
+  adminChatId=null; adminChatName=null;
+  if(chatSub){chatSub.unsubscribe();chatSub=null;}
+  if(pollInt){clearInterval(pollInt);pollInt=null;}
   document.getElementById('chat-view').classList.add('hidden');
-  document.getElementById('chat-input-bar').classList.add('hidden');
-  document.getElementById('admin-chat-header').classList.add('hidden');
+  document.getElementById('chat-bar').classList.add('hidden');
+  document.getElementById('admin-chat-hdr').classList.add('hidden');
   document.getElementById('inbox-view').classList.remove('hidden');
   loadInbox();
 }
 
-// ── UTILS ─────────────────────────────────────────
-function esc(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
-function fmtTime(d) {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today - 86400000);
-  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const timeStr = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  if (msgDay.getTime() === today.getTime()) return timeStr;
-  if (msgDay.getTime() === yesterday.getTime()) return 'Yesterday ' + timeStr;
-  return d.toLocaleDateString() + ' ' + timeStr;
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+// ── BADGE ─────────────────────────────────
+function setBadge(n) {
+  const b=document.getElementById('chat-badge');
+  if(n>0){b.style.display='inline-flex';b.textContent=n>99?'99+':n;}
+  else b.style.display='none';
 }
 
-document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
-
-// Mobile keyboard fix — scroll chat to bottom when keyboard opens
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    setTimeout(() => {
-      const cv = document.getElementById('chat-view');
-      if (cv) cv.scrollTop = cv.scrollHeight;
-    }, 100);
-  });
+// ── IMAGE UPLOAD ─────────────────────────
+async function uploadImg(file, bucket) {
+  const ext=file.name.split('.').pop();
+  const path=Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
+  const { error } = await sb.storage.from(bucket).upload(path, file, {contentType:file.type});
+  if (error) throw error;
+  const { data } = sb.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
 }
-document.getElementById('post-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();postUpdate();} });
+function previewPostImg(inp) { if(!inp.files[0])return; postImgFile=inp.files[0]; document.getElementById('post-preview-img').src=URL.createObjectURL(postImgFile); document.getElementById('post-img-preview').style.display=''; }
+function clearPostImg() { postImgFile=null; document.getElementById('post-img-input').value=''; document.getElementById('post-img-preview').style.display='none'; }
+function previewChatImg(inp) { if(!inp.files[0])return; chatImgFile=inp.files[0]; document.getElementById('chat-preview-img').src=URL.createObjectURL(chatImgFile); document.getElementById('chat-img-preview').style.display=''; }
+function clearChatImg() { chatImgFile=null; document.getElementById('chat-img-input').value=''; document.getElementById('chat-img-preview').style.display='none'; }
 
-// ── WELCOME & START CONVERSATION ─────────────────────
-const WELCOME_TEXT = "👋 Hey there! Welcome to Signature Digital. I'm here to assist you with any subscriptions or questions. Feel free to message me anytime! 😊";
-
-async function sendWelcomeMessage(userId) {
-  // check if already has welcome
-  const { data: existing } = await sb.from('messages')
-    .select('id').eq('chat_id', userId).eq('is_admin_message', true).limit(1);
-  if (existing && existing.length > 0) return;
-  await sb.from('messages').insert({
-    chat_id: userId,
-    sender_id: '00000000-0000-0000-0000-000000000000',
-    text: WELCOME_TEXT,
-    is_admin_message: true
-  });
-}
-
-async function startOrOpenChat(userId) {
-  // Check if conversation exists
-  const { data } = await sb.from('messages').select('id').eq('chat_id', userId).limit(1);
-  if (!data || data.length === 0) {
-    // Start conversation with welcome message
-    await sendWelcomeMessage(userId);
+// ── PULL TO REFRESH ───────────────────────
+function initPTR() {
+  let sy=0, pulling=false, triggered=false;
+  const THRESH=65;
+  const ptr=document.getElementById('ptr');
+  const sp=document.getElementById('ptr-spinner');
+  function getScroll(){ return curTab==='updates'?document.getElementById('updates-view'):document.getElementById('chat-view'); }
+  function setH(dy){
+    const p=Math.min(dy/THRESH,1);
+    sp.style.transform=`translateY(${-50+p*56}px) rotate(${p*360}deg) scale(${.4+p*.6})`;
+    sp.style.opacity=p; ptr.style.height=Math.max(dy*.4,0)+'px';
   }
-  // Switch to chat tab and open the chat
-  switchTab('chat');
-}
-
-// ── USERNAME EDIT ─────────────────────────────────
-function openEditUsername() {
-  closeProfileMenu();
-  const modal = document.getElementById('username-modal');
-  modal.style.display = 'flex';
-  // pre-fill current username
-  const unEl = document.getElementById('p-username');
-  if (unEl) document.getElementById('username-input').value = unEl.textContent;
-}
-function closeEditUsername() {
-  document.getElementById('username-modal').style.display = 'none';
-}
-async function saveUsername() {
-  const username = document.getElementById('username-input').value.trim();
-  if (!username) return showToast('Please enter a username');
-  const { error } = await sb.from('profiles').upsert({ id: currentUser.id, username, phone: currentUser.user_metadata?.phone });
-  if (error) return showToast('Error: ' + error.message);
-  closeEditUsername();
-  showToast('Username saved!');
-  updateProfileMenu(currentUser);
-}
-
-// ── PULL TO REFRESH ──────────────────────────────────
-(function() {
-  let startY = 0;
-  let startScrollTop = 0;
-  let pulling = false;
-  let triggered = false;
-  const THRESHOLD = 70;
-
-  function getScrollEl() {
-    if (currentTab === 'updates') return document.getElementById('updates-view');
-    return document.getElementById('chat-view');
-  }
-
-  function setPTRHeight(h) {
-    const el = document.getElementById('ptr-indicator');
-    el.style.height = Math.min(h, THRESHOLD + 20) + 'px';
-    const spinner = document.getElementById('ptr-spinner');
-    const progress = Math.min(h / THRESHOLD, 1);
-    spinner.style.transform = 'rotate(' + (progress * 180) + 'deg) scale(' + (0.4 + progress * 0.6) + ')';
-    spinner.style.opacity = progress;
-  }
-
-  document.addEventListener('touchstart', e => {
-    const scrollEl = getScrollEl();
-    if (!scrollEl) return;
-    startScrollTop = scrollEl.classList.contains('hidden') ? 0 : scrollEl.scrollTop;
-    const fromHeader = e.target.closest('#app-header') || e.target.closest('#tabs');
-    if (!fromHeader && startScrollTop > 2) return;
-    startY = e.touches[0].clientY;
-    pulling = true;
-    triggered = false;
-    document.getElementById('ptr-indicator').classList.remove('releasing');
-    document.getElementById('ptr-spinner').classList.remove('spinning');
-  }, { passive: true });
-
-  document.addEventListener('touchmove', e => {
-    if (!pulling || triggered) return;
-    const fromHeader = e.target.closest('#app-header') || e.target.closest('#tabs');
-    const scrollEl = getScrollEl();
-    if (!fromHeader && scrollEl && scrollEl.scrollTop > 2) { pulling = false; return; }
-    const dy = e.touches[0].clientY - startY;
-    if (dy <= 0) { pulling = false; return; }
-    setPTRHeight(dy * 0.5);
-  }, { passive: true });
-
-
-
-  document.addEventListener('touchend', e => {
-    if (!pulling || triggered) { pulling = false; return; }
-    const el = document.getElementById('ptr-indicator');
-    const currentH = parseInt(el.style.height) || 0;
-    el.classList.add('releasing');
-    if (currentH >= THRESHOLD * 0.5) {
-      triggered = true;
-      el.classList.add('refreshing');
-      document.getElementById('ptr-spinner').classList.add('spinning');
-      // Refresh content
-      setTimeout(() => {
-        if (currentTab === 'updates') loadUpdates();
-        else if (currentUser) fetchMessages(currentUser.id);
-        // Hide after refresh
-        setTimeout(() => {
-          el.classList.remove('refreshing');
-          el.style.height = '0px';
-          document.getElementById('ptr-spinner').classList.remove('spinning');
-          triggered = false;
-        }, 1000);
-      }, 300);
+  document.addEventListener('touchstart',e=>{
+    if(triggered)return;
+    const sc=getScroll(); const fromHdr=e.target.closest('#app-hdr')||e.target.closest('#tabs');
+    const atTop=!sc||sc.classList.contains('hidden')||sc.scrollTop<=1;
+    if(!atTop&&!fromHdr)return;
+    sy=e.touches[0].clientY; pulling=true; sp.style.transition='';
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!pulling||triggered)return;
+    const sc=getScroll(); const fromHdr=e.target.closest('#app-hdr')||e.target.closest('#tabs');
+    if(sc&&!sc.classList.contains('hidden')&&sc.scrollTop>1&&!fromHdr){pulling=false;return;}
+    const dy=e.touches[0].clientY-sy;
+    if(dy<0){pulling=false;ptr.style.height='0px';return;}
+    setH(dy*.45);
+  },{passive:true});
+  document.addEventListener('touchend',()=>{
+    if(!pulling||triggered){pulling=false;return;}
+    pulling=false;
+    const h=parseFloat(ptr.style.height)||0;
+    if(h>=THRESH*.6){
+      triggered=true;
+      ptr.style.height='50px'; sp.style.transform='translateY(6px) scale(1)'; sp.style.opacity='1';
+      sp.classList.add('spinning');
+      setTimeout(()=>window.location.reload(),800);
     } else {
-      el.style.height = '0px';
+      sp.style.transition='transform .2s,opacity .2s';
+      sp.style.transform='translateY(-50px) scale(.4)'; sp.style.opacity='0';
+      ptr.style.height='0px';
+      setTimeout(()=>sp.style.transition='',250);
     }
-    pulling = false;
-  }, { passive: true });
-})();
-
-// Restore OTP session on page load
-(function() {
-  const blockedUntil = checkGlobalBlock();
-  if (blockedUntil) {
-    otpBlockedUntil = blockedUntil;
-  }
-  const session = getOTPSession();
-  if (session) {
-    otpSendCount = session.sends || 0;
-    otpAttempts = session.attempts || 0;
-  }
-})();
-
-// Fix mobile — track visual viewport so input stays above browser nav bar
-function fixMobileHeight() {
-  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  document.body.style.height = vh + 'px';
-  document.body.style.top = (window.visualViewport ? window.visualViewport.offsetTop : 0) + 'px';
+  },{passive:true});
 }
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', fixMobileHeight);
+
+// ── UTILS ─────────────────────────────────
+function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+function fmtTime(d){
+  const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const yest=new Date(today-86400000);
+  const md=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(md.getTime()===today.getTime()) return t;
+  if(md.getTime()===yest.getTime()) return 'Yesterday '+t;
+  return d.toLocaleDateString()+' '+t;
 }
-window.addEventListener('resize', fixMobileHeight);
-fixMobileHeight();
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ── KEYBOARD SHORTCUTS ────────────────────
+document.getElementById('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} });
+document.getElementById('post-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();postUpdate();} });
 
 init();
 </script>
