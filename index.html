@@ -453,6 +453,29 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ════════════════════════════════════════
+// VERSION — bump this on every deploy
+// ════════════════════════════════════════
+const APP_VERSION = '20260523_1550';
+
+// Force reload if cached version is outdated
+(function() {
+  const stored = localStorage.getItem('app_version');
+  if (stored && stored !== APP_VERSION) {
+    localStorage.setItem('app_version', APP_VERSION);
+    // Clear all caches
+    if ('caches' in window) {
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
+        window.location.reload(true);
+      });
+    } else {
+      window.location.reload(true);
+    }
+    return;
+  }
+  if (!stored) localStorage.setItem('app_version', APP_VERSION);
+})();
+
+// ════════════════════════════════════════
 // CONFIG — replace with your values
 // ════════════════════════════════════════
 const SB_URL  = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
@@ -483,9 +506,16 @@ async function init() {
   if ('caches' in window) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
   const { data: { session } } = await sb.auth.getSession();
   if (session) await onSignIn(session.user); else showAuthIfNeeded();
-  sb.auth.onAuthStateChange(async (_, sess) => {
-    if (sess) await onSignIn(sess.user); else onSignOut();
+  sb.auth.onAuthStateChange(async (event, sess) => {
+    if (sess) await onSignIn(sess.user);
+    else if (event === 'SIGNED_OUT') onSignOut();
   });
+  // Re-check session every 30s to catch token refresh
+  setInterval(async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && !user) await onSignIn(session.user);
+    else if (!session && user) onSignOut();
+  }, 30000);
   startOwnerStatus();
   initPTR();
   fixViewport();
