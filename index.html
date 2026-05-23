@@ -757,15 +757,27 @@ async function refreshPmenu(u){
     return;
   }
   const ph=u.user_metadata?.phone||'';
-  document.getElementById('pmname').textContent=isAdmin?'Admin':'Client';
-  document.getElementById('pmphone').textContent=ph||'Signed in';
-  document.getElementById('pmav').textContent=ph.slice(-2)||'U';
   try{
     const {data}=await sb.from('profiles').select('username').eq('id',u.id).single();
-    const el=document.getElementById('pmuname');
-    if(data?.username){el.textContent=data.username;el.style.display='';}
-    else el.style.display='none';
-  }catch(e){}
+    const uname=data?.username||'';
+    if(isAdmin){
+      document.getElementById('pmname').textContent='Admin';
+      document.getElementById('pmphone').textContent=ph||'Signed in';
+      document.getElementById('pmav').textContent=ph.slice(-2)||'U';
+      const el=document.getElementById('pmuname');
+      if(uname){el.textContent=uname;el.style.display='';}else el.style.display='none';
+    } else {
+      // Client: show username as name, phone below
+      document.getElementById('pmname').textContent=uname||ph||'My Account';
+      document.getElementById('pmphone').textContent=ph||'';
+      document.getElementById('pmav').textContent=(uname||ph).slice(0,2).toUpperCase()||'U';
+      document.getElementById('pmuname').style.display='none';
+    }
+  }catch(e){
+    document.getElementById('pmname').textContent=isAdmin?'Admin':ph||'My Account';
+    document.getElementById('pmphone').textContent=ph||'';
+    document.getElementById('pmav').textContent=ph.slice(-2)||'U';
+  }
 }
 
 function openUmodal(){closePmenu();document.getElementById('uinp').value=document.getElementById('pmuname').textContent||'';document.getElementById('umodal').style.display='flex';}
