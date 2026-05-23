@@ -1077,21 +1077,23 @@ async function uploadImg(file,bucket){
 function prevPostImg(inp){
   if(!inp.files[0])return;
   postImgF=inp.files[0];
-  document.getElementById('postprevimg').src=URL.createObjectURL(postImgF);
+  const url=URL.createObjectURL(postImgF);
+  document.getElementById('postprevimg').src=url;
   document.getElementById('postfname').textContent=postImgF.name;
   document.getElementById('postfsize').textContent=fmtSize(postImgF.size);
-  document.getElementById('postprev').style.display='';
+  document.getElementById('postprev').style.cssText='display:block!important;padding:0 12px 6px;';
 }
-function clearPostImg(){postImgF=null;document.getElementById('postimginp').value='';document.getElementById('postprev').style.display='none';}
+function clearPostImg(){postImgF=null;document.getElementById('postimginp').value='';document.getElementById('postprev').style.cssText='display:none!important;';}
 function prevChatImg(inp){
   if(!inp.files[0])return;
   chatImgF=inp.files[0];
-  document.getElementById('chatprevimg').src=URL.createObjectURL(chatImgF);
+  const url=URL.createObjectURL(chatImgF);
+  document.getElementById('chatprevimg').src=url;
   document.getElementById('chatfname').textContent=chatImgF.name;
   document.getElementById('chatfsize').textContent=fmtSize(chatImgF.size);
-  document.getElementById('chatprev').style.display='';
+  document.getElementById('chatprev').style.cssText='display:block!important;background:#f0f2f5;border-radius:8px;padding:6px 8px;margin-bottom:4px;';
 }
-function clearChatImg(){chatImgF=null;document.getElementById('chatimginp').value='';document.getElementById('chatprev').style.display='none';}
+function clearChatImg(){chatImgF=null;document.getElementById('chatimginp').value='';document.getElementById('chatprev').style.cssText='display:none!important;';}
 
 // ── SOUND ─────────────────────────────────
 let actx=null;
