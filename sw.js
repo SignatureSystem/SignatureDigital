@@ -1,7 +1,7 @@
 // Signature Digital — Service Worker
 // Auto-updates cache on every new deploy
 
-const VERSION = '20260523_2029';
+const VERSION = '20260523_2057';
 const CACHE   = 'sigdig-' + VERSION;
 
 // On install — cache the page and activate immediately
