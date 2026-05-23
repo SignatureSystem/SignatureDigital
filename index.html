@@ -10,13 +10,13 @@
 body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(135deg,#0a4a3a 0%,#075E54 30%,#0d7a6a 60%,#1a9b85 100%);min-height:100vh;display:flex;flex-direction:column;background-attachment:fixed;}
 
 /* HEADER */
-#hdr{background:transparent;padding:0;flex-shrink:0;position:sticky;top:0;z-index:10;}
+#hdr{background:transparent;padding:16px 16px 0;}
 .hav{width:40px;height:40px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;margin-right:12px;flex-shrink:0;}
 .hname{font-size:16px;font-weight:600;color:#fff;}
 .hsub{font-size:12px;color:rgba(255,255,255,.65);}
 
 /* UPDATES */
-#main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:12px 12px 24px;}
+#main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:16px 12px 24px;}
 .ucard{background:rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:18px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.2);margin-bottom:12px;}
 .umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);}
 .ubadge{background:rgba(37,211,102,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;flex-shrink:0;backdrop-filter:blur(4px);}
@@ -37,9 +37,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
 .hfollowers{display:flex;align-items:center;gap:4px;margin-top:3px;}
 .hfollowers svg{width:12px;height:12px;fill:rgba(255,255,255,.7);}
 .hfollowers span{font-size:11px;color:rgba(255,255,255,.65);}
-.hdr-top{display:flex;align-items:center;gap:10px;background:rgba(7,94,84,.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:10px 14px 12px;border-radius:0 0 26px 26px;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.15);border-top:none;}
-.hdr-pill-bar{padding:0;display:flex;justify-content:center;background:transparent;margin-top:0;}
-.hwa-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(7,94,84,.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:8px 22px 13px;border-radius:0 0 26px 26px;transition:all .2s;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-top:none;}
+.hdr-top{display:flex;align-items:center;gap:10px;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:12px 16px;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.18);}
+.hdr-pill-bar{padding:8px 16px 0;display:flex;justify-content:center;background:transparent;}
+.hwa-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:10px 22px;border-radius:24px;transition:all .2s;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.18);}
 .hwa-btn:hover{background:rgba(255,255,255,.25);}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);}
 #toast.show{opacity:1;}
@@ -133,9 +133,6 @@ async function loadUpdates(){
       return '<div class="ucard">'+
         '<div class="umeta">'+
           '<span class="ubadge">UPDATE</span>'+
-          '<span class="uauthor">Signature Digital</span>'+
-          '<span class="udot">&#183;</span>'+
-          '<span class="uphone">077 831 5058</span>'+
           '<span class="utime">'+fmtTime(new Date(u.created_at))+'</span>'+
         '</div>'+
         '<div class="utxt">'+esc(u.text)+'</div>'+
