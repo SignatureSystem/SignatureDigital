@@ -520,7 +520,16 @@ async function onSignIn(u){
   user=u;
   const ph=u.user_metadata?.phone||'';
   const norm=p=>p.replace(/\D/g,'');
-  isAdmin=ADMIN_NUMS.some(a=>norm(a)===norm(ph)||a===norm(u.email||'').replace('@sigdig.app',''));
+  const emailNum = (u.email||'').replace('@sigdig.app','');
+  // Check all formats: +94778315058, 94778315058, 0778315058, 778315058
+  isAdmin = ADMIN_NUMS.some(a => {
+    const na = norm(a);
+    const np = norm(ph);
+    const ne = norm(emailNum);
+    return na === np || na === ne ||
+           na.slice(-9) === np.slice(-9) ||
+           na.slice(-9) === ne.slice(-9);
+  });
   closeAuth();
   document.getElementById('pm-signin').style.display='none';
   document.getElementById('pm-signout').style.display='';
