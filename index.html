@@ -535,7 +535,6 @@ async function toggleReactDefault(uid) {
   var pop = document.getElementById('react-popup-' + uid);
   if (pop && pop.classList.contains('show')) {
     hideReactPopup(uid);
-    return;
   }
   
   var active = localStorage.getItem('react_' + uid);
@@ -910,11 +909,11 @@ async function loadUpdates(){
 
 async function trackView(uid){
   var k='v_'+uid;
-  if(localStorage.getItem(k)) return;
+  if(sessionStorage.getItem(k)) return;
   try{
     var r = await sb.rpc('increment_view_count', { update_id: uid });
     if(r && r.error) throw r.error;
-    localStorage.setItem(k,'1');
+    sessionStorage.setItem(k,'1');
     var el=document.getElementById('vc-'+uid); 
     if(el) el.textContent = parseInt(el.textContent) + 1;
   }catch(e){
@@ -924,7 +923,7 @@ async function trackView(uid){
       var currentVal = el ? (parseInt(el.textContent) || 0) : 0;
       var rFall = await sb.from('updates').update({ views: currentVal + 1 }).eq('id', uid);
       if(rFall && rFall.error) throw rFall.error;
-      localStorage.setItem(k,'1');
+      sessionStorage.setItem(k,'1');
       if(el) el.textContent = currentVal + 1;
     }catch(err){
       console.error("Fallback view update failed too:", err);
