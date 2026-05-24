@@ -130,12 +130,8 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);min-he
 <script>
 const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
-const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 var imgFile = null;
-
-// Session token stored locally — verified against bot on each load
-var SESSION_TOKEN = localStorage.getItem('sgd_admin_token') || '';
 
 async function doAdminLogin(){
   var pwd = document.getElementById('apwd').value.trim();
@@ -143,48 +139,30 @@ async function doAdminLogin(){
   var btn = document.querySelector('.lbtn');
   btn.textContent = 'Verifying...'; btn.disabled = true;
   try {
-    var ctrl = new AbortController();
-    setTimeout(function(){ ctrl.abort(); }, 8000);
-    var res = await fetch(BOT_URL + '/admin-login', {
-      method: 'POST', signal: ctrl.signal,
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({password: pwd})
-    });
-    var data = await res.json();
-    if(res.ok && data.token) {
-      SESSION_TOKEN = data.token;
-      localStorage.setItem('sgd_admin_token', data.token);
+    var r = await sb.from('admin_config').select('value').eq('key','admin_pwd_hash').single();
+    if(r.error || !r.data){ document.getElementById('lerr').textContent='Config error'; btn.textContent='Login'; btn.disabled=false; return; }
+    var parts = r.data.value.split(':');
+    var salt = parts[0], stored = parts[1];
+    var enc = new TextEncoder();
+    var hashBuf = await crypto.subtle.digest('SHA-256', enc.encode(salt+pwd));
+    var hashArr = Array.from(new Uint8Array(hashBuf));
+    var hashHex = hashArr.map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    if(hashHex === stored){
+      localStorage.setItem('sgd_admin','1');
       document.getElementById('login-screen').classList.add('hidden');
       loadUpdates();
     } else {
       document.getElementById('lerr').textContent = 'Incorrect password';
     }
   } catch(e) {
-    document.getElementById('lerr').textContent = 'Could not reach server. Try again.';
+    document.getElementById('lerr').textContent = 'Something went wrong. Try again.';
   }
   btn.textContent = 'Login'; btn.disabled = false;
 }
 
-
-async function checkSession() {
-  if(!SESSION_TOKEN) return;
-  try {
-    var res = await fetch(BOT_URL + '/admin-verify', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({token: SESSION_TOKEN})
-    });
-    if(res.ok) {
-        document.getElementById('login-screen').classList.add('hidden');
-      loadUpdates();
-    } else {
-      localStorage.removeItem('sgd_admin_token');
-      SESSION_TOKEN = '';
-    }
-  } catch(e) {}
+if(localStorage.getItem('sgd_admin')==='1'){
+  document.getElementById('login-screen').classList.add('hidden');
 }
-
-checkSession();
 
 function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 function fmtTime(d){ var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),yest=new Date(today-86400000),md=new Date(d.getFullYear(),d.getMonth(),d.getDate()),t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); if(md.getTime()===today.getTime()) return t; if(md.getTime()===yest.getTime()) return 'Yesterday '+t; return d.toLocaleDateString()+' '+t; }
@@ -247,13 +225,13 @@ async function loadUpdates(){
     none.style.display='none';
     list.innerHTML=r.data.map(function(u){
       return '<div class="ucard">'+
-        '<button class="del-btn" onclick="deleteUpdate(\''+u.id+'\')">Delete</button>'+
+        '<button class="del-btn" data-id="'+u.id+'" onclick="deleteUpdate(this.dataset.id)">Delete</button>'+
         '<div class="umeta">'+
           '<span class="ubadge">UPDATE</span>'+
           '<span class="utime">'+fmtTime(new Date(u.created_at))+'</span>'+
         '</div>'+
         '<div class="utxt">'+esc(u.text)+'</div>'+
-        (u.image_url?'<img class="uimg" src="'+u.image_url+'" onclick="window.open(\''+u.image_url+'\',\'_blank\')" alt="image">':'')+
+        (u.image_url?'<img class="uimg" src="'+u.image_url+'" onclick="window.open(this.src,\'_blank\')" alt="image">':'')+
         '<div class="uviews">'+
           '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'+
           '<span>'+(u.views||0)+' views</span>'+
