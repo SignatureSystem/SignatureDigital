@@ -1036,23 +1036,26 @@ async function loadUpdates(){
   }catch(e){ document.getElementById('loading').textContent='Failed to load updates.'; }
 }
 
+const viewedInThisLoad = new Set();
+
 async function trackView(uid){
-  var k='v_'+uid;
-  if(sessionStorage.getItem(k)) return;
+  var cleanId = parseInt(uid, 10);
+  if (isNaN(cleanId)) return;
+  if (viewedInThisLoad.has(cleanId)) return;
+  viewedInThisLoad.add(cleanId);
+  
   try{
-    var r = await sb.rpc('increment_view_count', { update_id: uid });
+    var r = await sb.rpc('increment_view_count', { update_id: cleanId });
     if(r && r.error) throw r.error;
-    sessionStorage.setItem(k,'1');
     var el=document.getElementById('vc-'+uid); 
-    if(el) el.textContent = parseInt(el.textContent) + 1;
+    if(el) el.textContent = (parseInt(el.textContent) || 0) + 1;
   }catch(e){
     console.warn("RPC increment_view_count failed, falling back to direct update:", e);
     try{
       var el=document.getElementById('vc-'+uid);
       var currentVal = el ? (parseInt(el.textContent) || 0) : 0;
-      var rFall = await sb.from('updates').update({ views: currentVal + 1 }).eq('id', uid);
+      var rFall = await sb.from('updates').update({ views: currentVal + 1 }).eq('id', cleanId);
       if(rFall && rFall.error) throw rFall.error;
-      sessionStorage.setItem(k,'1');
       if(el) el.textContent = currentVal + 1;
     }catch(err){
       console.error("Fallback view update failed too:", err);
