@@ -8,8 +8,6 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;--inp:#F0F2F5;}
 body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
-
-/* LOGIN */
 #login-screen{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;}
 #login-screen.hidden{display:none;}
 .lbox{background:#fff;border-radius:14px;width:320px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);}
@@ -22,23 +20,22 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);min-he
 .lbtn{width:100%;padding:11px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
 .lbtn:hover{background:var(--dg);}
 .lerr{color:#e53935;font-size:12px;text-align:center;margin-bottom:10px;min-height:16px;}
-
-/* HEADER */
-#hdr{background:var(--hdr);display:flex;align-items:center;padding:0 16px;height:58px;flex-shrink:0;position:sticky;top:0;z-index:10;}
-.hav{width:40px;height:40px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;margin-right:12px;}
+#hdr{background:var(--hdr);display:flex;align-items:center;padding:0 16px;height:56px;flex-shrink:0;position:sticky;top:0;z-index:10;}
 .hname{font-size:16px;font-weight:600;color:#fff;flex:1;}
 .hbadge{background:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:4px 10px;border-radius:12px;}
-
-/* POST BOX */
-#postbox{background:#fff;border-bottom:1px solid var(--bdr);padding:16px;position:sticky;top:58px;z-index:9;}
+.hlogout{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:12px;margin-left:10px;}
+#postbox{background:#fff;border-bottom:1px solid var(--bdr);padding:16px;position:sticky;top:56px;z-index:9;}
 .post-inner{max-width:640px;margin:0 auto;}
 .post-inner textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;outline:none;resize:none;font-family:inherit;min-height:80px;transition:border-color .2s;}
 .post-inner textarea:focus{border-color:var(--dg);}
+.field-row{display:flex;gap:10px;margin-top:10px;}
+.field-row input{flex:1;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;outline:none;font-family:inherit;min-width:0;transition:border-color .2s;}
+.field-row input:focus{border-color:var(--dg);}
 .post-actions{display:flex;align-items:center;gap:10px;margin-top:10px;}
 .attach-lbl{cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);padding:8px 12px;border:1.5px solid var(--bdr);border-radius:8px;transition:all .2s;}
 .attach-lbl:hover{border-color:var(--dg);color:var(--dg);}
 .attach-lbl svg{width:16px;height:16px;fill:currentColor;}
-.post-btn{margin-left:auto;padding:9px 22px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;}
+.post-btn{margin-left:auto;padding:9px 22px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
 .post-btn:hover{background:var(--dg);}
 .post-btn:disabled{background:#aaa;cursor:not-allowed;}
 .prev-wrap{display:none;margin-top:10px;background:var(--inp);border-radius:8px;padding:8px 10px;}
@@ -47,37 +44,46 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);min-he
 .prev-info{flex:1;min-width:0;}
 .prev-name{font-size:12px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .prev-size{font-size:11px;color:var(--sub);}
-.prev-clear{background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;flex-shrink:0;}
-
-/* UPDATES LIST */
+.prev-clear{background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;}
 #main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:12px 12px 24px;}
-.ucard{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px;position:relative;}
+.ucard{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px;position:relative;padding-top:44px;}
+.card-actions{position:absolute;top:10px;right:10px;display:flex;gap:6px;}
+.btn-del{background:#fee2e2;border:none;cursor:pointer;color:#e53935;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;}
+.btn-del:hover{background:#fecaca;}
+.btn-edit{background:#e0f0ff;border:none;cursor:pointer;color:#1a6fa8;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;}
+.btn-edit:hover{background:#bee3f8;}
 .umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(0,0,0,.05);}
 .ubadge{background:var(--g);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;}
 .utime{font-size:11px;color:var(--sub);margin-left:auto;}
 .utxt{font-size:14px;color:var(--txt);line-height:1.55;}
-.uimg{width:100%;border-radius:8px;margin-top:10px;max-height:320px;object-fit:contain;background:#f5f5f5;cursor:pointer;display:block;}
+.uimg{width:100%;border-radius:8px;margin-bottom:10px;max-height:320px;object-fit:contain;background:#f5f5f5;display:block;pointer-events:none;}
+.upd-btn-preview{display:inline-flex;margin-top:8px;padding:7px 18px;background:var(--g);color:#fff;border-radius:16px;font-size:12px;font-weight:600;text-decoration:none;}
 .uviews{display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(0,0,0,.04);}
 .uviews svg{width:13px;height:13px;fill:#bbb;}
 .uviews span{font-size:11px;color:#bbb;}
-.del-btn{position:absolute;top:10px;right:10px;background:#fee2e2;border:none;cursor:pointer;color:#e53935;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;}
-.del-btn:hover{background:#fecaca;}
 #no-upd{text-align:center;padding:40px;color:var(--sub);font-size:14px;}
-
-/* TOAST */
+#edit-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;}
+.ebox{background:#fff;border-radius:14px;width:500px;max-width:calc(100vw - 32px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.ehdr{background:var(--hdr);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.ehdr p{color:#fff;font-size:15px;font-weight:600;}
+.ehdr button{background:none;border:none;cursor:pointer;color:#fff;font-size:20px;}
+.ebody{padding:18px;}
+.ebody textarea{width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;outline:none;font-family:inherit;min-height:80px;resize:none;margin-bottom:10px;}
+.ebody textarea:focus{border-color:var(--dg);}
+.ebody .field-row{margin-bottom:14px;}
+.ebtns{display:flex;gap:8px;justify-content:flex-end;}
+.ebtns button{padding:9px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.ecancel{background:var(--inp);color:var(--txt);}
+.esave{background:var(--g);color:#fff;}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;border-radius:8px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
 #toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="lbox">
-    <div class="lhdr">
-      <div class="logo">Signature Digital</div>
-      <div class="sub">Admin Panel</div>
-    </div>
+    <div class="lhdr"><div class="logo">Signature Digital</div><div class="sub">Admin Panel</div></div>
     <div class="lbody">
       <div class="lerr" id="lerr"></div>
       <input type="password" id="apwd" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doAdminLogin()">
@@ -86,17 +92,40 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);min-he
   </div>
 </div>
 
-<!-- HEADER -->
-<div id="hdr">
-  <div class="hav">SD</div>
-  <div class="hname">Signature Digital — Admin</div>
-  <span class="hbadge">Admin</span>
+<div id="edit-modal">
+  <div class="ebox">
+    <div class="ehdr">
+      <p>Edit Update</p>
+      <button onclick="closeEdit()">&#10005;</button>
+    </div>
+    <div class="ebody">
+      <input type="hidden" id="edit-id">
+      <textarea id="edit-txt" placeholder="Update text..."></textarea>
+      <div class="field-row">
+        <input type="text" id="edit-btn-label" placeholder="Button label (e.g. Buy Now)">
+        <input type="url" id="edit-btn-url" placeholder="Button URL (e.g. https://wa.me/...)">
+      </div>
+      <div class="ebtns">
+        <button class="ecancel" onclick="closeEdit()">Cancel</button>
+        <button class="esave" onclick="saveEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- POST BOX -->
+<div id="hdr">
+  <div class="hname">Signature Digital — Admin</div>
+  <span class="hbadge">Admin</span>
+  <button class="hlogout" onclick="doLogout()">Logout</button>
+</div>
+
 <div id="postbox">
   <div class="post-inner">
     <textarea id="post-txt" placeholder="Write an update for your clients..."></textarea>
+    <div class="field-row">
+      <input type="text" id="btn-label" placeholder="Button label (e.g. Buy Now) — optional">
+      <input type="url" id="btn-url" placeholder="Button URL — optional">
+    </div>
     <div class="prev-wrap" id="prev-wrap">
       <div class="prev-inner">
         <img id="prev-img" src="">
@@ -118,131 +147,156 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);min-he
   </div>
 </div>
 
-<!-- UPDATES -->
 <div id="main">
   <div id="updlist"></div>
-  <div id="no-upd" style="display:none;">No updates yet. Post your first one above!</div>
+  <div id="no-upd" style="display:none;">No updates yet.</div>
 </div>
 
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+var SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
+var sb = supabase.createClient(SB_URL, SB_KEY);
 var imgFile = null;
 
-async function doAdminLogin(){
+async function doAdminLogin() {
   var pwd = document.getElementById('apwd').value.trim();
-  if(!pwd) return;
+  if (!pwd) return;
   var btn = document.querySelector('.lbtn');
   btn.textContent = 'Verifying...'; btn.disabled = true;
   try {
     var r = await sb.from('admin_config').select('value').eq('key','admin_pwd_hash').single();
-    if(r.error || !r.data){ document.getElementById('lerr').textContent='Config error'; btn.textContent='Login'; btn.disabled=false; return; }
+    if (r.error || !r.data) { document.getElementById('lerr').textContent = 'Config error'; return; }
     var parts = r.data.value.split(':');
-    var salt = parts[0], stored = parts[1];
     var enc = new TextEncoder();
-    var hashBuf = await crypto.subtle.digest('SHA-256', enc.encode(salt+pwd));
-    var hashArr = Array.from(new Uint8Array(hashBuf));
-    var hashHex = hashArr.map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-    if(hashHex === stored){
+    var buf = await crypto.subtle.digest('SHA-256', enc.encode(parts[0] + pwd));
+    var hex = Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    if (hex === parts[1]) {
       localStorage.setItem('sgd_admin','1');
       document.getElementById('login-screen').classList.add('hidden');
       loadUpdates();
     } else {
       document.getElementById('lerr').textContent = 'Incorrect password';
     }
-  } catch(e) {
-    document.getElementById('lerr').textContent = 'Something went wrong. Try again.';
-  }
+  } catch(e) { document.getElementById('lerr').textContent = 'Something went wrong.'; }
   btn.textContent = 'Login'; btn.disabled = false;
 }
 
-if(localStorage.getItem('sgd_admin')==='1'){
+function doLogout() { localStorage.removeItem('sgd_admin'); location.reload(); }
+
+if (localStorage.getItem('sgd_admin') === '1') {
   document.getElementById('login-screen').classList.add('hidden');
 }
 
-function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
-function fmtTime(d){ var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),yest=new Date(today-86400000),md=new Date(d.getFullYear(),d.getMonth(),d.getDate()),t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); if(md.getTime()===today.getTime()) return t; if(md.getTime()===yest.getTime()) return 'Yesterday '+t; return d.toLocaleDateString()+' '+t; }
-function fmtSize(b){ if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(1)+'KB'; return (b/1048576).toFixed(1)+'MB'; }
-function showToast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
+function esc(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtTime(d) { var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),yest=new Date(today-86400000),md=new Date(d.getFullYear(),d.getMonth(),d.getDate()),t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); if(md.getTime()===today.getTime()) return t; if(md.getTime()===yest.getTime()) return 'Yesterday '+t; return d.toLocaleDateString()+' '+t; }
+function fmtSize(b) { if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(1)+'KB'; return (b/1048576).toFixed(1)+'MB'; }
+function showToast(msg) { var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
 
-function prevImg(inp){
-  if(!inp.files[0]) return;
-  imgFile=inp.files[0];
-  document.getElementById('prev-img').src=URL.createObjectURL(imgFile);
-  document.getElementById('prev-name').textContent=imgFile.name;
-  document.getElementById('prev-size').textContent=fmtSize(imgFile.size);
-  document.getElementById('prev-wrap').style.cssText='display:block!important;';
+function prevImg(inp) {
+  if (!inp.files[0]) return;
+  imgFile = inp.files[0];
+  document.getElementById('prev-img').src = URL.createObjectURL(imgFile);
+  document.getElementById('prev-name').textContent = imgFile.name;
+  document.getElementById('prev-size').textContent = fmtSize(imgFile.size);
+  document.getElementById('prev-wrap').style.cssText = 'display:block!important;';
 }
-function clearImg(){
-  imgFile=null;
-  document.getElementById('img-inp').value='';
-  document.getElementById('prev-wrap').style.cssText='display:none!important;';
-}
+function clearImg() { imgFile=null; document.getElementById('img-inp').value=''; document.getElementById('prev-wrap').style.cssText='display:none!important;'; }
 
-async function uploadImg(file){
-  var ext=file.name.split('.').pop();
-  var path=Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-  var r=await sb.storage.from('update-images').upload(path,file,{contentType:file.type});
-  if(r.error) throw r.error;
+async function uploadImg(file) {
+  var ext = file.name.split('.').pop();
+  var path = Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
+  var r = await sb.storage.from('update-images').upload(path, file, {contentType:file.type});
+  if (r.error) throw r.error;
   return sb.storage.from('update-images').getPublicUrl(path).data.publicUrl;
 }
 
-async function postUpdate(){
-  var txt=document.getElementById('post-txt').value.trim();
-  var imgUrl=null;
-  if(!txt&&!imgFile) return showToast('Write something first');
-  var btn=document.getElementById('post-btn');
-  btn.disabled=true; btn.textContent='Posting...';
-  try{
-    if(imgFile){ imgUrl=await uploadImg(imgFile); clearImg(); }
-    var r=await sb.from('updates').insert({text:txt||'',image_url:imgUrl,views:0});
-    if(r.error) throw r.error;
-    document.getElementById('post-txt').value='';
+async function postUpdate() {
+  var txt = document.getElementById('post-txt').value.trim();
+  var btnLabel = document.getElementById('btn-label').value.trim();
+  var btnUrl = document.getElementById('btn-url').value.trim();
+  var imgUrl = null;
+  if (!txt && !imgFile) return showToast('Write something first');
+  var btn = document.getElementById('post-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+  try {
+    if (imgFile) { imgUrl = await uploadImg(imgFile); clearImg(); }
+    var r = await sb.from('updates').insert({text:txt||'', image_url:imgUrl, views:0, btn_label:btnLabel||null, btn_url:btnUrl||null});
+    if (r.error) throw r.error;
+    document.getElementById('post-txt').value = '';
+    document.getElementById('btn-label').value = '';
+    document.getElementById('btn-url').value = '';
     showToast('Update posted!');
     loadUpdates();
-  }catch(e){ showToast('Error: '+e.message); }
-  btn.disabled=false; btn.textContent='Post Update';
+  } catch(e) { showToast('Error: '+e.message); }
+  btn.disabled = false; btn.textContent = 'Post Update';
 }
 
-async function deleteUpdate(id){
-  if(!confirm('Delete this update?')) return;
-  try{
-    await sb.from('updates').delete().eq('id',id);
-    showToast('Deleted');
-    loadUpdates();
-  }catch(e){ showToast('Error deleting'); }
+var editingId = null;
+function openEdit(id, txt, btnLabel, btnUrl) {
+  editingId = id;
+  document.getElementById('edit-txt').value = txt || '';
+  document.getElementById('edit-btn-label').value = btnLabel || '';
+  document.getElementById('edit-btn-url').value = btnUrl || '';
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+function closeEdit() { document.getElementById('edit-modal').style.display = 'none'; editingId = null; }
+
+async function saveEdit() {
+  if (!editingId) return;
+  var txt = document.getElementById('edit-txt').value.trim();
+  var btnLabel = document.getElementById('edit-btn-label').value.trim();
+  var btnUrl = document.getElementById('edit-btn-url').value.trim();
+  try {
+    await sb.from('updates').update({text:txt, btn_label:btnLabel||null, btn_url:btnUrl||null}).eq('id', editingId);
+    closeEdit(); showToast('Saved!'); loadUpdates();
+  } catch(e) { showToast('Error saving'); }
 }
 
-async function loadUpdates(){
-  try{
-    var r=await sb.from('updates').select('*').order('created_at',{ascending:false}).limit(50);
-    var list=document.getElementById('updlist'), none=document.getElementById('no-upd');
-    if(!r.data||!r.data.length){ list.innerHTML=''; none.style.display=''; return; }
-    none.style.display='none';
-    list.innerHTML=r.data.map(function(u){
+async function deleteUpdate(id) {
+  if (!confirm('Delete this update?')) return;
+  try { await sb.from('updates').delete().eq('id', id); showToast('Deleted'); loadUpdates(); }
+  catch(e) { showToast('Error deleting'); }
+}
+
+async function loadUpdates() {
+  try {
+    var r = await sb.from('updates').select('*').order('created_at',{ascending:false}).limit(50);
+    var list = document.getElementById('updlist'), none = document.getElementById('no-upd');
+    if (!r.data || !r.data.length) { list.innerHTML=''; none.style.display=''; return; }
+    none.style.display = 'none';
+    list.innerHTML = r.data.map(function(u) {
+      var id = u.id;
+      var txt = u.text || '';
+      var bl = u.btn_label || '';
+      var bu = u.btn_url || '';
       return '<div class="ucard">'+
-        '<button class="del-btn" data-id="'+u.id+'" onclick="deleteUpdate(this.dataset.id)">Delete</button>'+
-        '<div class="umeta">'+
-          '<span class="ubadge">UPDATE</span>'+
-          '<span class="utime">'+fmtTime(new Date(u.created_at))+'</span>'+
+        '<div class="card-actions">'+
+          '<button class="btn-edit" onclick="openEdit(\''+id+'\',this.closest(\'.ucard\').dataset.txt,this.closest(\'.ucard\').dataset.bl,this.closest(\'.ucard\').dataset.bu)">Edit</button>'+
+          '<button class="btn-del" onclick="deleteUpdate(\''+id+'\')">Delete</button>'+
         '</div>'+
-        '<div class="utxt">'+esc(u.text)+'</div>'+
-        (u.image_url?'<img class="uimg" src="'+u.image_url+'" onclick="window.open(this.src,\'_blank\')" alt="image">':'')+
-        '<div class="uviews">'+
-          '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'+
-          '<span>'+(u.views||0)+' views</span>'+
-        '</div>'+
+        '<div class="umeta"><span class="ubadge">UPDATE</span><span class="utime">'+fmtTime(new Date(u.created_at))+'</span></div>'+
+        (u.image_url?'<img class="uimg" src="'+u.image_url+'">':'')+
+        (txt?'<div class="utxt">'+esc(txt)+'</div>':'')+
+        (bl&&bu?'<a class="upd-btn-preview" href="'+bu+'" target="_blank">'+esc(bl)+'</a>':'')+
+        '<div class="uviews"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg><span>'+(u.views||0)+' views</span></div>'+
       '</div>';
     }).join('');
-  }catch(e){ showToast('Failed to load updates'); }
+    r.data.forEach(function(u) {
+      var card = list.querySelector('[data-id="'+u.id+'"]');
+      if (!card) {
+        var cards = list.querySelectorAll('.ucard');
+        var idx = r.data.indexOf(u);
+        if (cards[idx]) { cards[idx].dataset.txt = u.text||''; cards[idx].dataset.bl = u.btn_label||''; cards[idx].dataset.bu = u.btn_url||''; cards[idx].dataset.id = u.id; }
+      }
+    });
+  } catch(e) { showToast('Failed to load'); }
 }
 
-document.getElementById('post-txt').addEventListener('keydown',function(e){
-  if(e.key==='Enter'&&e.ctrlKey){ e.preventDefault(); postUpdate(); }
+document.getElementById('post-txt').addEventListener('keydown', function(e) {
+  if (e.key==='Enter' && e.ctrlKey) { e.preventDefault(); postUpdate(); }
 });
 
 loadUpdates();
