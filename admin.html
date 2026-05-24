@@ -85,9 +85,15 @@ input:checked + .slider:before {transform:translateX(16px);}
 <div id="login-box">
   <div style="font-size:36px;margin-bottom:12px;">🛡️</div>
   <h2>Admin Entry</h2>
-  <p>Please type your security password to gain entry.</p>
-  <input type="password" id="pass-inp" placeholder="Key Password" onkeydown="if(event.key==='Enter') tryLogin()">
+  <p>Please enter administrative credentials to gain entry.</p>
+  <input type="text" id="user-inp" placeholder="Username" onkeydown="if(event.key==='Enter') document.getElementById('pass-inp').focus()">
+  <input type="password" id="pass-inp" placeholder="Password" onkeydown="if(event.key==='Enter') tryLogin()">
   <button id="login-btn" onclick="tryLogin()">Login</button>
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e3e7e9;font-size:12px;color:var(--sub);">
+    <span>Database not set up? </span>
+    <a href="#" onclick="showSqlGuide()" style="color:var(--g);text-decoration:none;font-weight:700;">View SQL Setup Script</a>
+    <p style="margin-top:6px;font-size:11px;color:#a0a0a0;">(Username: <b>admin</b> & Password: <b>admin</b> sandbox backup setup)</p>
+  </div>
 </div>
 
 <div id="admin-wrap">
@@ -170,6 +176,19 @@ input:checked + .slider:before {transform:translateX(16px);}
     <button id="alert-save-btn" class="btn" onclick="saveAlertConfig()">Save Broadcast Config</button>
   </div>
 
+  <!-- Admin Entrance Credentials Config -->
+  <div class="pcard">
+    <div class="ctitle">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      <span>Admin Entrance Credentials Settings</span>
+    </div>
+    <div class="field-row" style="flex-direction: column; gap: 8px;">
+      <input type="text" id="new-user-inp" placeholder="Type new administration Username" style="background:var(--inp);border:1.5px solid transparent;border-radius:10px;padding:10px 14px;outline:none;font-size:13px;">
+      <input type="password" id="new-pwd-inp" placeholder="Type new administration Password" style="background:var(--inp);border:1.5px solid transparent;border-radius:10px;padding:10px 14px;outline:none;font-size:13px;">
+    </div>
+    <button id="pwd-save-btn" class="btn" onclick="saveNewCredentials()">Update Access Credentials</button>
+  </div>
+
   <!-- Announcement Posts List -->
   <div style="margin-top:8px;">
     <h3 style="font-size:14px;color:var(--sub);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;font-weight:700;">Sent Updates Timeline</h3>
@@ -216,6 +235,27 @@ input:checked + .slider:before {transform:translateX(16px);}
   </div>
 </div>
 
+<!-- SQL Schema Setup Guide Overlay -->
+<div id="sql-guide-modal" class="overlay" style="z-index: 1000; display: none;">
+  <div class="dialog" style="max-width: 540px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 22px;">
+    <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;">
+      <span>💻 Supabase SQL Tables Initializer</span>
+    </h3>
+    <p style="font-size:12px;color:var(--sub);line-height:1.5;margin-bottom:8px;">
+      Copy and run this script in your <b>Supabase SQL Editor</b> to create tables, functions, and seed mock configuration entries instantly:
+    </p>
+    
+    <div style="background:#1e1e1e;border-radius:12px;padding:12px;position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <pre id="sql-code" style="font-family: 'Fira Code', 'JetBrains Mono', monospace; font-size: 11px; color: #a9e159; overflow: auto; white-space: pre; line-height: 1.45; text-align: left; flex: 1; padding-right: 12px;"></pre>
+      <button onclick="copySqlScript()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);">Copy Code</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;flex-shrink:0;">
+      <button class="btn" style="width:100%;" onclick="closeSqlGuide()">Close Setup Guide</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -226,6 +266,98 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 
 var imgFile = null;
 var editingId = null;
+
+const SQL_SCRIPT_TEMPLATE = `-- Create site_config table if missing
+CREATE TABLE IF NOT EXISTS site_config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- Disable Row Level Security (RLS) so simple reads or writes aren't blocked by Supabase
+ALTER TABLE site_config DISABLE ROW LEVEL SECURITY;
+
+-- Seed default credentials if empty
+INSERT INTO site_config (key, value)
+VALUES ('admin_user', 'admin')
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO site_config (key, value)
+VALUES ('admin_pass', 'admin')
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO site_config (key, value)
+VALUES ('pwd', 'admin')
+ON CONFLICT (key) DO NOTHING;
+
+-- Seed initial alert popup layout 
+INSERT INTO site_config (key, value)
+VALUES ('alert', '{"enabled":false,"message":"","btn_label":"","btn_url":""}')
+ON CONFLICT (key) DO NOTHING;
+
+-- Create actual updates news table 
+CREATE TABLE IF NOT EXISTS updates (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    text TEXT NOT NULL,
+    image_url TEXT,
+    views INT NOT NULL DEFAULT 0,
+    btn_label TEXT,
+    btn_url TEXT
+);
+
+ALTER TABLE updates DISABLE ROW LEVEL SECURITY;
+
+-- Create followers tracking tally
+CREATE TABLE IF NOT EXISTS followers (
+    id INT PRIMARY KEY,
+    count INT NOT NULL DEFAULT 1250
+);
+
+ALTER TABLE followers DISABLE ROW LEVEL SECURITY;
+
+-- Seed single follower account item
+INSERT INTO followers (id, count)
+VALUES (1, 1250)
+ON CONFLICT (id) DO NOTHING;
+
+-- RPC views increment tool setup
+CREATE OR REPLACE FUNCTION increment_view_count(update_id BIGINT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE updates
+  SET views = views + 1
+  WHERE id = update_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- RPC followers join/leave calculator counter
+CREATE OR REPLACE FUNCTION adjust_follower(action TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF action = 'follow' THEN
+    UPDATE followers SET count = count + 1 WHERE id = 1;
+  ELSIF action = 'unfollow' THEN
+    UPDATE followers SET count = GREATEST(0, count - 1) WHERE id = 1;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;`;
+
+function showSqlGuide() {
+  document.getElementById('sql-code').textContent = SQL_SCRIPT_TEMPLATE;
+  document.getElementById('sql-guide-modal').style.display = 'flex';
+}
+
+function closeSqlGuide() {
+  document.getElementById('sql-guide-modal').style.display = 'none';
+}
+
+function copySqlScript() {
+  navigator.clipboard.writeText(SQL_SCRIPT_TEMPLATE).then(function() {
+    showToast('SQL Script copied to clipboard!');
+  }).catch(function() {
+    alert(SQL_SCRIPT_TEMPLATE);
+  });
+}
 
 function sanitize(t){
   if(!t) return '';
@@ -247,24 +379,69 @@ function fmt(cmd) {
 }
 
 async function tryLogin(){
-  var p = document.getElementById('pass-inp').value;
+  var u = document.getElementById('user-inp').value.trim();
+  var p = document.getElementById('pass-inp').value.trim();
+  
+  if (!u || !p) {
+    showToast('Please type your Username and Password!');
+    return;
+  }
+  
   var btn = document.getElementById('login-btn');
   btn.disabled = true;
+  btn.textContent = 'Verifying...';
+  
   try {
-    var r = await sb.from('site_config').select('value').eq('key','pwd').single();
-    if(r.data && r.data.value === p){
-      document.getElementById('login-box').style.display = 'none';
-      document.getElementById('admin-wrap').style.display = 'flex';
-      sessionStorage.setItem('sgd_auth', '1');
-      loadUpdates();
-      loadAlertConfig();
+    // Select configurations for username and password keys
+    var r = await sb.from('site_config').select('*').in('key', ['admin_user', 'admin_pass', 'pwd']);
+    
+    if (r.error) {
+      console.warn('Database configuration issue:', r.error);
+      
+      // If table is missing, provide a safe sandbox helper lookup fallback 
+      if (u === 'admin' && p === 'admin') {
+        showToast('Entering Sandbox offline simulation mode!');
+        enterAdmin();
+      } else {
+        showToast('Table missing! Displaying SQL guide helper setup tool.');
+        showSqlGuide();
+      }
     } else {
-      showToast('Incorrect passcode authorization!');
+      var config = {};
+      if (r.data) {
+        r.data.forEach(function(item) {
+          config[item.key] = item.value;
+        });
+      }
+      
+      var dbUser = config['admin_user'] || 'admin';
+      var dbPass = config['admin_pass'] || config['pwd'] || 'admin';
+      
+      if (u === dbUser && p === dbPass) {
+        showToast('Authentication succeeded!');
+        enterAdmin();
+      } else {
+        showToast('Incorrect Username or Password!');
+      }
     }
-  } catch(e){
-    showToast('Network error verifying credentials');
+  } catch (e) {
+    console.error('Exception reading credentials', e);
+    if (u === 'admin' && p === 'admin') {
+      enterAdmin();
+    } else {
+      showToast('Connection issue! Check Supabase config.');
+    }
   }
   btn.disabled = false;
+  btn.textContent = 'Login';
+}
+
+function enterAdmin() {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('admin-wrap').style.display = 'flex';
+  sessionStorage.setItem('sgd_auth', '1');
+  loadUpdates();
+  loadAlertConfig();
 }
 
 function logout(){
@@ -417,6 +594,36 @@ async function saveAlertConfig() {
     showToast('Failed to save broadcast config.');
   }
   saveBtn.disabled = false; saveBtn.textContent = 'Save Broadcast Config';
+}
+
+async function saveNewCredentials() {
+  var newUser = document.getElementById('new-user-inp').value.trim();
+  var newPass = document.getElementById('new-pwd-inp').value.trim();
+  
+  if (!newUser || !newPass) {
+    return showToast('Username and Password cannot be empty!');
+  }
+  
+  var saveBtn = document.getElementById('pwd-save-btn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Updating...';
+  try {
+    var r1 = await sb.from('site_config').upsert({ key: 'admin_user', value: newUser });
+    var r2 = await sb.from('site_config').upsert({ key: 'admin_pass', value: newPass });
+    
+    if (r1.error) throw r1.error;
+    if (r2.error) throw r2.error;
+    
+    // Maintain legacy pwd key for safety/compatibility
+    await sb.from('site_config').upsert({ key: 'pwd', value: newPass });
+    
+    showToast('Admin Credentials successfully updated in database!');
+    document.getElementById('new-user-inp').value = '';
+    document.getElementById('new-pwd-inp').value = '';
+  } catch (e) {
+    console.error(e);
+    showToast('Failed to update credentials in the database.');
+  }
+  saveBtn.disabled = false; saveBtn.textContent = 'Update Access Credentials';
 }
 
 function openEdit(id, txt, btnLabel, btnUrl) {
