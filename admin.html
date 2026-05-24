@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Signature Digital — Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;--inp:#F0F2F5;}
@@ -190,7 +191,12 @@ var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var sb = supabase.createClient(SB_URL, SB_KEY);
 var imgFile = null;
 
-// Check active session on load
+// Sanitize function to safely render bold/italic tags
+function sanitize(t){
+  if(!t) return '';
+  return DOMPurify.sanitize(t, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span'] });
+}
+
 async function checkSession() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
@@ -225,7 +231,6 @@ async function doLogout() {
   location.reload(); 
 }
 
-function stripHTML(html) { return (html||'').replace(/<[^>]*>?/gm, ''); }
 function fmtTime(d) { var t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); return d.toLocaleDateString()+' '+t; }
 function showToast(msg) { var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
@@ -312,8 +317,8 @@ async function loadUpdates() {
         '</div>'+
         '<div class="umeta"><span class="ubadge">UPDATE</span><span class="utime">'+fmtTime(new Date(u.created_at))+'</span></div>'+
         (u.image_url?'<img class="uimg" src="'+u.image_url+'">':'')+
-        (u.text?'<div class="utxt">'+stripHTML(u.text)+'</div>':'')+
-        (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--g);font-weight:600;">Button: '+stripHTML(u.btn_label)+'</div>':'')+
+        (u.text?'<div class="utxt">'+sanitize(u.text)+'</div>':'')+
+        (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--g);font-weight:600;">Button: '+sanitize(u.btn_label)+'</div>':'')+
         '<div class="uviews"><span style="font-size:11px;color:#bbb;">'+(u.views||0)+' views</span></div>'+
       '</div>';
     }).join('');
