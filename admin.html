@@ -100,7 +100,10 @@ input:checked + .slider:before {transform:translateX(16px);}
 <div id="admin-wrap">
   <div id="ahdr">
     <h1>👨‍💻 System Admin</h1>
-    <button onclick="logout()">Disconnect</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="showSqlGuide()" style="background:var(--inp);border:none;color:var(--dg);font-size:12px;font-weight:700;padding:6px 14px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">💻 SQL Setup Guide</button>
+      <button onclick="logout()">Disconnect</button>
+    </div>
   </div>
 
   <!-- Composer Panel -->
