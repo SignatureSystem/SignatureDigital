@@ -22,7 +22,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);}
 .ubadge{background:rgba(37,211,102,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;flex-shrink:0;backdrop-filter:blur(4px);}
 .utime{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto;flex-shrink:0;}
-.utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;}
+/* Added white-space: pre-wrap so line breaks are forced to render */
+.utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
 .uimg{width:100%;border-radius:12px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.1);pointer-events:none;user-select:none;}
 
 /* Alert Modal */
@@ -31,7 +32,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .alert-box{background:rgba(7,94,84,.7);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:24px 22px 20px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2);position:relative;}
 .alert-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1;transition:background .2s;}
 .alert-close:hover{background:rgba(255,255,255,.25);}
-.alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;}
+.alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;white-space:pre-wrap;}
 .alert-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
 .upd-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
 .uviews{display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08);}
@@ -110,10 +111,14 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 
 function sanitize(t){
   if(!t) return '';
-  return DOMPurify.sanitize(t, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span'] });
+  // Convert standard newlines to <br> to be safe, then let DOMPurify handle it.
+  // We added 'div' and 'p' to the allowed tags list to preserve formatting lines!
+  var formatted = t.replace(/\n/g, '<br>');
+  return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span', 'div', 'p'] });
 }
 
-function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function fmtTime(d){
   var now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   var yest=new Date(today-86400000), md=new Date(d.getFullYear(),d.getMonth(),d.getDate());
