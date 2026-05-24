@@ -8,7 +8,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;}
-html, body { overscroll-behavior: none; overscroll-behavior-y: none; overscroll-behavior-x: none; background-color: #0a4a3a; }
+html, body { overscroll-behavior: none; overscroll-behavior-y: none; overscroll-behavior-x: none; background-color: #0a4a3a; touch-action: manipulation; }
+button, a, .u-react-btn, .u-react-counts, .u-emoji-btn { touch-action: manipulation; }
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#0a4a3a 0%,#075E54 30%,#0d7a6a 60%,#1a9b85 100%);min-height:100vh;display:flex;flex-direction:column;background-attachment:fixed;}
 
 /* HEADER */
@@ -252,6 +253,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
   font-weight: 700;
   margin-left: 2px;
 }
+.u-react-breakdown-pop {
+  position: absolute;
+  bottom: 125%;
+  right: 0;
+  width: 170px;
+  background: rgba(18, 40, 32, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  padding: 10px 12px;
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.55), inset 0 1.5px 1px rgba(255,255,255,0.2);
+  z-index: 220;
+  animation: reactPopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: bottom right;
+}
 
 /* SKELETON LOADER STYLES */
 .sk-card {
@@ -367,15 +387,6 @@ document.addEventListener('gesturestart', function(event) {
   event.preventDefault();
 }, { passive: false });
 
-var lastTouchTime = 0;
-document.addEventListener('touchend', function(event) {
-  var now = new Date().getTime();
-  if (now - lastTouchTime <= 300) {
-    event.preventDefault();
-  }
-  lastTouchTime = now;
-}, false);
-
 // Reaction definitions and configurations (Facebook-style reactions)
 const REACT_MAP = {
   like: { emoji: '👍', label: 'Like', class: 'like' },
@@ -395,21 +406,74 @@ var hoverTimers = {};
 var currentOpenPopupId = null;
 var popupOpenedAt = {};
 
-function startReactLongPress(uid, isTouch) {
-  if (reactTimers[uid]) clearTimeout(reactTimers[uid]);
-  reactTimers[uid] = setTimeout(function() {
+var pressTimer = null;
+var longPressTriggered = false;
+var isTouchDevice = false;
+var activeBreakdownId = null;
+
+function handleReactTouchStart(e, uid) {
+  isTouchDevice = true;
+  longPressTriggered = false;
+  if (pressTimer) clearTimeout(pressTimer);
+  
+  pressTimer = setTimeout(function() {
     showReactPopup(uid);
-  }, 350);
+    longPressTriggered = true;
+  }, 400);
 }
 
-function endReactLongPress(uid) {
-  if (reactTimers[uid]) {
-    clearTimeout(reactTimers[uid]);
-    delete reactTimers[uid];
+function handleReactTouchEnd(e, uid) {
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+  if (longPressTriggered) {
+    e.preventDefault();
+    return;
+  }
+  e.preventDefault();
+  toggleReactDefault(uid);
+}
+
+function handleReactMouseDown(e, uid) {
+  if (isTouchDevice) return;
+  longPressTriggered = false;
+  if (pressTimer) clearTimeout(pressTimer);
+  
+  pressTimer = setTimeout(function() {
+    showReactPopup(uid);
+    longPressTriggered = true;
+  }, 400);
+}
+
+function handleReactMouseUp(e, uid) {
+  if (isTouchDevice) return;
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
   }
 }
 
+function handleReactMouseLeave(e, uid) {
+  if (isTouchDevice) return;
+  if (pressTimer) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+  endReactHover(uid);
+}
+
+function handleReactClick(e, uid) {
+  if (isTouchDevice) return;
+  if (longPressTriggered) {
+    e.preventDefault();
+    return;
+  }
+  toggleReactDefault(uid);
+}
+
 function startReactHover(uid) {
+  if (isTouchDevice) return;
   if (hoverTimers[uid]) clearTimeout(hoverTimers[uid]);
   hoverTimers[uid] = setTimeout(function() {
     showReactPopup(uid);
@@ -417,6 +481,7 @@ function startReactHover(uid) {
 }
 
 function endReactHover(uid) {
+  if (isTouchDevice) return;
   if (hoverTimers[uid]) clearTimeout(hoverTimers[uid]);
   hoverTimers[uid] = setTimeout(function() {
     var container = document.getElementById('react-container-' + uid);
@@ -449,11 +514,73 @@ function hideReactPopup(uid) {
   popupOpenedAt[uid] = 0;
 }
 
+function showReactionBreakdown(uid, e) {
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  
+  if (activeBreakdownId && activeBreakdownId !== uid) {
+    var otherPop = document.getElementById('react-breakdown-' + activeBreakdownId);
+    if (otherPop) otherPop.style.display = 'none';
+  }
+  
+  var pop = document.getElementById('react-breakdown-' + uid);
+  if (!pop) return;
+  
+  if (pop.style.display === 'flex') {
+    pop.style.display = 'none';
+    activeBreakdownId = null;
+    return;
+  }
+  
+  var countsObj = activeStateCounts[uid];
+  if (!countsObj) return;
+  
+  var items = [
+    { key: 'like', count: countsObj.react_like || 0, emoji: '👍', label: 'Like' },
+    { key: 'love', count: countsObj.react_love || 0, emoji: '❤️', label: 'Love' },
+    { key: 'haha', count: countsObj.react_haha || 0, emoji: '😆', label: 'Haha' },
+    { key: 'wow', count: countsObj.react_wow || 0, emoji: '😮', label: 'Wow' },
+    { key: 'sad', count: countsObj.react_sad || 0, emoji: '😢', label: 'Sad' },
+    { key: 'angry', count: countsObj.react_angry || 0, emoji: '😡', label: 'Angry' }
+  ];
+  
+  var activeItems = items.filter(function(i) { return i.count > 0; });
+  if (activeItems.length === 0) return;
+  
+  var html = '<div style="font-weight:700;font-size:11px;color:rgba(255,255,255,.9);margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:4px;width:100%;">Reactions Breakdown</div>';
+  activeItems.forEach(function(item) {
+    var itemEmoji = item.emoji;
+    if (item.key === 'like') {
+      itemEmoji = '<span style="display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.15);width:16px;height:16px;border-radius:50%;margin-right:2px;border:1px solid rgba(255,255,255,0.25);">' + MINI_LIKE_SVG + '</span>';
+    } else {
+      itemEmoji = '<span>' + item.emoji + '</span>';
+    }
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;font-size:12px;color:rgba(255,255,255,.9);padding:3px 0;">' +
+              '<span style="display:flex;align-items:center;gap:6px;">' + itemEmoji + ' <span>' + item.label + '</span></span>' +
+              '<span style="font-weight:700;color:#25D366;">' + fmtCount(item.count) + '</span>' +
+            '</div>';
+  });
+  
+  pop.innerHTML = html;
+  pop.style.display = 'flex';
+  activeBreakdownId = uid;
+}
+
 document.addEventListener('click', function(e) {
   if (currentOpenPopupId) {
     var container = document.getElementById('react-container-' + currentOpenPopupId);
     if (container && !container.contains(e.target)) {
       hideReactPopup(currentOpenPopupId);
+    }
+  }
+  if (activeBreakdownId) {
+    var pop = document.getElementById('react-breakdown-' + activeBreakdownId);
+    var countsEl = document.getElementById('react-counts-' + activeBreakdownId);
+    if (pop && !pop.contains(e.target) && countsEl && !countsEl.contains(e.target)) {
+      pop.style.display = 'none';
+      activeBreakdownId = null;
     }
   }
 });
@@ -869,12 +996,13 @@ async function loadUpdates(){
           '<div style="display:flex;align-items:center;gap:12px;margin-left:auto;">'+
             '<div class="u-react-container" id="react-container-'+u.id+'" onmouseenter="startReactHover('+u.id+')" onmouseleave="endReactHover('+u.id+')">'+
               '<button class="u-react-btn" id="react-btn-'+u.id+'" '+
-                      'onmousedown="startReactLongPress('+u.id+')" '+
-                      'onmouseup="endReactLongPress('+u.id+')" '+
-                      'onmouseleave="endReactLongPress('+u.id+')" '+
-                      'ontouchstart="startReactLongPress('+u.id+', true)" '+
-                      'ontouchend="endReactLongPress('+u.id+')" '+
-                      'onclick="toggleReactDefault('+u.id+')">'+
+                      'onmousedown="handleReactMouseDown(event, '+u.id+')" '+
+                      'onmouseup="handleReactMouseUp(event, '+u.id+')" '+
+                      'onmouseleave="handleReactMouseLeave(event, '+u.id+')" '+
+                      'ontouchstart="handleReactTouchStart(event, '+u.id+')" '+
+                      'ontouchend="handleReactTouchEnd(event, '+u.id+')" '+
+                      'oncontextmenu="event.preventDefault()" '+
+                      'onclick="handleReactClick(event, '+u.id+')">'+
                 '<span class="react-btn-icon" id="react-icon-'+u.id+'">'+LIKE_SVG+'</span> '+
                 '<span class="react-btn-text" id="react-lbl-'+u.id+'">Like</span>'+
               '</button>'+
@@ -888,7 +1016,8 @@ async function loadUpdates(){
                 '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'sad\')" title="Sad">😢</button>'+
                 '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'angry\')" title="Angry">😡</button>'+
               '</div>'+
-              '<div class="u-react-counts" id="react-counts-'+u.id+'" onclick="toggleReactDefault('+u.id+')"></div>'+
+              '<div class="u-react-counts" id="react-counts-'+u.id+'" onclick="showReactionBreakdown('+u.id+', event)"></div>'+
+              '<div class="u-react-breakdown-pop" id="react-breakdown-'+u.id+'"></div>'+
             '</div>'+
             (u.btn_label&&u.btn_url?'<a href="'+(u.btn_url.startsWith('http')?u.btn_url:'https://'+u.btn_url)+'" target="_blank" class="upd-btn" style="margin-top:0;padding:6px 16px;font-size:12px;border-radius:16px;">'+esc(u.btn_label)+'</a>':'')+
           '</div>'+
