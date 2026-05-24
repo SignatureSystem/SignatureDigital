@@ -681,7 +681,8 @@ async function postUpdate() {
     showToast('Announcement published successfully.');
     loadUpdates();
   } catch(e) { 
-    showToast('Failed to post announcement.'); 
+    console.error('Error in postUpdate:', e);
+    showToast('Failed to post announcement: ' + (e.message || e.details || JSON.stringify(e))); 
   }
   btn.disabled = false; btn.textContent = 'Post Update';
 }
@@ -697,7 +698,9 @@ async function loadAlertConfig() {
       document.getElementById('alert-url').value = cfg.btn_url || '';
       toggleAlertFields();
     }
-  } catch(e){}
+  } catch(e){
+    console.warn('Error loadAlertConfig:', e);
+  }
 }
 
 async function saveAlertConfig() {
@@ -716,11 +719,13 @@ async function saveAlertConfig() {
   var saveBtn = document.getElementById('alert-save-btn');
   saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
   try {
-    var r = await sb.from('site_config').update({ value: JSON.stringify(payload) }).eq('key', 'alert');
+    // Robust .upsert over .update in case configuration is brand-new
+    var r = await sb.from('site_config').upsert({ key: 'alert', value: JSON.stringify(payload) });
     if(r.error) throw r.error;
     showToast('Broadcast settings updated!');
   } catch(e){
-    showToast('Failed to save broadcast config.');
+    console.error('Error saveAlertConfig:', e);
+    showToast('Failed to save broadcast config: ' + (e.message || JSON.stringify(e)));
   }
   saveBtn.disabled = false; saveBtn.textContent = 'Save Broadcast Config';
 }
@@ -749,8 +754,8 @@ async function saveNewCredentials() {
     document.getElementById('new-user-inp').value = '';
     document.getElementById('new-pwd-inp').value = '';
   } catch (e) {
-    console.error(e);
-    showToast('Failed to update credentials in the database.');
+    console.error('Error saveNewCredentials:', e);
+    showToast('Failed to update credentials in the database: ' + (e.message || JSON.stringify(e)));
   }
   saveBtn.disabled = false; saveBtn.textContent = 'Update Access Credentials';
 }
@@ -826,7 +831,8 @@ async function saveEdit(){
     showToast('Saved changes!');
     loadUpdates();
   } catch(e){
-    showToast('Error saving changes.');
+    console.error('Error saving changes:', e);
+    showToast('Error saving changes: ' + (e.message || JSON.stringify(e)));
   }
 }
 
@@ -844,7 +850,8 @@ async function deleteUpdate(uid){
     showToast('Announcement deleted!');
     loadUpdates();
   } catch(e){
-    showToast('Failed to delete post.');
+    console.error('Error deleting updates:', e);
+    showToast('Failed to delete post: ' + (e.message || JSON.stringify(e)));
   }
 }
 
@@ -859,6 +866,12 @@ async function loadUpdates(){
   try {
     var r = await sb.from('updates').select('*').order('created_at', {ascending:false});
     if(r.error) throw r.error;
+    
+    if(!r.data || !r.data.length){
+      list.innerHTML = '<div style="text-align:center;padding:24px;background:var(--inp);border-radius:12px;color:var(--sub);font-size:13px;">No updates found. Ready to compose your first post!</div>';
+      return;
+    }
+
     list.innerHTML = r.data.map(function(u){
       var cleanText = u.text || '';
       var giveawayPreview = '';
@@ -894,7 +907,13 @@ async function loadUpdates(){
       if(el) el._data = u;
     });
   } catch(e){
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub);">Error loading entries</div>';
+    console.error('Error loading updates list:', e);
+    list.innerHTML = '<div style="text-align:center;padding:24px;background:#fff5f5;border:1.5px solid #ffcdd2;border-radius:18px;color:#c62828;">' +
+      '<div style="font-size: 26px; margin-bottom: 8px;">⚙️</div>' +
+      '<div style="font-size: 14px; font-weight:700; margin-bottom: 4px;">Database Connection / Setup Issue</div>' +
+      '<div style="font-size: 11px; color:#555; margin-bottom:12px; word-break: break-all;">' + esc(e.message || e.details || String(e)) + '</div>' +
+      '<button class="btn-sec" onclick="showSqlGuide()" style="padding: 6px 14px; font-size: 11px; cursor: pointer; font-weight:700;">View SQL Setup Script</button>' +
+    '</div>';
   }
 }
 </script>
