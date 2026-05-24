@@ -50,7 +50,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(0,0,0,.05);}
 .ubadge{background:var(--g);color:#fff;font-size:10px;padding:2px 8px;border-radius:9px;}
 .utime{font-size:11px;color:var(--sub);margin-left:auto;}
-.utxt{font-size:14px;color:var(--txt);line-height:1.55;}
+/* Added white-space: pre-wrap here as well */
+.utxt{font-size:14px;color:var(--txt);line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
 .uimg{width:100%;border-radius:8px;margin-bottom:10px;max-height:320px;object-fit:contain;background:#f5f5f5;}
 .upd-btn-preview{display:inline-flex;margin-top:8px;padding:7px 18px;background:var(--g);color:#fff;border-radius:16px;font-size:12px;text-decoration:none;}
 .uviews{display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(0,0,0,.04);}
@@ -107,7 +108,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
         <button class="fmt-btn" onclick="fmtEdit('underline')"><u>U</u></button>
         <button class="fmt-btn" onclick="fmtEdit('strikeThrough')"><s>S</s></button>
       </div>
-      <div id="edit-txt" contenteditable="true" style="width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;outline:none;min-height:80px;margin-bottom:10px;line-height:1.55;"></div>
+      <div id="edit-txt" contenteditable="true" style="width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;outline:none;min-height:80px;margin-bottom:10px;line-height:1.55;white-space:pre-wrap;"></div>
       <div class="field-row" style="margin-bottom:14px;">
         <input type="text" id="edit-btn-label" placeholder="Button label (e.g. Buy Now)">
         <input type="url" id="edit-btn-url" placeholder="Button URL">
@@ -134,7 +135,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
       <button class="fmt-btn" onclick="fmt('underline')"><u>U</u></button>
       <button class="fmt-btn" onclick="fmt('strikeThrough')"><s>S</s></button>
     </div>
-    <div id="post-txt" contenteditable="true" placeholder="Write an update for your clients..." style="width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;outline:none;min-height:80px;line-height:1.55;"></div>
+    <div id="post-txt" contenteditable="true" placeholder="Write an update for your clients..." style="width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;outline:none;min-height:80px;line-height:1.55;white-space:pre-wrap;"></div>
     <div class="field-row">
       <input type="text" id="btn-label" placeholder="Button label (optional)">
       <input type="url" id="btn-url" placeholder="Button URL (optional)">
@@ -191,10 +192,11 @@ var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var sb = supabase.createClient(SB_URL, SB_KEY);
 var imgFile = null;
 
-// Sanitize function to safely render bold/italic tags
+// Allow 'div' and 'p' tags to preserve paragraphs!
 function sanitize(t){
   if(!t) return '';
-  return DOMPurify.sanitize(t, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span'] });
+  var formatted = t.replace(/\n/g, '<br>');
+  return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span', 'div', 'p'] });
 }
 
 async function checkSession() {
@@ -355,7 +357,7 @@ async function saveAlert(){
 function fmt(cmd) { document.getElementById('post-txt').focus(); document.execCommand(cmd, false, null); }
 function fmtEdit(cmd) { document.getElementById('edit-txt').focus(); document.execCommand(cmd, false, null); }
 
-// Fix formatting issue when copy-pasting from other websites
+// Strip hidden html when copy pasting but keep standard line breaks
 function interceptPaste(e) {
   e.preventDefault();
   var text = (e.originalEvent || e).clipboardData.getData('text/plain');
