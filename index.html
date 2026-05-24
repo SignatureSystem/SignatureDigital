@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="overscroll-behavior: none; background-color: #0a4a3a;">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -8,6 +8,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;}
+html, body { overscroll-behavior: none; overscroll-behavior-y: none; overscroll-behavior-x: none; background-color: #0a4a3a; }
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#0a4a3a 0%,#075E54 30%,#0d7a6a 60%,#1a9b85 100%);min-height:100vh;display:flex;flex-direction:column;background-attachment:fixed;}
 
 /* HEADER */
@@ -136,6 +137,121 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
   border-color: #25D366;
   color: #fff;
 }
+
+/* ACTION BAR & REACTIONS SYSTEM */
+.u-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+.u-react-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.u-react-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.u-react-btn:hover, .u-react-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.u-react-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.u-react-btn.like { color: #fff; }
+.u-react-btn.love { color: #f1948a; }
+.u-react-btn.haha { color: #f7dc6f; }
+.u-react-btn.wow { color: #f5b041; }
+.u-react-btn.sad { color: #f7dc6f; }
+.u-react-btn.angry { color: #f1948a; }
+
+.u-react-popup {
+  position: absolute;
+  bottom: 125%;
+  left: 0;
+  background: rgba(18, 40, 32, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  padding: 6px 10px;
+  display: none;
+  gap: 12px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.55), inset 0 1.5px 1px rgba(255,255,255,0.2);
+  z-index: 210;
+  animation: reactPopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: bottom left;
+}
+.u-react-popup.show {
+  display: flex;
+}
+@keyframes reactPopIn {
+  0% { transform: scale(0.6) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.u-emoji-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 26px;
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  padding: 2px;
+}
+.u-emoji-btn:hover {
+  transform: scale(1.4) translateY(-6px);
+}
+.u-react-counts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 14px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  user-select: none;
+}
+.u-react-emoji-icons {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+.u-react-emoji-icons span {
+  font-size: 13px;
+  display: inline-block;
+}
+.u-react-emoji-icons span:not(:first-child) {
+  margin-left: -4px;
+}
+.u-react-total-num {
+  font-weight: 700;
+  margin-left: 2px;
+}
 </style>
 </head>
 <body>
@@ -192,6 +308,263 @@ const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
 const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
 const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// Zoom and gesture prevention controls
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) {
+    event.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('gesturestart', function(event) {
+  event.preventDefault();
+}, { passive: false });
+
+var lastTouchTime = 0;
+document.addEventListener('touchend', function(event) {
+  var now = new Date().getTime();
+  if (now - lastTouchTime <= 300) {
+    event.preventDefault();
+  }
+  lastTouchTime = now;
+}, false);
+
+// Reaction definitions and configurations (Facebook-style reactions)
+const REACT_MAP = {
+  like: { emoji: '👍', label: 'Like', class: 'like' },
+  love: { emoji: '❤️', label: 'Love', class: 'love' },
+  haha: { emoji: '😆', label: 'Haha', class: 'haha' },
+  wow: { emoji: '😮', label: 'Wow', class: 'wow' },
+  sad: { emoji: '😢', label: 'Sad', class: 'sad' },
+  angry: { emoji: '😡', label: 'Angry', class: 'angry' }
+};
+
+const LIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:2px;"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
+const MINI_LIKE_SVG = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
+
+var activeStateCounts = {};
+var reactTimers = {};
+var hoverTimers = {};
+var currentOpenPopupId = null;
+var ignoredClick = {};
+
+function startReactLongPress(uid, isTouch) {
+  if (reactTimers[uid]) clearTimeout(reactTimers[uid]);
+  reactTimers[uid] = setTimeout(function() {
+    showReactPopup(uid);
+  }, 350);
+}
+
+function endReactLongPress(uid) {
+  if (reactTimers[uid]) {
+    clearTimeout(reactTimers[uid]);
+    delete reactTimers[uid];
+  }
+}
+
+function startReactHover(uid) {
+  if (hoverTimers[uid]) clearTimeout(hoverTimers[uid]);
+  hoverTimers[uid] = setTimeout(function() {
+    showReactPopup(uid);
+  }, 400);
+}
+
+function endReactHover(uid) {
+  if (hoverTimers[uid]) clearTimeout(hoverTimers[uid]);
+  hoverTimers[uid] = setTimeout(function() {
+    var container = document.getElementById('react-container-' + uid);
+    if (container && !container.matches(':hover')) {
+      hideReactPopup(uid);
+    }
+  }, 350);
+}
+
+function showReactPopup(uid) {
+  if (currentOpenPopupId && currentOpenPopupId !== uid) {
+    hideReactPopup(currentOpenPopupId);
+  }
+  var pop = document.getElementById('react-popup-' + uid);
+  if (pop) {
+    pop.classList.add('show');
+    currentOpenPopupId = uid;
+    ignoredClick[uid] = true;
+    setTimeout(function() {
+      ignoredClick[uid] = false;
+    }, 450);
+  }
+}
+
+function hideReactPopup(uid) {
+  var pop = document.getElementById('react-popup-' + uid);
+  if (pop) {
+    pop.classList.remove('show');
+  }
+  if (currentOpenPopupId === uid) {
+    currentOpenPopupId = null;
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (currentOpenPopupId) {
+    var container = document.getElementById('react-container-' + currentOpenPopupId);
+    if (container && !container.contains(e.target)) {
+      hideReactPopup(currentOpenPopupId);
+    }
+  }
+});
+
+function updateReactBtnUI(uid, type) {
+  var btn = document.getElementById('react-btn-' + uid);
+  var icon = document.getElementById('react-icon-' + uid);
+  var lbl = document.getElementById('react-lbl-' + uid);
+  if (!btn || !icon || !lbl) return;
+  
+  btn.className = 'u-react-btn';
+  
+  if (type && REACT_MAP[type]) {
+    var match = REACT_MAP[type];
+    if (type === 'like') {
+      icon.innerHTML = LIKE_SVG;
+    } else {
+      icon.textContent = match.emoji;
+    }
+    lbl.textContent = match.label;
+    btn.classList.add('active', match.class);
+  } else {
+    icon.innerHTML = LIKE_SVG;
+    lbl.textContent = 'Like';
+  }
+}
+
+function renderCountsUI(uid) {
+  var countsObj = activeStateCounts[uid];
+  if (!countsObj) return;
+  
+  var total = 0;
+  var items = [
+    { type: 'like', count: countsObj.react_like || 0, emoji: '👍' },
+    { type: 'love', count: countsObj.react_love || 0, emoji: '❤️' },
+    { type: 'haha', count: countsObj.react_haha || 0, emoji: '😆' },
+    { type: 'wow', count: countsObj.react_wow || 0, emoji: '😮' },
+    { type: 'sad', count: countsObj.react_sad || 0, emoji: '😢' },
+    { type: 'angry', count: countsObj.react_angry || 0, emoji: '😡' }
+  ];
+  
+  items.forEach(function(item) {
+    total += item.count;
+  });
+  
+  var countsEl = document.getElementById('react-counts-' + uid);
+  if (!countsEl) return;
+  
+  if (total === 0) {
+    countsEl.style.display = 'none';
+    return;
+  }
+  
+  var activeItems = items.filter(function(i) { return i.count > 0; });
+  activeItems.sort(function(a, b) { return b.count - a.count; });
+  
+  var topEmojisHtml = '<div class="u-react-emoji-icons">';
+  var displayCount = Math.min(3, activeItems.length);
+  for (var i = 0; i < displayCount; i++) {
+    if (activeItems[i].type === 'like') {
+      topEmojisHtml += '<span style="display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.15);width:16px;height:16px;border-radius:50%;margin-right:2px;border:1px solid rgba(255,255,255,0.25);">' + MINI_LIKE_SVG + '</span>';
+    } else {
+      topEmojisHtml += '<span>' + activeItems[i].emoji + '</span>';
+    }
+  }
+  topEmojisHtml += '</div>';
+  
+  countsEl.innerHTML = topEmojisHtml + '<span class="u-react-total-num">' + fmtCount(total) + '</span>';
+  countsEl.style.display = 'flex';
+}
+
+async function toggleReactDefault(uid) {
+  if (ignoredClick[uid]) {
+    ignoredClick[uid] = false;
+    return;
+  }
+  
+  var pop = document.getElementById('react-popup-' + uid);
+  if (pop && pop.classList.contains('show')) {
+    hideReactPopup(uid);
+    return;
+  }
+  
+  var active = localStorage.getItem('react_' + uid);
+  if (active) {
+    localStorage.removeItem('react_' + uid);
+    updateReactBtnUI(uid, null);
+    await decrementReactionOnServer(uid, active);
+  } else {
+    localStorage.setItem('react_' + uid, 'like');
+    updateReactBtnUI(uid, 'like');
+    await incrementReactionOnServer(uid, 'like');
+  }
+}
+
+async function selectReaction(uid, emojiKey) {
+  hideReactPopup(uid);
+  
+  var prevReaction = localStorage.getItem('react_' + uid) || null;
+  if (prevReaction === emojiKey) {
+    localStorage.removeItem('react_' + uid);
+    updateReactBtnUI(uid, null);
+    await decrementReactionOnServer(uid, emojiKey);
+    return;
+  }
+  
+  if (prevReaction) {
+    await decrementReactionOnServer(uid, prevReaction);
+  }
+  
+  localStorage.setItem('react_' + uid, emojiKey);
+  updateReactBtnUI(uid, emojiKey);
+  await incrementReactionOnServer(uid, emojiKey);
+}
+
+async function incrementReactionOnServer(uid, type) {
+  try {
+    var r = await sb.rpc('react_to_post', { update_id: uid, reaction: type, val: 1 });
+    if (r.error) throw r.error;
+  } catch (err) {
+    console.warn("RPC react_to_post failed, falling back to direct update:", err);
+    try {
+      var currentVal = activeStateCounts[uid] ? (activeStateCounts[uid]['react_' + type] || 0) : 0;
+      var updateData = {};
+      updateData['react_' + type] = currentVal + 1;
+      await sb.from('updates').update(updateData).eq('id', uid);
+    } catch (e) {
+      console.error("Direct update fallback failed too:", e);
+    }
+  }
+  if (activeStateCounts[uid]) {
+    activeStateCounts[uid]['react_' + type] = (activeStateCounts[uid]['react_' + type] || 0) + 1;
+    renderCountsUI(uid);
+  }
+}
+
+async function decrementReactionOnServer(uid, type) {
+  try {
+    var r = await sb.rpc('react_to_post', { update_id: uid, reaction: type, val: -1 });
+    if (r.error) throw r.error;
+  } catch (err) {
+    console.warn("RPC react_to_post failed, falling back to direct update:", err);
+    try {
+      var currentVal = activeStateCounts[uid] ? (activeStateCounts[uid]['react_' + type] || 0) : 0;
+      var updateData = {};
+      updateData['react_' + type] = Math.max(0, currentVal - 1);
+      await sb.from('updates').update(updateData).eq('id', uid);
+    } catch (e) {
+      console.error("Direct update fallback failed too:", e);
+    }
+  }
+  if (activeStateCounts[uid]) {
+    activeStateCounts[uid]['react_' + type] = Math.max(0, (activeStateCounts[uid]['react_' + type] || 0) - 1);
+    renderCountsUI(uid);
+  }
+}
 
 function sanitize(t){
   if(!t) return '';
@@ -425,6 +798,16 @@ async function loadUpdates(){
         cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
       }
 
+      // Cache counts locally for reactive state
+      activeStateCounts[u.id] = {
+        react_like: u.react_like || 0,
+        react_love: u.react_love || 0,
+        react_haha: u.react_haha || 0,
+        react_wow: u.react_wow || 0,
+        react_sad: u.react_sad || 0,
+        react_angry: u.react_angry || 0
+      };
+
       return '<div class="ucard">'+
         '<div class="umeta">'+
           '<span class="ubadge">UPDATE</span>'+
@@ -433,15 +816,49 @@ async function loadUpdates(){
         (u.image_url?'<img class="uimg" src="'+u.image_url+'" alt="">':'')+
         (cleanText?'<div class="utxt">'+sanitize(cleanText)+'</div>':'')+
         giveawayHtml +
-        (u.btn_label&&u.btn_url?'<a href="'+(u.btn_url.startsWith('http')?u.btn_url:'https://'+u.btn_url)+'" target="_blank" class="upd-btn">'+esc(u.btn_label)+'</a>':'')+
-        '<div class="uviews">'+
-          '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'+
-          '<span id="vc-'+u.id+'">'+(u.views||0)+'</span>'+
+        '<div class="u-action-bar">'+
+          '<div class="uviews" style="margin-top:0;padding-top:0;border-top:none;display:inline-flex;align-items:center;gap:4px;">'+
+            '<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:rgba(255,255,255,.4);"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'+
+            '<span id="vc-'+u.id+'" style="font-size:11px;color:rgba(255,255,255,.4);">'+(u.views||0)+'</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:12px;margin-left:auto;">'+
+            '<div class="u-react-container" id="react-container-'+u.id+'" onmouseenter="startReactHover('+u.id+')" onmouseleave="endReactHover('+u.id+')">'+
+              '<button class="u-react-btn" id="react-btn-'+u.id+'" '+
+                      'onmousedown="startReactLongPress('+u.id+')" '+
+                      'onmouseup="endReactLongPress('+u.id+')" '+
+                      'onmouseleave="endReactLongPress('+u.id+')" '+
+                      'ontouchstart="startReactLongPress('+u.id+', true)" '+
+                      'ontouchend="endReactLongPress('+u.id+')" '+
+                      'onclick="toggleReactDefault('+u.id+')">'+
+                '<span class="react-btn-icon" id="react-icon-'+u.id+'">'+LIKE_SVG+'</span> '+
+                '<span class="react-btn-text" id="react-lbl-'+u.id+'">Like</span>'+
+              '</button>'+
+              '<div class="u-react-popup" id="react-popup-'+u.id+'">'+
+                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'like\')" title="Like" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;">'+
+                  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>'+
+                '</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'love\')" title="Love">❤️</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'haha\')" title="Haha">😆</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'wow\')" title="Wow">😮</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'sad\')" title="Sad">😢</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'angry\')" title="Angry">😡</button>'+
+              '</div>'+
+              '<div class="u-react-counts" id="react-counts-'+u.id+'" onclick="toggleReactDefault('+u.id+')"></div>'+
+            '</div>'+
+            (u.btn_label&&u.btn_url?'<a href="'+(u.btn_url.startsWith('http')?u.btn_url:'https://'+u.btn_url)+'" target="_blank" class="upd-btn" style="margin-top:0;padding:6px 16px;font-size:12px;border-radius:16px;">'+esc(u.btn_label)+'</a>':'')+
+          '</div>'+
         '</div>'+
       '</div>';
     }).join('');
     
-    r.data.forEach(function(u){ trackView(u.id); });
+    r.data.forEach(function(u){
+      renderCountsUI(u.id);
+      var userReactedKey = localStorage.getItem('react_' + u.id);
+      if (userReactedKey) {
+        updateReactBtnUI(u.id, userReactedKey);
+      }
+      trackView(u.id);
+    });
   }catch(e){ document.getElementById('loading').textContent='Failed to load updates.'; }
 }
 
