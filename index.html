@@ -31,6 +31,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 #alert-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 #alert-modal.show{display:flex;}
 .alert-box{background:rgba(7,94,84,.7);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:24px 22px 20px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2);position:relative;}
+
+/* SQL Guide Modal Styles */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:12px;z-index:1000;}
+.dialog{background:#fff;border-radius:24px;border:1.5px solid #e3e7e9;padding:20px;max-width:540px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:14px;color:#111;}
 .alert-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1;transition:background .2s;}
 .alert-close:hover{background:rgba(255,255,255,.25);}
 .alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;white-space:pre-wrap;}
@@ -368,6 +372,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
   </div>
 </div>
 <div id="toast"></div>
+
+<!-- SQL Schema Setup Guide Overlay -->
+<div id="sql-guide-modal" class="overlay">
+  <div class="dialog" style="max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 22px;">
+    <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;">
+      <span>💻 Supabase SQL Tables Initializer</span>
+    </h3>
+    <p style="font-size:12px;color:#667781;line-height:1.5;margin-bottom:8px;">
+      Copy and run this script in your <b>Supabase SQL Editor</b> to create tables, functions, and seed mock configurations instantly:
+    </p>
+    
+    <div style="background:#1e1e1e;border-radius:12px;padding:12px;position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <pre id="sql-code" style="font-family: 'Fira Code', 'JetBrains Mono', monospace; font-size: 11.5px; color: #a9e159; overflow: auto; white-space: pre; line-height: 1.45; text-align: left; flex: 1; padding-right: 12px;"></pre>
+      <button onclick="copySqlScript()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);">Copy Code</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;flex-shrink:0;">
+      <button class="alert-btn" style="width:100%;background:#25D366;border-color:#25D366;cursor:pointer;cursor:pointer;" onclick="closeSqlGuide()">Close Setup Guide</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -888,8 +913,8 @@ async function loadUpdates(){
       list.innerHTML = '<div style="text-align:center;padding:32px 14px;background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);border-radius:18px;border:1px dashed rgba(255,255,255,0.25);margin-top:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">' +
         '<div style="font-size:28px;margin-bottom:10px;">⚙️</div>' +
         '<div style="font-size:14px;font-weight:700;color:#ffdd6b;margin-bottom:6px;">Supabase Database Setup Needed</div>' +
-        '<div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;margin-bottom:14px;max-width:320px;margin-left:auto;margin-right:auto;">The "updates" table was not detected. Please log in to admin area to get the SQL setup script.</div>' +
-        '<a href="admin.html" style="display:inline-flex;align-items:center;justify-content:center;padding:8px 18px;background:rgba(37,211,102,0.85);border:1px solid rgba(37,211,102,0.5);border-radius:24px;color:#fff;font-size:12px;font-weight:700;text-decoration:none;">Open Admin Setup SQL &rarr;</a>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;margin-bottom:14px;max-width:320px;margin-left:auto;margin-right:auto;">The "updates" table was not detected. Please initialize your database tables using our helper initializer tool.</div>' +
+        '<a href="#" onclick="showSqlGuide();return false;" style="display:inline-flex;align-items:center;justify-content:center;padding:8px 18px;background:rgba(37,211,102,0.85);border:1px solid rgba(37,211,102,0.5);border-radius:24px;color:#fff;font-size:12px;font-weight:700;text-decoration:none;">Open SQL Setup Guide &rarr;</a>' +
       '</div>';
       return;
     }
@@ -1033,7 +1058,17 @@ async function loadUpdates(){
       }
       trackView(u.id);
     });
-  }catch(e){ document.getElementById('loading').textContent='Failed to load updates.'; }
+  }catch(e){
+    console.error('Supabase load updates failed:', e);
+    document.getElementById('loading').style.display='none';
+    var list = document.getElementById('updlist');
+    list.innerHTML = '<div style="text-align:center;padding:32px 14px;background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);border-radius:18px;border:1px dashed rgba(255,255,255,0.25);margin-top:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">' +
+      '<div style="font-size:28px;margin-bottom:10px;">⚙️</div>' +
+      '<div style="font-size:14px;font-weight:700;color:#ffdd6b;margin-bottom:6px;">Supabase Connection Error</div>' +
+      '<div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;margin-bottom:14px;max-width:320px;margin-left:auto;margin-right:auto;">Database tables might not be fully configured yet.</div>' +
+      '<a href="#" onclick="showSqlGuide();return false;" style="display:inline-flex;align-items:center;justify-content:center;padding:8px 18px;background:rgba(37,211,102,0.85);border:1px solid rgba(37,211,102,0.5);border-radius:24px;color:#fff;font-size:12px;font-weight:700;text-decoration:none;">Open SQL Setup Guide &rarr;</a>' +
+    '</div>';
+  }
 }
 
 const viewedInThisLoad = new Set();
@@ -1061,6 +1096,135 @@ async function trackView(uid){
       console.error("Fallback view update failed too:", err);
     }
   }
+}
+
+const SQL_SCRIPT_TEMPLATE = `-- Create site_config table if missing
+CREATE TABLE IF NOT EXISTS site_config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- Disable Row Level Security (RLS) so simple reads or writes aren't blocked by Supabase
+ALTER TABLE site_config DISABLE ROW LEVEL SECURITY;
+
+-- Seed default credentials if empty
+INSERT INTO site_config (key, value)
+VALUES ('admin_user', 'admin')
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO site_config (key, value)
+VALUES ('admin_pass', 'admin')
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO site_config (key, value)
+VALUES ('pwd', 'admin')
+ON CONFLICT (key) DO NOTHING;
+
+-- Seed initial alert popup layout 
+INSERT INTO site_config (key, value)
+VALUES ('alert', '{"enabled":false,"message":"","btn_label":"","btn_url":""}')
+ON CONFLICT (key) DO NOTHING;
+
+-- Create actual updates news table 
+CREATE TABLE IF NOT EXISTS updates (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    text TEXT NOT NULL,
+    image_url TEXT,
+    views INT NOT NULL DEFAULT 0,
+    btn_label TEXT,
+    btn_url TEXT,
+    react_like INT NOT NULL DEFAULT 0,
+    react_love INT NOT NULL DEFAULT 0,
+    react_haha INT NOT NULL DEFAULT 0,
+    react_wow INT NOT NULL DEFAULT 0,
+    react_sad INT NOT NULL DEFAULT 0,
+    react_angry INT NOT NULL DEFAULT 0
+);
+
+-- Ensure all columns exist even if the updates table was created in an earlier build
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_like INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_love INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_haha INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_wow INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_sad INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_angry INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_label TEXT;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_url TEXT;
+
+ALTER TABLE updates DISABLE ROW LEVEL SECURITY;
+
+-- Create followers tracking tally
+CREATE TABLE IF NOT EXISTS followers (
+    id INT PRIMARY KEY,
+    count INT NOT NULL DEFAULT 1250
+);
+
+ALTER TABLE followers DISABLE ROW LEVEL SECURITY;
+
+-- Seed single follower account item
+INSERT INTO followers (id, count)
+VALUES (1, 1250)
+ON CONFLICT (id) DO NOTHING;
+
+-- RPC views increment tool setup
+CREATE OR REPLACE FUNCTION increment_view_count(update_id BIGINT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE updates
+  SET views = COALESCE(views, 0) + 1
+  WHERE id = update_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- RPC reaction handler setup
+CREATE OR REPLACE FUNCTION react_to_post(update_id BIGINT, reaction TEXT, val INT)
+RETURNS VOID AS $$
+BEGIN
+  IF reaction = 'like' THEN
+    UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id = update_id;
+  ELSIF reaction = 'love' THEN
+    UPDATE updates SET react_love = GREATEST(0, COALESCE(react_love, 0) + val) WHERE id = update_id;
+  ELSIF reaction = 'haha' THEN
+    UPDATE updates SET react_haha = GREATEST(0, COALESCE(react_haha, 0) + val) WHERE id = update_id;
+  ELSIF reaction = 'wow' THEN
+    UPDATE updates SET react_wow = GREATEST(0, COALESCE(react_wow, 0) + val) WHERE id = update_id;
+  ELSIF reaction = 'sad' THEN
+    UPDATE updates SET react_sad = GREATEST(0, COALESCE(react_sad, 0) + val) WHERE id = update_id;
+  ELSIF reaction = 'angry' THEN
+    UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id = update_id;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- RPC followers join/leave calculator counter
+CREATE OR REPLACE FUNCTION adjust_follower(action TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF action = 'follow' THEN
+    UPDATE followers SET count = COALESCE(count, 0) + 1 WHERE id = 1;
+  ELSIF action = 'unfollow' THEN
+    UPDATE followers SET count = GREATEST(0, COALESCE(count, 0) - 1) WHERE id = 1;
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;`;
+
+function showSqlGuide() {
+  document.getElementById('sql-code').textContent = SQL_SCRIPT_TEMPLATE;
+  document.getElementById('sql-guide-modal').style.display = 'flex';
+}
+
+function closeSqlGuide() {
+  document.getElementById('sql-guide-modal').style.display = 'none';
+}
+
+function copySqlScript() {
+  navigator.clipboard.writeText(SQL_SCRIPT_TEMPLATE).then(function() {
+    showToast('SQL Script copied to clipboard!');
+  }).catch(function() {
+    alert(SQL_SCRIPT_TEMPLATE);
+  });
 }
 
 loadUpdates();
