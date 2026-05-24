@@ -127,13 +127,16 @@ input:checked + .slider:before {transform:translateX(16px);}
       <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Include Copyable Giveaway Box</span>
     </div>
     <div id="gw-fields" style="display: none; flex-direction: column; gap: 8px; margin-top: 2px; background: #fafafa; border: 1.5.px dashed var(--bdr); border-radius: 12px; padding: 12px;">
-      <div style="font-size: 11px; font-weight: 700; color: var(--sub); margin-bottom: 4px; display: flex; gap: 14px; text-transform: uppercase; letter-spacing: 0.05em;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--sub); margin-bottom: 4px; display: flex; gap: 14px; text-transform: uppercase; letter-spacing: 0.05em; flex-wrap: wrap;">
         <span style="color: var(--txt);">Giveaway Type:</span>
         <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
           <input type="radio" name="gw-type" value="key" checked onchange="toggleGwType()"> Single Code / Key
         </label>
         <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
           <input type="radio" name="gw-type" value="account" onchange="toggleGwType()"> Email & Password Account
+        </label>
+        <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+          <input type="radio" name="gw-type" value="all" onchange="toggleGwType()"> All 3 (Code, Email & Password)
         </label>
       </div>
       <div class="field-row">
@@ -192,6 +195,7 @@ input:checked + .slider:before {transform:translateX(16px);}
             <div style="background: rgba(37, 211, 102, 0.18); border: 1px solid rgba(37, 211, 102, 0.4); color: #25D366; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content;">🎁 Giveaway</div>
             <span id="preview-gw-label" style="font-size: 11px; color: rgba(255, 255, 255, 0.6); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; display: block;">License Key</span>
             
+            <div id="preview-gw-key-title" style="display: none; font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;">LICENSE KEY / CODE</div>
             <div id="preview-gw-single-container" style="display: flex; align-items: center; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 10px 12px; position: relative;">
               <span id="preview-gw-value" style="font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; color: #25D366; font-weight: 600; word-break: break-all; flex: 1; text-align: left;"></span>
               <button style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #fff;" onclick="return false;">
@@ -304,13 +308,16 @@ input:checked + .slider:before {transform:translateX(16px);}
       <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Include Copyable Giveaway Box</span>
     </div>
     <div id="edit-gw-fields" style="display: none; flex-direction: column; gap: 8px; margin-top: 2px; background: #fafafa; border: 1.5.px dashed var(--bdr); border-radius: 12px; padding: 12px;">
-      <div style="font-size: 11px; font-weight: 700; color: var(--sub); margin-bottom: 4px; display: flex; gap: 14px; text-transform: uppercase; letter-spacing: 0.05em;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--sub); margin-bottom: 4px; display: flex; gap: 14px; text-transform: uppercase; letter-spacing: 0.05em; flex-wrap: wrap;">
         <span style="color: var(--txt);">Giveaway Type:</span>
         <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
           <input type="radio" name="edit-gw-type" value="key" checked onchange="toggleEditGwType()"> Single Code / Key
         </label>
         <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
           <input type="radio" name="edit-gw-type" value="account" onchange="toggleEditGwType()"> Email & Password Account
+        </label>
+        <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+          <input type="radio" name="edit-gw-type" value="all" onchange="toggleEditGwType()"> All 3 (Code, Email & Password)
         </label>
       </div>
       <div class="field-row">
@@ -684,6 +691,7 @@ function updatePostPreview() {
   var gwBox = document.getElementById('preview-giveaway');
   var pSingle = document.getElementById('preview-gw-single-container');
   var pAccount = document.getElementById('preview-gw-account-container');
+  var pKeyTitle = document.getElementById('preview-gw-key-title');
   
   if (gwActive) {
     gwBox.style.display = 'block';
@@ -691,9 +699,23 @@ function updatePostPreview() {
     var typeSelector = document.querySelector('input[name="gw-type"]:checked');
     var type = typeSelector ? typeSelector.value : 'key';
     
-    if (type === 'account') {
+    if (type === 'all') {
+      pSingle.style.display = 'flex';
+      pAccount.style.display = 'flex';
+      pKeyTitle.style.display = 'block';
+      
+      var val = document.getElementById('gw-value').value.trim();
+      var email = document.getElementById('gw-email').value.trim();
+      var pass = document.getElementById('gw-password').value.trim();
+      
+      document.getElementById('preview-gw-label').textContent = label ? label : 'Giveaway Info';
+      document.getElementById('preview-gw-value').textContent = val ? val : 'MH37W-XXXXX-XXXXX';
+      document.getElementById('preview-gw-email').textContent = email ? email : 'account@example.com';
+      document.getElementById('preview-gw-password').textContent = pass ? pass : '••••••••';
+    } else if (type === 'account') {
       pSingle.style.display = 'none';
       pAccount.style.display = 'flex';
+      pKeyTitle.style.display = 'none';
       
       var email = document.getElementById('gw-email').value.trim();
       var pass = document.getElementById('gw-password').value.trim();
@@ -703,6 +725,7 @@ function updatePostPreview() {
     } else {
       pSingle.style.display = 'flex';
       pAccount.style.display = 'none';
+      pKeyTitle.style.display = 'none';
       
       var val = document.getElementById('gw-value').value.trim();
       document.getElementById('preview-gw-label').textContent = label ? label : 'License Key';
@@ -739,7 +762,10 @@ function toggleGwFields() {
 function toggleGwType() {
   var typeSelector = document.querySelector('input[name="gw-type"]:checked');
   var type = typeSelector ? typeSelector.value : 'key';
-  if (type === 'account') {
+  if (type === 'all') {
+    document.getElementById('gw-key-group').style.display = 'flex';
+    document.getElementById('gw-account-group').style.display = 'flex';
+  } else if (type === 'account') {
     document.getElementById('gw-key-group').style.display = 'none';
     document.getElementById('gw-account-group').style.display = 'flex';
   } else {
@@ -760,7 +786,10 @@ function toggleEditGwFields() {
 function toggleEditGwType() {
   var typeSelector = document.querySelector('input[name="edit-gw-type"]:checked');
   var type = typeSelector ? typeSelector.value : 'key';
-  if (type === 'account') {
+  if (type === 'all') {
+    document.getElementById('edit-gw-key-group').style.display = 'flex';
+    document.getElementById('edit-gw-account-group').style.display = 'flex';
+  } else if (type === 'account') {
     document.getElementById('edit-gw-key-group').style.display = 'none';
     document.getElementById('edit-gw-account-group').style.display = 'flex';
   } else {
@@ -820,7 +849,21 @@ async function postUpdate() {
     var type = typeSelector ? typeSelector.value : 'key';
     var metadata = {};
     
-    if (type === 'account') {
+    if (type === 'all') {
+      var val = document.getElementById('gw-value').value.trim();
+      var em = document.getElementById('gw-email').value.trim();
+      var pw = document.getElementById('gw-password').value.trim();
+      if (!val || !em || !pw) {
+        return showToast('License key, email, and password are all required!');
+      }
+      metadata = {
+        type: 'all',
+        label: gwLabel || 'Giveaway Pack',
+        value: val,
+        email: em,
+        password: pw
+      };
+    } else if (type === 'account') {
       var em = document.getElementById('gw-email').value.trim();
       var pw = document.getElementById('gw-password').value.trim();
       if (!em || !pw) {
@@ -974,7 +1017,12 @@ function openEdit(id, txt, btnLabel, btnUrl, imageUrl) {
       var gw = JSON.parse(match[1]);
       gwLabel = gw.label || '';
       gwActive = true;
-      if (gw.type === 'account' || (gw.email && gw.password)) {
+      if (gw.type === 'all' || (gw.value && gw.email && gw.password)) {
+        gwType = 'all';
+        gwValue = gw.value || '';
+        gwEmail = gw.email || '';
+        gwPassword = gw.password || '';
+      } else if (gw.type === 'account' || (gw.email && gw.password)) {
         gwType = 'account';
         gwEmail = gw.email || '';
         gwPassword = gw.password || '';
@@ -1043,7 +1091,24 @@ async function saveEdit(){
     var type = typeSelector ? typeSelector.value : 'key';
     var metadata = {};
     
-    if (type === 'account') {
+    if (type === 'all') {
+      var val = document.getElementById('edit-gw-value').value.trim();
+      var em = document.getElementById('edit-edit-gw-email') ? document.getElementById('edit-edit-gw-email').value.trim() : document.getElementById('edit-gw-email').value.trim();
+      var pw = document.getElementById('edit-edit-gw-password') ? document.getElementById('edit-edit-gw-password').value.trim() : document.getElementById('edit-gw-password').value.trim();
+      // Wait, let's use the real element IDs: edit-gw-value, edit-gw-email, edit-gw-password
+      em = document.getElementById('edit-gw-email').value.trim();
+      pw = document.getElementById('edit-gw-password').value.trim();
+      if (!val || !em || !pw) {
+        return showToast('License key, email, and password are all required!');
+      }
+      metadata = {
+        type: 'all',
+        label: gwLabel || 'Giveaway Pack',
+        value: val,
+        email: em,
+        password: pw
+      };
+    } else if (type === 'account') {
       var em = document.getElementById('edit-gw-email').value.trim();
       var pw = document.getElementById('edit-gw-password').value.trim();
       if (!em || !pw) {
@@ -1149,7 +1214,16 @@ async function loadUpdates(){
         try {
           var gw = JSON.parse(match[1]);
           if(gw){
-            if (gw.type === 'account' || (gw.email && gw.password)) {
+            if (gw.type === 'all' || (gw.value && gw.email && gw.password)) {
+              giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;flex-direction:column;gap:4px;">' +
+                '<div>🎁 Giveaway Free Pack: ' + esc(gw.label || 'Credentials & Account') + '</div>' +
+                '<div style="margin-left:12px;font-weight:500;font-size:11px;color:var(--txt);">' +
+                  'Key: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;">' + esc(gw.value) + '</code><br>' +
+                  'Email: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;margin-top:2px;display:inline-block;">' + esc(gw.email) + '</code> ' +
+                  'Password: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;margin-top:2px;display:inline-block;">' + esc(gw.password) + '</code>' +
+                '</div>' +
+              '</div>';
+            } else if (gw.type === 'account' || (gw.email && gw.password)) {
               giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;flex-direction:column;gap:4px;">' +
                 '<div>🎁 Giveaway Account: ' + esc(gw.label || 'Account Login') + '</div>' +
                 '<div style="margin-left:12px;font-weight:500;font-size:11px;color:var(--txt);">' +
