@@ -26,6 +26,15 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
 .utime{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto;flex-shrink:0;}
 .utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;}
 .uimg{width:100%;border-radius:12px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.1);pointer-events:none;user-select:none;}
+/* Alert Modal */
+#alert-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+#alert-modal.show{display:flex;}
+.alert-box{background:rgba(7,94,84,.7);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:24px 22px 20px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2);position:relative;}
+.alert-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1;transition:background .2s;}
+.alert-close:hover{background:rgba(255,255,255,.25);}
+.alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;}
+.alert-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.alert-btn:hover{background:rgba(37,211,102,.45);}
 .upd-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);transition:all .3s cubic-bezier(.34,1.56,.64,1);}
 .upd-btn:hover{background:rgba(255,255,255,.25);}
 .uviews{display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08);}
@@ -95,6 +104,15 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <div id="no-upd" style="display:none;">No updates yet. Check back soon!</div>
 </div>
 
+<div id="alert-modal">
+  <div class="alert-box">
+    <button class="alert-close" onclick="closeAlert()">&#10005;</button>
+    <div class="alert-msg" id="alert-msg"></div>
+    <div id="alert-btn-wrap" style="display:none;">
+      <a class="alert-btn" id="alert-btn-link" href="#" target="_blank" id="alert-action-btn"></a>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -114,6 +132,31 @@ function fmtTime(d){
   return d.toLocaleDateString()+' '+t;
 }
 function fmtSize(b){ if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(1)+'KB'; return (b/1048576).toFixed(1)+'MB'; }
+async function loadAlert(){
+  try{
+    var r=await sb.from('site_config').select('value').eq('key','alert').single();
+    if(!r.data) return;
+    var cfg=JSON.parse(r.data.value);
+    if(!cfg.enabled||!cfg.message) return;
+    // Show once per session
+    if(sessionStorage.getItem('alert_seen')) return;
+    document.getElementById('alert-msg').textContent=cfg.message;
+    var bw=document.getElementById('alert-btn-wrap');
+    var bl=document.getElementById('alert-btn-link');
+    if(cfg.btn_label&&cfg.btn_url){
+      bl.textContent=cfg.btn_label;
+      bl.href=cfg.btn_url;
+      bw.style.display='';
+    } else {
+      bw.style.display='none';
+    }
+    document.getElementById('alert-modal').classList.add('show');
+  }catch(e){}
+}
+function closeAlert(){
+  document.getElementById('alert-modal').classList.remove('show');
+  sessionStorage.setItem('alert_seen','1');
+}
 function showToast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
 
 function fmtCount(n){
@@ -255,6 +298,7 @@ async function trackView(uid){
 }
 
 loadUpdates();
+loadAlert();
 trackFollower();
 </script>
 </body>
