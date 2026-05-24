@@ -7,365 +7,560 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;--inp:#F0F2F5;}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
-#login-screen{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;}
-#login-screen.hidden{display:none;}
-.lbox{background:#fff;border-radius:14px;width:320px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);}
-.lhdr{background:var(--hdr);padding:22px 20px;text-align:center;}
-.lhdr .logo{font-size:20px;font-weight:700;color:#fff;}
-.lhdr .sub{font-size:12px;color:rgba(255,255,255,.65);margin-top:3px;}
-.lbody{padding:22px;}
-.lbody input{width:100%;padding:11px 13px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;font-family:inherit;}
-.lbody input:focus{border-color:var(--dg);}
-.lbtn{width:100%;padding:11px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
-.lbtn:hover{background:var(--dg);}
-.lerr{color:#e53935;font-size:12px;text-align:center;margin-bottom:10px;min-height:16px;}
-#hdr{background:var(--hdr);display:flex;align-items:center;padding:0 16px;height:56px;flex-shrink:0;position:sticky;top:0;z-index:10;}
-.hname{font-size:16px;font-weight:600;color:#fff;flex:1;}
-.hbadge{background:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:4px 10px;border-radius:12px;}
-.hlogout{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);font-size:12px;margin-left:10px;}
-.fmt-toolbar{display:flex;gap:6px;margin-bottom:8px;}
-.fmt-btn{background:var(--inp);border:1.5px solid var(--bdr);border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--txt);font-family:inherit;transition:all .15s;line-height:1;}
-.fmt-btn:hover{background:#e0e0e0;}
-#postbox{background:#fff;border-bottom:1px solid var(--bdr);padding:16px;position:sticky;top:56px;z-index:9;}
-.post-inner{max-width:640px;margin:0 auto;}
-.field-row{display:flex;gap:10px;margin-top:10px;}
-.field-row input{flex:1;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;outline:none;}
-.post-actions{display:flex;align-items:center;gap:10px;margin-top:10px;}
-.attach-lbl{cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);padding:8px 12px;border:1.5px solid var(--bdr);border-radius:8px;}
-.attach-lbl svg{width:16px;height:16px;fill:currentColor;}
-.post-btn{margin-left:auto;padding:9px 22px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;}
-.prev-wrap{display:none;margin-top:10px;background:var(--inp);border-radius:8px;padding:8px 10px;}
-.prev-inner{display:flex;align-items:center;gap:10px;}
-.prev-inner img{max-height:70px;border-radius:6px;object-fit:cover;}
-.prev-info{flex:1;min-width:0;}
-.prev-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.prev-clear{background:none;border:none;cursor:pointer;color:#e53935;font-size:18px;}
-#main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:12px 12px 24px;}
-.ucard{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px;position:relative;padding-top:44px;}
-.card-actions{position:absolute;top:10px;right:10px;display:flex;gap:6px;}
-.btn-del{background:#fee2e2;border:none;cursor:pointer;color:#e53935;font-size:11px;padding:4px 10px;border-radius:6px;}
-.btn-edit{background:#e0f0ff;border:none;cursor:pointer;color:#1a6fa8;font-size:11px;padding:4px 10px;border-radius:6px;}
-.umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(0,0,0,.05);}
-.ubadge{background:var(--g);color:#fff;font-size:10px;padding:2px 8px;border-radius:9px;}
+:root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E3E7E9;--inp:#F0F2F5;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#F0F2F5;min-height:100vh;color:var(--txt);display:flex;flex-direction:column;}
+
+/* Login Form */
+#login-box{max-width:360px;width:100%;margin:100px auto auto;background:#fff;border-radius:24px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.05);text-align:center;}
+#login-box h2{font-size:22px;margin-bottom:8px;font-weight:700;}
+#login-box p{font-size:13px;color:var(--sub);margin-bottom:24px;}
+#login-box input{width:100%;padding:14px 18px;background:var(--inp);border:1.5px solid transparent;border-radius:12px;outline:none;font-size:15px;text-align:center;margin-bottom:16px;transition:all .2s;}
+#login-box input:focus{border-color:var(--g);background:#fff;}
+#login-box button{width:100%;padding:14px;background:var(--g);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;}
+#login-box button:hover{background:var(--dg);}
+
+/* Dashboard Navigation */
+#admin-wrap{display:none;width:100%;max-width:640px;margin:0 auto;padding:16px 12px 80px;flex:1;flex-direction:column;gap:16px;}
+#ahdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0 12px;border-bottom:1.5px solid var(--bdr);}
+#ahdr h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:6px;}
+#ahdr button{background:transparent;border:none;color:var(--sub);font-size:13px;font-weight:600;cursor:pointer;}
+
+/* Panel Card */
+.pcard{background:#fff;border-radius:20px;padding:18px;border:1.5px solid var(--bdr);box-shadow:0 4px 16px rgba(0,0,0,.02);display:flex;flex-direction:column;gap:12px;}
+.ctitle{font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+
+/* Text editor format tools */
+.fmt-bar{display:flex;gap:6px;background:var(--inp);padding:6px;border-radius:10px;}
+.fmt-btn{background:transparent;border:none;width:28px;height:28px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.fmt-btn:hover{background:rgba(0,0,0,.05);}
+
+/* Inputs */
+#post-txt, #edit-txt{min-height:90px;max-height:220px;overflow-y:auto;border:1.5px solid var(--bdr);border-radius:12px;padding:12px;outline:none;font-size:14px;line-height:1.5;background:#fff;}
+#post-txt:empty:before, #edit-txt:empty:before{content:attr(placeholder);color:#a0a0a0;}
+.field-row{display:flex;gap:8px;}
+.field-row input{flex:1;background:var(--inp);border:1.5px solid transparent;border-radius:10px;padding:10px 14px;outline:none;font-size:13px;}
+.field-row input:focus{border-color:var(--g);background:#fff;}
+
+/* Toggle Switch Styling */
+.toggle {position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;}
+.toggle input {opacity:0;width:0;height:0;}
+.slider {position:absolute;cursor:pointer;inset:0;background-color:#ccc;transition:.3s;border-radius:22px;}
+.slider:before {position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background-color:white;transition:.3s;border-radius:50%;}
+input:checked + .slider {background-color:var(--g);}
+input:checked + .slider:before {transform:translateX(16px);}
+
+/* Image select bar */
+#img-sel-bar{display:flex;align-items:center;justify-content:space-between;background:var(--inp);border-radius:12px;padding:8px 12px;margin-top:2px;}
+#img-sel-bar button{background:var(--g);border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+#img-preview img{max-height:140px;border-radius:10px;margin-top:8px;}
+
+/* Action Buttons */
+.btn{background:var(--g);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn:hover{background:var(--dg);}
+.btn-sec{background:var(--inp);color:var(--txt);border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* Feed logs */
+#updlist{display:flex;flex-direction:column;gap:12px;}
+.ucard{background:#fff;border-radius:18px;padding:14px;border:1.5px solid var(--bdr);position:relative;}
+.umeta{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.ubadge{background:var(--inp);color:var(--sub);font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;}
 .utime{font-size:11px;color:var(--sub);margin-left:auto;}
-/* Added white-space: pre-wrap here as well */
-.utxt{font-size:14px;color:var(--txt);line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
-.uimg{width:100%;border-radius:8px;margin-bottom:10px;max-height:320px;object-fit:contain;background:#f5f5f5;}
-.upd-btn-preview{display:inline-flex;margin-top:8px;padding:7px 18px;background:var(--g);color:#fff;border-radius:16px;font-size:12px;text-decoration:none;}
-.uviews{display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(0,0,0,.04);}
-.uviews svg{width:13px;height:13px;fill:#bbb;}
-.uviews span{font-size:11px;color:#bbb;}
-#edit-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;}
-.ebox{background:#fff;border-radius:14px;width:500px;max-width:calc(100vw - 32px);overflow:hidden;}
-.ehdr{background:var(--hdr);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;color:#fff;}
-.ehdr button{background:none;border:none;cursor:pointer;color:#fff;font-size:20px;}
-.ebody{padding:18px;}
-.ebtns{display:flex;gap:8px;justify-content:flex-end;}
-.ebtns button{padding:9px 20px;border:none;border-radius:8px;cursor:pointer;}
-.ecancel{background:var(--inp);}
-.esave{background:var(--g);color:#fff;}
-.alert-panel{background:#fff;border-bottom:1px solid var(--bdr);padding:16px;}
-.alert-inner{max-width:640px;margin:0 auto;}
-.alert-row{display:flex;gap:10px;align-items:flex-end;margin-top:10px;}
-.toggle-wrap{display:flex;align-items:center;gap:10px;margin-top:10px;}
-.toggle{position:relative;width:44px;height:24px;}
-.toggle input{opacity:0;width:0;height:0;}
-.slider{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:.3s;}
-.slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;}
-.toggle input:checked+.slider{background:var(--g);}
-.toggle input:checked+.slider:before{transform:translateX(20px);}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;border-radius:8px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;}
+.utxt{font-size:13px;color:var(--txt);line-height:1.5;white-space:pre-wrap;}
+.uimg{width:100%;max-height:220px;object-fit:contain;border-radius:10px;margin-top:8px;background:#f5f5f5;}
+.card-actions{position:absolute;top:10px;right:10px;display:flex;gap:4px;}
+.btn-edit, .btn-del{background:var(--inp);border:none;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;cursor:pointer;}
+.btn-edit:hover{background:#e2e5e9;color:#2196F3;}
+.btn-del:hover{background:#fee;color:#f44336;}
+
+/* Modals */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:12px;z-index:90;}
+.dialog{background:#fff;border-radius:24px;border:1.5px solid var(--bdr);padding:20px;max-width:440px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,.15);display:flex;flex-direction:column;gap:14px;}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
 #toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="lbox">
-    <div class="lhdr"><div class="logo">Signature Digital</div><div class="sub">Admin Panel</div></div>
-    <div class="lbody">
-      <div class="lerr" id="lerr"></div>
-      <input type="email" id="aemail" placeholder="Admin Email" onkeydown="if(event.key==='Enter')doAdminLogin()">
-      <input type="password" id="apwd" placeholder="Admin Password" onkeydown="if(event.key==='Enter')doAdminLogin()">
-      <button class="lbtn" onclick="doAdminLogin()">Login</button>
-    </div>
+<div id="login-box">
+  <div style="font-size:36px;margin-bottom:12px;">🛡️</div>
+  <h2>Admin Entry</h2>
+  <p>Please type your security password to gain entry.</p>
+  <input type="password" id="pass-inp" placeholder="Key Password" onkeydown="if(event.key==='Enter') tryLogin()">
+  <button id="login-btn" onclick="tryLogin()">Login</button>
+</div>
+
+<div id="admin-wrap">
+  <div id="ahdr">
+    <h1>👨‍💻 System Admin</h1>
+    <button onclick="logout()">Disconnect</button>
   </div>
-</div>
 
-<div id="edit-modal">
-  <div class="ebox">
-    <div class="ehdr">
-      <p style="font-weight:600">Edit Update</p>
-      <button onclick="closeEdit()">&#10005;</button>
+  <!-- Composer Panel -->
+  <div class="pcard">
+    <div class="ctitle">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      <span>Compose Update</span>
     </div>
-    <div class="ebody">
-      <input type="hidden" id="edit-id">
-      <div class="fmt-toolbar">
-        <button class="fmt-btn" onclick="fmtEdit('bold')"><b>B</b></button>
-        <button class="fmt-btn" onclick="fmtEdit('italic')"><i>I</i></button>
-        <button class="fmt-btn" onclick="fmtEdit('underline')"><u>U</u></button>
-        <button class="fmt-btn" onclick="fmtEdit('strikeThrough')"><s>S</s></button>
-      </div>
-      <div id="edit-txt" contenteditable="true" style="width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:14px;outline:none;min-height:80px;margin-bottom:10px;line-height:1.55;white-space:pre-wrap;"></div>
-      <div class="field-row" style="margin-bottom:14px;">
-        <input type="text" id="edit-btn-label" placeholder="Button label (e.g. Buy Now)">
-        <input type="url" id="edit-btn-url" placeholder="Button URL">
-      </div>
-      <div class="ebtns">
-        <button class="ecancel" onclick="closeEdit()">Cancel</button>
-        <button class="esave" onclick="saveEdit()">Save Changes</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="hdr">
-  <div class="hname">Signature Digital — Admin</div>
-  <span class="hbadge">Admin</span>
-  <button class="hlogout" onclick="doLogout()">Logout</button>
-</div>
-
-<div id="postbox">
-  <div class="post-inner">
-    <div class="fmt-toolbar">
+    
+    <div class="fmt-bar">
       <button class="fmt-btn" onclick="fmt('bold')"><b>B</b></button>
       <button class="fmt-btn" onclick="fmt('italic')"><i>I</i></button>
       <button class="fmt-btn" onclick="fmt('underline')"><u>U</u></button>
-      <button class="fmt-btn" onclick="fmt('strikeThrough')"><s>S</s></button>
+      <button class="fmt-btn" onclick="fmt('strike')"><s>S</s></button>
     </div>
-    <div id="post-txt" contenteditable="true" placeholder="Write an update for your clients..." style="width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:14px;outline:none;min-height:80px;line-height:1.55;white-space:pre-wrap;"></div>
-    <div class="field-row">
-      <input type="text" id="btn-label" placeholder="Button label (optional)">
-      <input type="url" id="btn-url" placeholder="Button URL (optional)">
-    </div>
-    <div class="prev-wrap" id="prev-wrap">
-      <div class="prev-inner">
-        <img id="prev-img" src="">
-        <div class="prev-info">
-          <div class="prev-name" id="prev-name"></div>
-        </div>
-        <button class="prev-clear" onclick="clearImg()">&#10005;</button>
-      </div>
-    </div>
-    <div class="post-actions">
-      <label class="attach-lbl">
-        <input type="file" id="img-inp" accept="image/*" style="display:none" onchange="prevImg(this)">
-        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg> Attach Image
+
+    <div id="post-txt" contenteditable="true" placeholder="Tell your audience about the latest software release..."></div>
+
+    <!-- Giveaway Settings UI -->
+    <div class="field-row" style="align-items: center; background: var(--inp); padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--bdr); margin-top: 2px;">
+      <label class="toggle" style="margin-right: 4px;">
+        <input type="checkbox" id="gw-enabled" onchange="toggleGwFields()">
+        <span class="slider"></span>
       </label>
-      <button class="post-btn" id="post-btn" onclick="postUpdate()">Post Update</button>
+      <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Include Copyable Giveaway Box</span>
     </div>
-  </div>
-</div>
+    <div class="field-row" id="gw-fields" style="display: none; margin-top: 2px; gap: 8px;">
+      <input type="text" id="gw-label" placeholder="Giveaway name / label (e.g. License Key)">
+      <input type="text" id="gw-value" placeholder="License credentials (MH37W-...)">
+    </div>
 
-<div class="alert-panel">
-  <div class="alert-inner">
-    <div style="font-size:13px;font-weight:600;color:var(--sub);margin-bottom:10px;">ALERT POPUP</div>
-    <textarea id="alert-msg" placeholder="Alert message shown to visitors..." style="width:100%;padding:10px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;outline:none;font-family:inherit;resize:none;min-height:60px;"></textarea>
-    <div class="alert-row">
-      <input type="text" id="alert-btn-label" placeholder="Button label (optional)" style="flex:1;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;">
-      <input type="url" id="alert-btn-url" placeholder="Button URL (optional)" style="flex:2;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:8px;font-size:13px;">
+    <div class="field-row">
+      <input type="text" id="btn-label" placeholder="Pill button label (optional)">
+      <input type="text" id="btn-url" placeholder="https://external-link.com">
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
-      <div class="toggle-wrap">
-        <label class="toggle"><input type="checkbox" id="alert-enabled" onchange="saveAlert()"><span class="slider"></span></label>
-        <span style="font-size:13px;">Show alert to visitors</span>
+
+    <div id="img-sel-bar">
+      <span id="img-status" style="font-size:12px;color:var(--sub);font-weight:500;">No photo attached</span>
+      <button onclick="triggerFileSelect()">Add Photo</button>
+      <input type="file" id="file-inp" accept="image/*" style="display:none;" onchange="handleFileChange(this)">
+    </div>
+    
+    <div id="img-preview" style="display:none;position:relative;width:fit-content;">
+      <img id="prev-tag" src="" alt="">
+      <button onclick="clearImg()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;">&#10005;</button>
+    </div>
+
+    <button id="post-btn" class="btn" onclick="postUpdate()">Post Update</button>
+  </div>
+
+  <!-- Global Banner Config -->
+  <div class="pcard">
+    <div class="ctitle">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+      <span>Global Pop-up Broadcast</span>
+    </div>
+    
+    <div class="field-row" style="align-items: center; background: var(--inp); padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--bdr);">
+      <label class="toggle" style="margin-right: 4px;">
+        <input type="checkbox" id="alert-enabled" onchange="toggleAlertFields()">
+        <span class="slider"></span>
+      </label>
+      <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Broadcast active & visible</span>
+    </div>
+
+    <div id="alert-fields" style="display:none;flex-direction:column;gap:10px;">
+      <textarea id="alert-msg" placeholder="Broadcast system message..." style="width:100%;min-height:70px;padding:12px;border:1.5px solid var(--bdr);border-radius:12px;outline:none;font-size:13px;"></textarea>
+      <div class="field-row">
+        <input type="text" id="alert-btn" placeholder="Pill button label (optional)">
+        <input type="text" id="alert-url" placeholder="https://redirect-url.com">
       </div>
-      <button onclick="saveAlert()" style="padding:8px 18px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Alert</button>
     </div>
-    <p id="alert-status" style="font-size:12px;color:var(--sub);margin-top:10px;"></p>
+
+    <button id="alert-save-btn" class="btn" onclick="saveAlertConfig()">Save Broadcast Config</button>
+  </div>
+
+  <!-- Announcement Posts List -->
+  <div style="margin-top:8px;">
+    <h3 style="font-size:14px;color:var(--sub);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;font-weight:700;">Sent Updates Timeline</h3>
+    <div id="updlist"></div>
   </div>
 </div>
 
-<div id="main">
-  <div id="updlist"></div>
-  <div id="no-upd" style="display:none;text-align:center;padding:40px;color:var(--sub);">No updates yet.</div>
+<!-- Edit Overlay Dialog -->
+<div id="edit-modal" class="overlay">
+  <div class="dialog">
+    <h3 style="font-size:15px;font-weight:700;">Edit Announcement Details</h3>
+    
+    <div class="fmt-bar">
+      <button class="fmt-btn" onclick="fmt('bold')"><b>B</b></button>
+      <button class="fmt-btn" onclick="fmt('italic')"><i>I</i></button>
+      <button class="fmt-btn" onclick="fmt('underline')"><u>U</u></button>
+      <button class="fmt-btn" onclick="fmt('strike')"><s>S</s></button>
+    </div>
+
+    <div id="edit-txt" contenteditable="true" placeholder="Update description details..."></div>
+
+    <!-- Edit mode Giveaway configure options -->
+    <div class="field-row" style="align-items: center; background: var(--inp); padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--bdr);">
+      <label class="toggle" style="margin-right: 4px;">
+        <input type="checkbox" id="edit-gw-enabled" onchange="toggleEditGwFields()">
+        <span class="slider"></span>
+      </label>
+      <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Include Copyable Giveaway Box</span>
+    </div>
+    <div class="field-row" id="edit-gw-fields" style="display: none; gap: 8px;">
+      <input type="text" id="edit-gw-label" placeholder="Giveaway name / label (e.g. License Key)">
+      <input type="text" id="edit-gw-value" placeholder="License credentials (MH37W-...)">
+    </div>
+
+    <div class="field-row">
+      <input type="text" id="edit-btn-label" placeholder="Button title">
+      <input type="text" id="edit-btn-url" placeholder="Target URL redirect font">
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn" style="flex:2;" onclick="saveEdit()">Apply Changes</button>
+      <button class="btn-sec" style="flex:1;" onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-var SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
-var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
-var sb = supabase.createClient(SB_URL, SB_KEY);
-var imgFile = null;
+const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// Allow 'div' and 'p' tags to preserve paragraphs!
+var imgFile = null;
+var editingId = null;
+
 function sanitize(t){
   if(!t) return '';
   var formatted = t.replace(/\n/g, '<br>');
   return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span', 'div', 'p'] });
 }
+function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-async function checkSession() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    document.getElementById('login-screen').classList.add('hidden');
-    loadUpdates();
-    loadAlertConfig();
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function fmt(cmd) {
+  document.execCommand(cmd, false, null);
+  document.getElementById('post-txt').focus();
+}
+
+async function tryLogin(){
+  var p = document.getElementById('pass-inp').value;
+  var btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  try {
+    var r = await sb.from('site_config').select('value').eq('key','pwd').single();
+    if(r.data && r.data.value === p){
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('admin-wrap').style.display = 'flex';
+      sessionStorage.setItem('sgd_auth', '1');
+      loadUpdates();
+      loadAlertConfig();
+    } else {
+      showToast('Incorrect passcode authorization!');
+    }
+  } catch(e){
+    showToast('Network error verifying credentials');
+  }
+  btn.disabled = false;
+}
+
+function logout(){
+  sessionStorage.removeItem('sgd_auth');
+  window.location.reload();
+}
+
+if(sessionStorage.getItem('sgd_auth') === '1'){
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('admin-wrap').style.display = 'flex';
+  loadUpdates();
+  loadAlertConfig();
+}
+
+function triggerFileSelect(){
+  document.getElementById('file-inp').click();
+}
+
+function handleFileChange(inp){
+  if(inp.files && inp.files[0]){
+    imgFile = inp.files[0];
+    document.getElementById('img-status').textContent = 'Attached: ' + imgFile.name.substring(0,20);
+    var reader = new FileReader();
+    reader.onload = function(e){
+      document.getElementById('prev-tag').src = e.target.result;
+      document.getElementById('img-preview').style.display = 'block';
+    }
+    reader.readAsDataURL(imgFile);
   }
 }
-checkSession();
 
-async function doAdminLogin() {
-  var email = document.getElementById('aemail').value.trim();
-  var pwd = document.getElementById('apwd').value.trim();
-  if (!email || !pwd) return;
-  var btn = document.querySelector('.lbtn');
-  btn.textContent = 'Verifying...'; btn.disabled = true;
-  
-  const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pwd });
-  
-  if (error) {
-    document.getElementById('lerr').textContent = error.message;
-  } else {
-    document.getElementById('login-screen').classList.add('hidden');
-    loadUpdates();
-    loadAlertConfig();
-  }
-  btn.textContent = 'Login'; btn.disabled = false;
+function clearImg(){
+  imgFile = null;
+  document.getElementById('file-inp').value = '';
+  document.getElementById('img-status').textContent = 'No photo attached';
+  document.getElementById('img-preview').style.display = 'none';
+  document.getElementById('prev-tag').src = '';
 }
 
-async function doLogout() { 
-  await sb.auth.signOut();
-  location.reload(); 
+function toggleGwFields() {
+  var active = document.getElementById('gw-enabled').checked;
+  document.getElementById('gw-fields').style.display = active ? 'flex' : 'none';
 }
 
-function fmtTime(d) { var t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); return d.toLocaleDateString()+' '+t; }
-function showToast(msg) { var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
-
-function prevImg(inp) {
-  if (!inp.files[0]) return;
-  imgFile = inp.files[0];
-  document.getElementById('prev-img').src = URL.createObjectURL(imgFile);
-  document.getElementById('prev-name').textContent = imgFile.name;
-  document.getElementById('prev-wrap').style.display = 'block';
+function toggleEditGwFields() {
+  var active = document.getElementById('edit-gw-enabled').checked;
+  document.getElementById('edit-gw-fields').style.display = active ? 'flex' : 'none';
 }
-function clearImg() { imgFile=null; document.getElementById('img-inp').value=''; document.getElementById('prev-wrap').style.display='none'; }
 
-async function uploadImg(file) {
+function toggleAlertFields() {
+  var active = document.getElementById('alert-enabled').checked;
+  document.getElementById('alert-fields').style.display = active ? 'flex' : 'none';
+}
+
+async function uploadImg(file){
   var ext = file.name.split('.').pop();
-  var path = Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-  var r = await sb.storage.from('update-images').upload(path, file);
-  if (r.error) throw r.error;
-  return sb.storage.from('update-images').getPublicUrl(path).data.publicUrl;
+  var name = Date.now() + '_' + Math.random().toString(36).substring(2,8) + '.' + ext;
+  var path = 'uploads/' + name;
+  var r = await sb.storage.from('profile').upload(path, file);
+  if(r.error) throw r.error;
+  return SB_URL + '/storage/v1/object/public/profile/' + path;
 }
 
 async function postUpdate() {
   var txt = document.getElementById('post-txt').innerHTML.trim();
   var btnLabel = document.getElementById('btn-label').value.trim();
   var btnUrl = document.getElementById('btn-url').value.trim();
+  
+  // Giveaway values
+  var gwActive = document.getElementById('gw-enabled').checked;
+  var gwLabel = document.getElementById('gw-label').value.trim();
+  var gwValue = document.getElementById('gw-value').value.trim();
+  
+  if (gwActive && !gwValue) {
+    return showToast('Giveaway credentials are required!');
+  }
+  
+  if (gwActive) {
+    var metadata = {
+      label: gwLabel || 'Credentials',
+      value: gwValue
+    };
+    txt = txt + '<!--GIVEAWAY_JSON:' + JSON.stringify(metadata) + '-->';
+  }
+
   var imgUrl = null;
-  if (!txt && !imgFile) return showToast('Write something first');
+  if (!txt && !imgFile) return showToast('Please enter text content first!');
   
   var btn = document.getElementById('post-btn');
-  btn.disabled = true; btn.textContent = 'Posting...';
+  btn.disabled = true; btn.textContent = 'Publishing...';
   try {
-    if (imgFile) { imgUrl = await uploadImg(imgFile); clearImg(); }
+    if (imgFile) { 
+      imgUrl = await uploadImg(imgFile); 
+      clearImg(); 
+    }
     var r = await sb.from('updates').insert({text:txt||'', image_url:imgUrl, views:0, btn_label:btnLabel||null, btn_url:btnUrl||null});
     if (r.error) throw r.error;
     document.getElementById('post-txt').innerHTML = '';
     document.getElementById('btn-label').value = '';
     document.getElementById('btn-url').value = '';
-    showToast('Update posted!');
+    
+    // reset giveaways
+    document.getElementById('gw-enabled').checked = false;
+    document.getElementById('gw-label').value = '';
+    document.getElementById('gw-value').value = '';
+    toggleGwFields();
+    
+    showToast('Announcement published successfully.');
     loadUpdates();
-  } catch(e) { showToast('Error posting'); }
+  } catch(e) { 
+    showToast('Failed to post announcement.'); 
+  }
   btn.disabled = false; btn.textContent = 'Post Update';
 }
 
-var editingId = null;
-function handleEdit(btn) {
-  var card = btn.closest('.ucard');
-  openEdit(card.dataset.id, card._data.text||'', card._data.btn_label||'', card._data.btn_url||'');
+async function loadAlertConfig() {
+  try {
+    var r = await sb.from('site_config').select('value').eq('key','alert').single();
+    if(r.data){
+      var cfg = JSON.parse(r.data.value);
+      document.getElementById('alert-enabled').checked = !!cfg.enabled;
+      document.getElementById('alert-msg').value = cfg.message || '';
+      document.getElementById('alert-btn').value = cfg.btn_label || '';
+      document.getElementById('alert-url').value = cfg.btn_url || '';
+      toggleAlertFields();
+    }
+  } catch(e){}
 }
+
+async function saveAlertConfig() {
+  var active = document.getElementById('alert-enabled').checked;
+  var msg = document.getElementById('alert-msg').value.trim();
+  var btnLabel = document.getElementById('alert-btn').value.trim();
+  var btnUrl = document.getElementById('alert-url').value.trim();
+  
+  var payload = {
+    enabled: active,
+    message: msg,
+    btn_label: btnLabel,
+    btn_url: btnUrl
+  };
+  
+  var saveBtn = document.getElementById('alert-save-btn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
+  try {
+    var r = await sb.from('site_config').update({ value: JSON.stringify(payload) }).eq('key', 'alert');
+    if(r.error) throw r.error;
+    showToast('Broadcast settings updated!');
+  } catch(e){
+    showToast('Failed to save broadcast config.');
+  }
+  saveBtn.disabled = false; saveBtn.textContent = 'Save Broadcast Config';
+}
+
 function openEdit(id, txt, btnLabel, btnUrl) {
   editingId = id;
-  document.getElementById('edit-txt').innerHTML = txt;
+  var cleanText = txt || '';
+  var gwLabel = '';
+  var gwValue = '';
+  var gwActive = false;
+  
+  // Parse giveaway signature
+  var match = cleanText.match(/<!--GIVEAWAY_JSON:(.*?)-->/);
+  if(match && match[1]){
+    try {
+      var gw = JSON.parse(match[1]);
+      gwLabel = gw.label || '';
+      gwValue = gw.value || '';
+      gwActive = true;
+      cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
+    } catch(e){}
+  }
+
+  document.getElementById('edit-txt').innerHTML = cleanText;
   document.getElementById('edit-btn-label').value = btnLabel;
   document.getElementById('edit-btn-url').value = btnUrl;
+  
+  document.getElementById('edit-gw-enabled').checked = gwActive;
+  document.getElementById('edit-gw-label').value = gwLabel;
+  document.getElementById('edit-gw-value').value = gwValue;
+  toggleEditGwFields();
+
   document.getElementById('edit-modal').style.display = 'flex';
 }
-function closeEdit() { document.getElementById('edit-modal').style.display = 'none'; editingId = null; }
 
-async function saveEdit() {
+function closeEdit(){
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId = null;
+}
+
+async function saveEdit(){
   var txt = document.getElementById('edit-txt').innerHTML.trim();
   var btnLabel = document.getElementById('edit-btn-label').value.trim();
   var btnUrl = document.getElementById('edit-btn-url').value.trim();
+  
+  // Clean prior configurations
+  txt = txt.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
+  
+  var gwActive = document.getElementById('edit-gw-enabled').checked;
+  var gwLabel = document.getElementById('edit-gw-label').value.trim();
+  var gwValue = document.getElementById('edit-gw-value').value.trim();
+  
+  if (gwActive && !gwValue) {
+    return showToast('Giveaway credentials value is required!');
+  }
+  
+  if (gwActive) {
+    var metadata = {
+      label: gwLabel || 'Credentials',
+      value: gwValue
+    };
+    txt = txt + '<!--GIVEAWAY_JSON:' + JSON.stringify(metadata) + '-->';
+  }
+
   try {
-    await sb.from('updates').update({text:txt, btn_label:btnLabel||null, btn_url:btnUrl||null}).eq('id', editingId);
-    closeEdit(); showToast('Saved!'); loadUpdates();
-  } catch(e) { showToast('Error saving'); }
+    var r = await sb.from('updates').update({
+      text: txt,
+      btn_label: btnLabel || null,
+      btn_url: btnUrl || null
+    }).eq('id', editingId);
+    if(r.error) throw r.error;
+    closeEdit();
+    showToast('Saved changes!');
+    loadUpdates();
+  } catch(e){
+    showToast('Error saving changes.');
+  }
 }
 
-async function deleteUpdate(id) {
-  if (!confirm('Delete this update?')) return;
-  try { await sb.from('updates').delete().eq('id', id); showToast('Deleted'); loadUpdates(); }
-  catch(e) { showToast('Error deleting'); }
+function handleEdit(btn) {
+  var card = btn.closest('.ucard');
+  var post = card._data;
+  openEdit(post.id, post.text||'', post.btn_label||'', post.btn_url||'');
 }
 
-async function loadUpdates() {
+async function deleteUpdate(uid){
+  if(!confirm('Are you absolute sure you want to delete this post?')) return;
   try {
-    var r = await sb.from('updates').select('*').order('created_at',{ascending:false});
-    var list = document.getElementById('updlist'), none = document.getElementById('no-upd');
-    if (!r.data || !r.data.length) { list.innerHTML=''; none.style.display=''; return; }
-    none.style.display = 'none';
-    list.innerHTML = r.data.map(function(u) {
-      return '<div class="ucard" data-id="'+u.id+'">'+
+    var r = await sb.from('updates').delete().eq('id', uid);
+    if(r.error) throw r.error;
+    showToast('Announcement deleted!');
+    loadUpdates();
+  } catch(e){
+    showToast('Failed to delete post.');
+  }
+}
+
+function fmtTime(d){
+  try{
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }catch(e){ return ''; }
+}
+
+async function loadUpdates(){
+  var list = document.getElementById('updlist');
+  try {
+    var r = await sb.from('updates').select('*').order('created_at', {ascending:false});
+    if(r.error) throw r.error;
+    list.innerHTML = r.data.map(function(u){
+      var cleanText = u.text || '';
+      var giveawayPreview = '';
+      
+      var match = cleanText.match(/<!--GIVEAWAY_JSON:(.*?)-->/);
+      if(match && match[1]){
+        try {
+          var gw = JSON.parse(match[1]);
+          if(gw && gw.value){
+            giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;align-items:center;gap:4px;">🎁 Giveaway: ' + esc(gw.label || 'Credentials') + ' &rarr; <code style="background:var(--inp);padding:2px 6px;border-radius:4px;color:var(--txt);font-weight:600;">' + esc(gw.value) + '</code></div>';
+          }
+        } catch(e){}
+        cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
+      }
+
+      return '<div class="ucard" id="upd-card-'+u.id+'">'+
         '<div class="card-actions">'+
           '<button class="btn-edit" onclick="handleEdit(this)">Edit</button>'+
           '<button class="btn-del" onclick="deleteUpdate(\''+u.id+'\')">Delete</button>'+
         '</div>'+
         '<div class="umeta"><span class="ubadge">UPDATE</span><span class="utime">'+fmtTime(new Date(u.created_at))+'</span></div>'+
         (u.image_url?'<img class="uimg" src="'+u.image_url+'">':'')+
-        (u.text?'<div class="utxt">'+sanitize(u.text)+'</div>':'')+
-        (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--g);font-weight:600;">Button: '+sanitize(u.btn_label)+'</div>':'')+
-        '<div class="uviews"><span style="font-size:11px;color:#bbb;">'+(u.views||0)+' views</span></div>'+
+        (cleanText?'<div class="utxt" style="margin-top:4px;">'+sanitize(cleanText)+'</div>':'')+
+        giveawayPreview +
+        (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:600;">Button: '+esc(u.btn_label)+' &rarr; <span style="font-weight:400;color:var(--sub);">'+esc(u.btn_url)+'</span></div>':'')+
+        '<div style="font-size:11px;color:var(--sub);margin-top:6px;">📊 '+ (u.views||0) +' view logs</div>'+
       '</div>';
     }).join('');
     
-    r.data.forEach(u => list.querySelector('[data-id="'+u.id+'"]')._data = u);
-  } catch(e) {}
+    // Store original database structures on DOM nodes for easy editing parsing
+    r.data.forEach(function(u){
+      var el = document.getElementById('upd-card-'+u.id);
+      if(el) el._data = u;
+    });
+  } catch(e){
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub);">Error loading entries</div>';
+  }
 }
-
-async function loadAlertConfig(){
-  try{
-    var r=await sb.from('site_config').select('value').eq('key','alert').single();
-    if(!r.data) return;
-    var cfg=JSON.parse(r.data.value);
-    document.getElementById('alert-msg').value=cfg.message||'';
-    document.getElementById('alert-btn-label').value=cfg.btn_label||'';
-    document.getElementById('alert-btn-url').value=cfg.btn_url||'';
-    document.getElementById('alert-enabled').checked=cfg.enabled||false;
-    document.getElementById('alert-status').textContent=cfg.enabled?'Active':'Disabled';
-  }catch(e){}
-}
-
-async function saveAlert(){
-  var msg=document.getElementById('alert-msg').value.trim();
-  var btnL=document.getElementById('alert-btn-label').value.trim();
-  var btnU=document.getElementById('alert-btn-url').value.trim();
-  var en=document.getElementById('alert-enabled').checked;
-  try{
-    await sb.from('site_config').upsert({key:'alert',value:JSON.stringify({message:msg,btn_label:btnL,btn_url:btnU,enabled:en})});
-    document.getElementById('alert-status').textContent=en?'Active':'Disabled';
-    showToast('Alert saved');
-  }catch(e){ showToast('Error saving alert'); }
-}
-
-function fmt(cmd) { document.getElementById('post-txt').focus(); document.execCommand(cmd, false, null); }
-function fmtEdit(cmd) { document.getElementById('edit-txt').focus(); document.execCommand(cmd, false, null); }
-
-// Strip hidden html when copy pasting but keep standard line breaks
-function interceptPaste(e) {
-  e.preventDefault();
-  var text = (e.originalEvent || e).clipboardData.getData('text/plain');
-  document.execCommand('insertText', false, text);
-}
-document.getElementById('post-txt').addEventListener('paste', interceptPaste);
-document.getElementById('edit-txt').addEventListener('paste', interceptPaste);
-
 </script>
 </body>
 </html>
