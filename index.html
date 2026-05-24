@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Signature Digital</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;}
@@ -20,12 +21,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .ucard{background:rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:18px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.2);margin-bottom:12px;}
 .umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);}
 .ubadge{background:rgba(37,211,102,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;flex-shrink:0;backdrop-filter:blur(4px);}
-.uauthor{font-size:12px;font-weight:600;color:rgba(150,255,200,.9);}
-.udot{color:rgba(255,255,255,.3);font-size:12px;}
-.uphone{font-size:11px;color:rgba(255,255,255,.45);}
 .utime{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto;flex-shrink:0;}
 .utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;}
 .uimg{width:100%;border-radius:12px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.1);pointer-events:none;user-select:none;}
+
 /* Alert Modal */
 #alert-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 #alert-modal.show{display:flex;}
@@ -33,35 +32,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .alert-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1;transition:background .2s;}
 .alert-close:hover{background:rgba(255,255,255,.25);}
 .alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;}
-.alert-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);transition:all .3s cubic-bezier(.34,1.56,.64,1);}
-.alert-btn:hover{background:rgba(37,211,102,.45);}
-.upd-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);transition:all .3s cubic-bezier(.34,1.56,.64,1);}
-.upd-btn:hover{background:rgba(255,255,255,.25);}
+.alert-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
+.upd-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
 .uviews{display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08);}
 .uviews svg{width:13px;height:13px;fill:rgba(255,255,255,.4);}
 .uviews span{font-size:11px;color:rgba(255,255,255,.4);}
-#no-upd{text-align:center;padding:60px 20px;color:rgba(255,255,255,.6);font-size:14px;}
-#loading{text-align:center;padding:40px;color:rgba(255,255,255,.6);font-size:14px;}
+#no-upd, #loading{text-align:center;padding:40px;color:rgba(255,255,255,.6);font-size:14px;}
 
-/* TOAST */
+/* TOAST & HEADER MISC */
 .hinfo{flex:1;min-width:0;}
 .hfollowers{display:flex;align-items:center;gap:4px;margin-top:3px;}
 .hfollowers svg{width:12px;height:12px;fill:rgba(255,255,255,.7);}
 .hfollowers span{font-size:11px;color:rgba(255,255,255,.65);}
-.hdr-top{display:flex;align-items:center;gap:10px;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:12px 16px;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.18);}
+.hdr-top{display:flex;align-items:center;gap:10px;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);padding:12px 16px;border-radius:24px;border:1px solid rgba(255,255,255,.18);}
 .hdr-pill-bar{padding:8px 16px 0;display:flex;justify-content:center;background:transparent;}
-.hwa-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:10px 22px;border-radius:24px;transition:all .2s;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.18);}
-.hwa-btn:hover{background:rgba(255,255,255,.25);}
-.follow-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;background:rgba(255,255,255,.15);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:10px 18px;border-radius:24px;border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.2);cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:inherit;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
-.follow-btn:hover{background:rgba(255,255,255,.25);}
+.hwa-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);padding:10px 22px;border-radius:24px;border:1px solid rgba(255,255,255,.18);}
+.follow-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);backdrop-filter:blur(24px);padding:10px 18px;border-radius:24px;border:1px solid rgba(255,255,255,.18);cursor:pointer;font-size:13px;font-weight:600;color:#fff;}
 .follow-btn.followed{background:rgba(37,211,102,.3);border-color:rgba(37,211,102,.5);}
-.follow-btn .btn-icon{display:inline-flex;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;}
-.follow-btn .btn-txt{transition:all .2s;}
-@keyframes popIn{0%{transform:scale(0) rotate(-45deg);opacity:0;}60%{transform:scale(1.3) rotate(5deg);}100%{transform:scale(1) rotate(0deg);opacity:1;}}
-@keyframes popOut{0%{transform:scale(1);opacity:1;}100%{transform:scale(0) rotate(45deg);opacity:0;}}
-.pop-in{animation:popIn .4s cubic-bezier(.34,1.56,.64,1) forwards;}
-.pop-out{animation:popOut .25s ease forwards;}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;border:1px solid rgba(255,255,255,.15);}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
 #toast.show{opacity:1;}
 </style>
 </head>
@@ -71,7 +59,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
   <div class="hdr-top">
     <div style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;" onclick="window.open('https://wa.me/94778315058','_blank')">
       <img class="hav" src="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/public/profile/633438052_122116907661099468_7006831602680973794_n.jpg" alt="Ahmad">
-      <div class="hinfo" style="flex:1;">
+      <div class="hinfo">
         <div class="hname">Signature Digital</div>
         <div class="hsub">Genuine Softwares at Affordable Prices</div>
         <div class="hfollowers">
@@ -90,9 +78,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
       </div>
     </a>
     <button class="follow-btn" id="follow-btn" onclick="toggleFollow()">
-      <span class="btn-icon" id="follow-icon">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      </span>
+      <span class="btn-icon" id="follow-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></span>
       <span class="btn-txt" id="follow-txt">Follow</span>
     </button>
   </div>
@@ -109,7 +95,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
     <button class="alert-close" onclick="closeAlert()">&#10005;</button>
     <div class="alert-msg" id="alert-msg"></div>
     <div id="alert-btn-wrap" style="display:none;">
-      <a class="alert-btn" id="alert-btn-link" href="#" target="_blank" id="alert-action-btn"></a>
+      <a class="alert-btn" id="alert-btn-link" href="#" target="_blank"></a>
     </div>
   </div>
 </div>
@@ -124,16 +110,9 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 
 function sanitize(t){
   if(!t) return '';
-  var allowed = ['b','i','u','s','strong','em','br','span'];
-  var tmp = document.createElement('div');
-  tmp.innerHTML = t;
-  var all = tmp.querySelectorAll('*');
-  for(var x=0;x<all.length;x++){
-    var tag = all[x].tagName.toLowerCase();
-    if(allowed.indexOf(tag)===-1){ all[x].outerHTML=all[x].textContent; }
-  }
-  return tmp.innerHTML;
+  return DOMPurify.sanitize(t, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span'] });
 }
+
 function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 function fmtTime(d){
   var now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -143,14 +122,13 @@ function fmtTime(d){
   if(md.getTime()===yest.getTime()) return 'Yesterday '+t;
   return d.toLocaleDateString()+' '+t;
 }
-function fmtSize(b){ if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(1)+'KB'; return (b/1048576).toFixed(1)+'MB'; }
+
 async function loadAlert(){
   try{
     var r=await sb.from('site_config').select('value').eq('key','alert').single();
     if(!r.data) return;
     var cfg=JSON.parse(r.data.value);
     if(!cfg.enabled||!cfg.message) return;
-    // Show once per session
     if(sessionStorage.getItem('alert_seen')) return;
     document.getElementById('alert-msg').textContent=cfg.message;
     var bw=document.getElementById('alert-btn-wrap');
@@ -159,8 +137,6 @@ async function loadAlert(){
       bl.textContent=cfg.btn_label;
       bl.href=cfg.btn_url;
       bw.style.display='';
-    } else {
-      bw.style.display='none';
     }
     document.getElementById('alert-modal').classList.add('show');
   }catch(e){}
@@ -169,7 +145,6 @@ function closeAlert(){
   document.getElementById('alert-modal').classList.remove('show');
   sessionStorage.setItem('alert_seen','1');
 }
-function showToast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
 
 function fmtCount(n){
   if(n>=1000000) return (n/1000000).toFixed(1).replace('.0','')+'M';
@@ -183,28 +158,13 @@ async function trackFollower(){
     var r=await sb.from('followers').select('count').eq('id',1).single();
     var current=r.data&&r.data.count?r.data.count:0;
     if(el) el.textContent=fmtCount(current)+' followers';
-  }catch(e){
-    if(el) el.textContent='0 followers';
-  }
-  // Check server for this IP's follow status
-  try{
-    var sr=await fetch(BOT_URL+'/follow-status');
-    var sd=await sr.json();
-    if(sd.following){
-      localStorage.setItem('sgd_follow','1');
-      setFollowedUI(true, false);
-    } else {
-      localStorage.removeItem('sgd_follow');
-      setFollowedUI(false, false);
-    }
-  }catch(e){
-    // Fallback to localStorage if bot unreachable
-    var isFollowing=localStorage.getItem('sgd_follow')==='1';
-    if(isFollowing) setFollowedUI(true, false);
-  }
+  }catch(e){ if(el) el.textContent='0 followers'; }
+  
+  var isFollowing=localStorage.getItem('sgd_follow')==='1';
+  setFollowedUI(isFollowing);
 }
 
-function setFollowedUI(followed, animate){
+function setFollowedUI(followed){
   var btn=document.getElementById('follow-btn');
   var icon=document.getElementById('follow-icon');
   var txt=document.getElementById('follow-txt');
@@ -212,64 +172,31 @@ function setFollowedUI(followed, animate){
   if(followed){
     btn.classList.add('followed');
     txt.textContent='Following';
-    if(animate){
-      icon.classList.remove('pop-out');
-      icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366" class="pop-in"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-    } else {
-      icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-    }
+    icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
   } else {
     btn.classList.remove('followed');
     txt.textContent='Follow';
-    if(animate){
-      icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" class="pop-in"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>';
-    } else {
-      icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>';
-    }
+    icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>';
   }
 }
 
 async function toggleFollow(){
   var isFollowing=localStorage.getItem('sgd_follow')==='1';
-  var el=document.getElementById('follower-count');
   var action=isFollowing?'unfollow':'follow';
-  try{
-    // Verify with bot (IP check)
-    var br=await fetch(BOT_URL+'/follow',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:action})
-    });
-    var bd=await br.json();
-    if(bd.already && action==='follow'){
-      // Already followed from another browser — just update UI
-      localStorage.setItem('sgd_follow','1');
-      setFollowedUI(true,true);
-      return;
-    }
-    // Update Supabase count
-    var r=await sb.from('followers').select('count').eq('id',1).single();
-    var current=r.data&&r.data.count?r.data.count:0;
-    var newCount=action==='follow'?current+1:Math.max(0,current-1);
-    await sb.from('followers').upsert({id:1,count:newCount});
+  
+  try {
+    // Rely on safe RPC function instead of client-side RLS bypass
+    await sb.rpc('adjust_follower', { action: action });
+    
     if(action==='follow'){
       localStorage.setItem('sgd_follow','1');
-      setFollowedUI(true,true);
+      setFollowedUI(true);
     } else {
       localStorage.removeItem('sgd_follow');
-      setFollowedUI(false,true);
+      setFollowedUI(false);
     }
-    if(el) el.textContent=fmtCount(newCount)+' followers';
-  }catch(e){
-    // Fallback — update locally if bot unreachable
-    var r2=await sb.from('followers').select('count').eq('id',1).single();
-    var current2=r2.data&&r2.data.count?r2.data.count:0;
-    var newCount2=action==='follow'?current2+1:Math.max(0,current2-1);
-    await sb.from('followers').upsert({id:1,count:newCount2});
-    if(action==='follow'){localStorage.setItem('sgd_follow','1');setFollowedUI(true,true);}
-    else{localStorage.removeItem('sgd_follow');setFollowedUI(false,true);}
-    if(el) el.textContent=fmtCount(newCount2)+' followers';
-  }
+    trackFollower(); // Refresh count locally
+  } catch(e) {}
 }
 
 async function loadUpdates(){
@@ -303,10 +230,10 @@ async function trackView(uid){
   if(localStorage.getItem(k)) return;
   localStorage.setItem(k,'1');
   try{
-    var r=await sb.from('updates').select('views').eq('id',uid).single();
-    var nv=(r.data&&r.data.views?r.data.views:0)+1;
-    await sb.from('updates').update({views:nv}).eq('id',uid);
-    var el=document.getElementById('vc-'+uid); if(el) el.textContent=nv;
+    // Use safe RPC function instead of client-side RLS bypass
+    await sb.rpc('increment_view_count', { update_id: uid });
+    var el=document.getElementById('vc-'+uid); 
+    if(el) el.textContent = parseInt(el.textContent) + 1;
   }catch(e){}
 }
 
