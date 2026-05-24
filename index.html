@@ -22,7 +22,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);}
 .ubadge{background:rgba(37,211,102,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;flex-shrink:0;backdrop-filter:blur(4px);}
 .utime{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto;flex-shrink:0;}
-/* Added white-space: pre-wrap so line breaks are forced to render */
 .utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
 .uimg{width:100%;border-radius:12px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.1);pointer-events:none;user-select:none;}
 
@@ -50,8 +49,93 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .hwa-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);padding:10px 22px;border-radius:24px;border:1px solid rgba(255,255,255,.18);}
 .follow-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);backdrop-filter:blur(24px);padding:10px 18px;border-radius:24px;border:1px solid rgba(255,255,255,.18);cursor:pointer;font-size:13px;font-weight:600;color:#fff;}
 .follow-btn.followed{background:rgba(37,211,102,.3);border-color:rgba(37,211,102,.5);}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1.5px solid rgba(255,255,255,.15);box-shadow:0 8px 30px rgba(0,0,0,.5);backdrop-filter:blur(10px);}
 #toast.show{opacity:1;}
+
+/* GIVEAWAY DYNAMIC COMPONENT STYLES */
+.giveaway-box {
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(18, 140, 126, 0.1) 100%);
+  border: 1px solid rgba(37, 211, 102, 0.3);
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.giveaway-badge {
+  background: rgba(37, 211, 102, 0.18);
+  border: 1px solid rgba(37, 211, 102, 0.4);
+  color: #25D366;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.giveaway-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  display: block;
+}
+.giveaway-val-container {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  position: relative;
+}
+.giveaway-val {
+  font-family: 'SF Mono', 'JetBrains Mono', 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #25D366;
+  font-weight: 600;
+  word-break: break-all;
+  padding-right: 36px;
+  user-select: all;
+  flex: 1;
+  letter-spacing: 0.02em;
+}
+.copy-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.2s;
+  outline: none;
+}
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #25D366;
+}
+.copy-btn.copied {
+  background: #25D366;
+  border-color: #25D366;
+  color: #fff;
+}
 </style>
 </head>
 <body>
@@ -111,8 +195,6 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 
 function sanitize(t){
   if(!t) return '';
-  // Convert standard newlines to <br> to be safe, then let DOMPurify handle it.
-  // We added 'div' and 'p' to the allowed tags list to preserve formatting lines!
   var formatted = t.replace(/\n/g, '<br>');
   return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span', 'div', 'p'] });
 }
@@ -203,6 +285,34 @@ async function toggleFollow(){
   } catch(e) {}
 }
 
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function copyGiveaway(uid) {
+  var el = document.getElementById('gw-val-' + uid);
+  var btn = document.getElementById('gw-btn-' + uid);
+  if (!el || !btn) return;
+  
+  var keyText = el.textContent || el.innerText;
+  navigator.clipboard.writeText(keyText).then(function() {
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    showToast('Copied to clipboard!');
+    setTimeout(function() {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    }, 2000);
+  }).catch(function() {
+    // fallback view copy notice
+    alert("Key: " + keyText);
+  });
+}
+
 async function loadUpdates(){
   try{
     var r = await sb.from('updates').select('*').order('created_at',{ascending:false}).limit(50);
@@ -210,14 +320,41 @@ async function loadUpdates(){
     var list=document.getElementById('updlist'), none=document.getElementById('no-upd');
     if(!r.data||!r.data.length){ none.style.display=''; return; }
     none.style.display='none';
+    
     list.innerHTML = r.data.map(function(u){
+      var cleanText = u.text || '';
+      var giveawayHtml = '';
+      
+      // Look for XML comment signature
+      var match = cleanText.match(/<!--GIVEAWAY_JSON:(.*?)-->/);
+      if (match && match[1]) {
+        try {
+          var gw = JSON.parse(match[1]);
+          if (gw && gw.value) {
+            giveawayHtml = '<div class="giveaway-box">' +
+              '<div class="giveaway-badge">🎁 Giveaway</div>' +
+              (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
+              '<div class="giveaway-val-container">' +
+                '<span class="giveaway-val" id="gw-val-' + u.id + '">' + esc(gw.value) + '</span>' +
+                '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Credentials">' +
+                  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
+                '</button>' +
+              '</div>' +
+            '</div>';
+          }
+        } catch(e) {}
+        // strip comment out from text
+        cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
+      }
+
       return '<div class="ucard">'+
         '<div class="umeta">'+
           '<span class="ubadge">UPDATE</span>'+
           '<span class="utime">'+fmtTime(new Date(u.created_at))+'</span>'+
         '</div>'+
         (u.image_url?'<img class="uimg" src="'+u.image_url+'" alt="">':'')+
-        (u.text?'<div class="utxt">'+sanitize(u.text)+'</div>':'')+
+        (cleanText?'<div class="utxt">'+sanitize(cleanText)+'</div>':'')+
+        giveawayHtml +
         (u.btn_label&&u.btn_url?'<a href="'+(u.btn_url.startsWith('http')?u.btn_url:'https://'+u.btn_url)+'" target="_blank" class="upd-btn">'+esc(u.btn_label)+'</a>':'')+
         '<div class="uviews">'+
           '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'+
@@ -225,6 +362,7 @@ async function loadUpdates(){
         '</div>'+
       '</div>';
     }).join('');
+    
     r.data.forEach(function(u){ trackView(u.id); });
   }catch(e){ document.getElementById('loading').textContent='Failed to load updates.'; }
 }
