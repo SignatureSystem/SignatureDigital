@@ -420,9 +420,6 @@ CREATE TABLE IF NOT EXISTS site_config (
     value TEXT NOT NULL
 );
 
--- Disable Row Level Security (RLS) so simple reads or writes aren't blocked by Supabase
-ALTER TABLE site_config DISABLE ROW LEVEL SECURITY;
-
 -- Seed default credentials if empty
 INSERT INTO site_config (key, value)
 VALUES ('admin_user', 'admin')
@@ -438,7 +435,7 @@ ON CONFLICT (key) DO NOTHING;
 
 -- Seed initial alert popup layout 
 INSERT INTO site_config (key, value)
-VALUES ('alert', '{"enabled":false,"message":"","btn_label":"","btn_url":""}')
+VALUES ('alert', '{"enabled":false,\"message\":\"\",\"btn_label\":\"\",\"btn_url\":\"\"}')
 ON CONFLICT (key) DO NOTHING;
 
 -- Create actual updates news table 
@@ -469,35 +466,133 @@ ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_angry INT NOT NULL DEFAULT 0;
 ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_label TEXT;
 ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_url TEXT;
 
-ALTER TABLE updates DISABLE ROW LEVEL SECURITY;
-
 -- Create followers tracking tally
 CREATE TABLE IF NOT EXISTS followers (
     id INT PRIMARY KEY,
     count INT NOT NULL DEFAULT 1250
 );
 
-ALTER TABLE followers DISABLE ROW LEVEL SECURITY;
-
 -- Seed single follower account item
 INSERT INTO followers (id, count)
 VALUES (1, 1250)
 ON CONFLICT (id) DO NOTHING;
 
--- RPC views increment tool setup
-CREATE OR REPLACE FUNCTION increment_view_count(update_id BIGINT)
-RETURNS VOID AS $$
+-- Active-Enable Row Level Security (RLS) across all tables to block direct unauthenticated abuse!
+ALTER TABLE site_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE updates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE followers ENABLE ROW LEVEL SECURITY;
+
+-- Drop any previous wide-open policies so we start clean
+DROP POLICY IF EXISTS allow_read_updates ON updates;
+DROP POLICY IF EXISTS allow_read_followers ON followers;
+DROP POLICY IF EXISTS allow_read_alert ON site_config;
+
+-- Create highly narrow SELECT-only policies for anonymous readers
+CREATE POLICY allow_read_updates ON updates FOR SELECT TO anon USING (true);
+CREATE POLICY allow_read_followers ON followers FOR SELECT TO anon USING (true);
+CREATE POLICY allow_read_alert ON site_config FOR SELECT TO anon USING (key = 'alert');
+
+-- RPC secure credentials validator function
+CREATE OR REPLACE FUNCTION verify_admin(u TEXT, p TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+  db_u TEXT;
+  db_p TEXT;
 BEGIN
-  UPDATE updates
-  SET views = COALESCE(views, 0) + 1
-  WHERE id = update_id;
+  SELECT value INTO db_u FROM site_config WHERE key = 'admin_user';
+  SELECT value INTO db_p FROM site_config WHERE key = 'admin_pass';
+  
+  -- Fallbacks if empty
+  IF db_u IS NULL THEN db_u := 'admin'; END IF;
+  IF db_p IS NULL THEN db_p := 'admin'; END IF;
+  
+  RETURN (u = db_u) AND (p = db_p);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- RPC reaction handler setup
+-- SECURE MUTATION RPC: Create an update entry (validated on DB level)
+CREATE OR REPLACE FUNCTION secure_create_update(u TEXT, p TEXT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF NOT verify_admin(u, p) THEN
+    RAISE EXCEPTION 'Unauthorized admin credentials!';
+  END IF;
+  
+  INSERT INTO updates (text, image_url, views, btn_label, btn_url, react_like, react_love, react_haha, react_wow, react_sad, react_angry)
+  VALUES (t_text, t_img_url, 0, t_btn_label, t_btn_url, 0, 0, 0, 0, 0, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- SECURE MUTATION RPC: Edit an update entry (validated on DB level)
+CREATE OR REPLACE FUNCTION secure_edit_update(u TEXT, p TEXT, uid BIGINT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF NOT verify_admin(u, p) THEN
+    RAISE EXCEPTION 'Unauthorized admin credentials!';
+  END IF;
+  
+  UPDATE updates
+  SET text = t_text,
+      image_url = t_img_url,
+      btn_label = t_btn_label,
+      btn_url = t_btn_url
+  WHERE id = uid;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- SECURE MUTATION RPC: Delete an update (validated on DB level)
+CREATE OR REPLACE FUNCTION secure_delete_update(u TEXT, p TEXT, uid BIGINT)
+RETURNS VOID AS $$
+BEGIN
+  IF NOT verify_admin(u, p) THEN
+    RAISE EXCEPTION 'Unauthorized admin credentials!';
+  END IF;
+  
+  DELETE FROM updates WHERE id = uid;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- SECURE MUTATION RPC: Save Global Alert popup Broadcast (validated on DB level)
+CREATE OR REPLACE FUNCTION secure_save_alert(u TEXT, p TEXT, payload TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF NOT verify_admin(u, p) THEN
+    RAISE EXCEPTION 'Unauthorized admin credentials!';
+  END IF;
+  
+  INSERT INTO site_config (key, value)
+  VALUES ('alert', payload)
+  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- SECURE MUTATION RPC: Update Admin Credentials (validated on DB level)
+CREATE OR REPLACE FUNCTION secure_update_credentials(u TEXT, p TEXT, new_u TEXT, new_p TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF NOT verify_admin(u, p) THEN
+    RAISE EXCEPTION 'Unauthorized admin credentials!';
+  END IF;
+  
+  IF COALESCE(new_u, '') = '' OR COALESCE(new_p, '') = '' THEN
+    RAISE EXCEPTION 'New credentials cannot be blank!';
+  END IF;
+  
+  INSERT INTO site_config (key, value) VALUES ('admin_user', new_u) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+  INSERT INTO site_config (key, value) VALUES ('admin_pass', new_p) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+  INSERT INTO site_config (key, value) VALUES ('pwd', new_p) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Safe reaction counter: uses secure definer to increment to prevent client logic tampering
 CREATE OR REPLACE FUNCTION react_to_post(update_id BIGINT, reaction TEXT, val INT)
 RETURNS VOID AS $$
 BEGIN
+  -- Validate input value to prevent people from sending random values (-1000 or +1000000)
+  IF val != 1 AND val != -1 THEN
+    RAISE EXCEPTION 'Invalid increment step value';
+  END IF;
+  
   IF reaction = 'like' THEN
     UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id = update_id;
   ELSIF reaction = 'love' THEN
@@ -511,6 +606,16 @@ BEGIN
   ELSIF reaction = 'angry' THEN
     UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id = update_id;
   END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- RPC views increment tool setup
+CREATE OR REPLACE FUNCTION increment_view_count(update_id BIGINT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE updates
+  SET views = COALESCE(views, 0) + 1
+  WHERE id = update_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -577,34 +682,16 @@ async function tryLogin(){
   btn.textContent = 'Verifying...';
   
   try {
-    // Select configurations for username and password keys
-    var r = await sb.from('site_config').select('*').in('key', ['admin_user', 'admin_pass', 'pwd']);
+    // Verify admin credentials on the DB securely using security definer RPC
+    var r = await sb.rpc('verify_admin', { u: u, p: p });
     
     if (r.error) {
       console.warn('Database configuration issue:', r.error);
       showToast('Database connection issue! Run setup SQL in Supabase.');
     } else {
-      var config = {};
-      if (r.data && r.data.length > 0) {
-        r.data.forEach(function(item) {
-          config[item.key] = item.value;
-        });
-      }
-      
-      var dbUser = config['admin_user'];
-      var dbPass = config['admin_pass'] || config['pwd'];
-      
-      // Strict Fallbacks if completely brand new (unset)
-      if (dbUser === undefined && dbPass === undefined) {
-        // Only if database state is totally empty, we fall back to admin/admin default setup
-        dbUser = 'admin';
-        dbPass = 'admin';
-      } else if (dbUser === undefined) {
-        // If a password key exists but no username key yet, require 'admin' user as default legacy mapping
-        dbUser = 'admin';
-      }
-      
-      if (u === dbUser && p === dbPass) {
+      if (r.data === true) {
+        sessionStorage.setItem('sgd_user', u);
+        sessionStorage.setItem('sgd_pass', p);
         showToast('Authentication succeeded!');
         enterAdmin();
       } else {
@@ -612,7 +699,7 @@ async function tryLogin(){
       }
     }
   } catch (e) {
-    console.error('Exception reading credentials', e);
+    console.error('Exception verifying credentials', e);
     showToast('Network error! Check your database connectivity.');
   }
   btn.disabled = false;
@@ -960,7 +1047,16 @@ async function postUpdate() {
       imgUrl = await uploadImg(imgFile); 
       clearImg(); 
     }
-    var r = await sb.from('updates').insert({text:txt||'', image_url:imgUrl, views:0, btn_label:btnLabel||null, btn_url:btnUrl||null});
+    var username = sessionStorage.getItem('sgd_user') || 'admin';
+    var password = sessionStorage.getItem('sgd_pass') || 'admin';
+    var r = await sb.rpc('secure_create_update', {
+      u: username,
+      p: password,
+      t_text: txt || '',
+      t_img_url: imgUrl,
+      t_btn_label: btnLabel || null,
+      t_btn_url: btnUrl || null
+    });
     if (r.error) throw r.error;
     document.getElementById('post-txt').innerHTML = '';
     document.getElementById('btn-label').value = '';
@@ -1017,8 +1113,13 @@ async function saveAlertConfig() {
   var saveBtn = document.getElementById('alert-save-btn');
   saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
   try {
-    // Robust .upsert over .update in case configuration is brand-new
-    var r = await sb.from('site_config').upsert({ key: 'alert', value: JSON.stringify(payload) });
+    var username = sessionStorage.getItem('sgd_user') || 'admin';
+    var password = sessionStorage.getItem('sgd_pass') || 'admin';
+    var r = await sb.rpc('secure_save_alert', {
+      u: username,
+      p: password,
+      payload: JSON.stringify(payload)
+    });
     if(r.error) throw r.error;
     showToast('Broadcast settings updated!');
   } catch(e){
@@ -1039,14 +1140,20 @@ async function saveNewCredentials() {
   var saveBtn = document.getElementById('pwd-save-btn');
   saveBtn.disabled = true; saveBtn.textContent = 'Updating...';
   try {
-    var r1 = await sb.from('site_config').upsert({ key: 'admin_user', value: newUser });
-    var r2 = await sb.from('site_config').upsert({ key: 'admin_pass', value: newPass });
+    var username = sessionStorage.getItem('sgd_user') || 'admin';
+    var password = sessionStorage.getItem('sgd_pass') || 'admin';
+    var r = await sb.rpc('secure_update_credentials', {
+      u: username,
+      p: password,
+      new_u: newUser,
+      new_p: newPass
+    });
     
-    if (r1.error) throw r1.error;
-    if (r2.error) throw r2.error;
+    if (r.error) throw r.error;
     
-    // Maintain legacy pwd key for safety/compatibility
-    await sb.from('site_config').upsert({ key: 'pwd', value: newPass });
+    // Update active stored session in memory upon success
+    sessionStorage.setItem('sgd_user', newUser);
+    sessionStorage.setItem('sgd_pass', newPass);
     
     showToast('Admin Credentials successfully updated in database!');
     document.getElementById('new-user-inp').value = '';
@@ -1208,12 +1315,17 @@ async function saveEdit(){
       finalImgUrl = await uploadImg(editImgFile);
     }
 
-    var r = await sb.from('updates').update({
-      text: txt,
-      btn_label: btnLabel || null,
-      btn_url: btnUrl || null,
-      image_url: finalImgUrl
-    }).eq('id', editingId);
+    var username = sessionStorage.getItem('sgd_user') || 'admin';
+    var password = sessionStorage.getItem('sgd_pass') || 'admin';
+    var r = await sb.rpc('secure_edit_update', {
+      u: username,
+      p: password,
+      uid: editingId,
+      t_text: txt,
+      t_img_url: finalImgUrl,
+      t_btn_label: btnLabel || null,
+      t_btn_url: btnUrl || null
+    });
     
     if(r.error) throw r.error;
     closeEdit();
@@ -1239,7 +1351,13 @@ function handleEdit(btn) {
 async function deleteUpdate(uid){
   if(!confirm('Are you absolute sure you want to delete this post?')) return;
   try {
-    var r = await sb.from('updates').delete().eq('id', uid);
+    var username = sessionStorage.getItem('sgd_user') || 'admin';
+    var password = sessionStorage.getItem('sgd_pass') || 'admin';
+    var r = await sb.rpc('secure_delete_update', {
+      u: username,
+      p: password,
+      uid: uid
+    });
     if(r.error) throw r.error;
     showToast('Announcement deleted!');
     loadUpdates();
