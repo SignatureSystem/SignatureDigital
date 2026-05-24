@@ -994,29 +994,29 @@ async function loadUpdates(){
             '<span id="vc-'+u.id+'" style="font-size:11px;color:rgba(255,255,255,.4);">'+(u.views||0)+'</span>'+
           '</div>'+
           '<div style="display:flex;align-items:center;gap:12px;margin-left:auto;">'+
-            '<div class="u-react-container" id="react-container-'+u.id+'" onmouseenter="startReactHover('+u.id+')" onmouseleave="endReactHover('+u.id+')">'+
+            '<div class="u-react-container" id="react-container-'+u.id+'" onmouseenter="startReactHover(\''+u.id+'\')" onmouseleave="endReactHover(\''+u.id+'\')">'+
               '<button class="u-react-btn" id="react-btn-'+u.id+'" '+
-                      'onmousedown="handleReactMouseDown(event, '+u.id+')" '+
-                      'onmouseup="handleReactMouseUp(event, '+u.id+')" '+
-                      'onmouseleave="handleReactMouseLeave(event, '+u.id+')" '+
-                      'ontouchstart="handleReactTouchStart(event, '+u.id+')" '+
-                      'ontouchend="handleReactTouchEnd(event, '+u.id+')" '+
+                      'onmousedown="handleReactMouseDown(event, \''+u.id+'\')" '+
+                      'onmouseup="handleReactMouseUp(event, \''+u.id+'\')" '+
+                      'onmouseleave="handleReactMouseLeave(event, \''+u.id+'\')" '+
+                      'ontouchstart="handleReactTouchStart(event, \''+u.id+'\')" '+
+                      'ontouchend="handleReactTouchEnd(event, \''+u.id+'\')" '+
                       'oncontextmenu="event.preventDefault()" '+
-                      'onclick="handleReactClick(event, '+u.id+')">'+
+                      'onclick="handleReactClick(event, \''+u.id+'\')">'+
                 '<span class="react-btn-icon" id="react-icon-'+u.id+'">'+LIKE_SVG+'</span> '+
                 '<span class="react-btn-text" id="react-lbl-'+u.id+'">Like</span>'+
               '</button>'+
               '<div class="u-react-popup" id="react-popup-'+u.id+'">'+
-                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'like\')" title="Like" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;">'+
+                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'like\')" title="Like" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;">'+
                   '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>'+
                 '</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'love\')" title="Love">❤️</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'haha\')" title="Haha">😆</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'wow\')" title="Wow">😮</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'sad\')" title="Sad">😢</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction('+u.id+', \'angry\')" title="Angry">😡</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'love\')" title="Love">❤️</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'haha\')" title="Haha">😆</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'wow\')" title="Wow">😮</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'sad\')" title="Sad">😢</button>'+
+                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'angry\')" title="Angry">😡</button>'+
               '</div>'+
-              '<div class="u-react-counts" id="react-counts-'+u.id+'" onclick="showReactionBreakdown('+u.id+', event)"></div>'+
+              '<div class="u-react-counts" id="react-counts-'+u.id+'" onclick="showReactionBreakdown(\''+u.id+'\', event)"></div>' +
               '<div class="u-react-breakdown-pop" id="react-breakdown-'+u.id+'"></div>'+
             '</div>'+
             (u.btn_label&&u.btn_url?'<a href="'+(u.btn_url.startsWith('http')?u.btn_url:'https://'+u.btn_url)+'" target="_blank" class="upd-btn" style="margin-top:0;padding:6px 16px;font-size:12px;border-radius:16px;">'+esc(u.btn_label)+'</a>':'')+
