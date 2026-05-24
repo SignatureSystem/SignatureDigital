@@ -486,7 +486,7 @@ BEGIN
   SET views = views + 1
   WHERE id = update_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- RPC reaction handler setup
 CREATE OR REPLACE FUNCTION react_to_post(update_id BIGINT, reaction TEXT, val INT)
@@ -506,7 +506,7 @@ BEGIN
     UPDATE updates SET react_angry = GREATEST(0, react_angry + val) WHERE id = update_id;
   END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- RPC followers join/leave calculator counter
 CREATE OR REPLACE FUNCTION adjust_follower(action TEXT)
@@ -518,7 +518,7 @@ BEGIN
     UPDATE followers SET count = GREATEST(0, count - 1) WHERE id = 1;
   END IF;
 END;
-$$ LANGUAGE plpgsql;`;
+$$ LANGUAGE plpgsql SECURITY DEFINER;`;,TargetContent:`;
 
 function showSqlGuide() {
   document.getElementById('sql-code').textContent = SQL_SCRIPT_TEMPLATE;
