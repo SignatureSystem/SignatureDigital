@@ -665,39 +665,11 @@ function toggleAlertFields() {
   document.getElementById('alert-fields').style.display = active ? 'flex' : 'none';
 }
 
-function resizeAndBase64(file, maxDim = 800) {
+function getOriginalBase64(file) {
   return new Promise((resolve, reject) => {
     var reader = new FileReader();
     reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var w = img.width;
-        var h = img.height;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) {
-            h = Math.round((h * maxDim) / w);
-            w = maxDim;
-          } else {
-            w = Math.round((w * maxDim) / h);
-            h = maxDim;
-          }
-        }
-        var canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        try {
-          var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          resolve(dataUrl);
-        } catch (err) {
-          reject(err);
-        }
-      };
-      img.onerror = function() {
-        reject(new Error('Failed to load image file.'));
-      };
-      img.src = e.target.result;
+      resolve(e.target.result);
     };
     reader.onerror = function() {
       reject(new Error('Failed to read image file.'));
@@ -708,16 +680,20 @@ function resizeAndBase64(file, maxDim = 800) {
 
 async function uploadImg(file){
   try {
-    var base64Data = await resizeAndBase64(file, 800);
-    return base64Data;
-  } catch (err) {
-    console.warn('Base64 processing failed: ' + err.message + '. Attempting original style fallback.');
     var ext = file.name.split('.').pop();
     var name = Date.now() + '_' + Math.random().toString(36).substring(2,8) + '.' + ext;
     var path = 'uploads/' + name;
     var r = await sb.storage.from('profile').upload(path, file);
     if(r.error) throw r.error;
     return SB_URL + '/storage/v1/object/public/profile/' + path;
+  } catch (err) {
+    console.warn('Storage upload failed: ' + err.message + '. Falling back to original quality Base64 data URL.');
+    try {
+      var base64Data = await getOriginalBase64(file);
+      return base64Data;
+    } catch (base64Err) {
+      throw new Error('Image parsing failed: ' + base64Err.message);
+    }
   }
 }
 
