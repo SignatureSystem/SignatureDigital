@@ -185,7 +185,6 @@ async function toggleFollow(){
   var action=isFollowing?'unfollow':'follow';
   
   try {
-    // Rely on safe RPC function instead of client-side RLS bypass
     await sb.rpc('adjust_follower', { action: action });
     
     if(action==='follow'){
@@ -195,7 +194,7 @@ async function toggleFollow(){
       localStorage.removeItem('sgd_follow');
       setFollowedUI(false);
     }
-    trackFollower(); // Refresh count locally
+    trackFollower(); 
   } catch(e) {}
 }
 
@@ -230,7 +229,6 @@ async function trackView(uid){
   if(localStorage.getItem(k)) return;
   localStorage.setItem(k,'1');
   try{
-    // Use safe RPC function instead of client-side RLS bypass
     await sb.rpc('increment_view_count', { update_id: uid });
     var el=document.getElementById('vc-'+uid); 
     if(el) el.textContent = parseInt(el.textContent) + 1;
