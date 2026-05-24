@@ -293,6 +293,25 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+function copyTextById(elId, btnId) {
+  var el = document.getElementById(elId);
+  var btn = document.getElementById(btnId);
+  if (!el || !btn) return;
+  
+  var keyText = el.textContent || el.innerText;
+  navigator.clipboard.writeText(keyText).then(function() {
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    showToast('Copied to clipboard!');
+    setTimeout(function() {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    }, 2000);
+  }).catch(function() {
+    alert("Val: " + keyText);
+  });
+}
+
 function copyGiveaway(uid) {
   var el = document.getElementById('gw-val-' + uid);
   var btn = document.getElementById('gw-btn-' + uid);
@@ -342,17 +361,38 @@ async function loadUpdates(){
       if (match && match[1]) {
         try {
           var gw = JSON.parse(match[1]);
-          if (gw && gw.value) {
-            giveawayHtml = '<div class="giveaway-box">' +
-              '<div class="giveaway-badge">🎁 Giveaway</div>' +
-              (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
-              '<div class="giveaway-val-container">' +
-                '<span class="giveaway-val" id="gw-val-' + u.id + '">' + esc(gw.value) + '</span>' +
-                '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Credentials">' +
-                  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                '</button>' +
-              '</div>' +
-            '</div>';
+          if (gw) {
+            if (gw.type === 'account' || (gw.email && gw.password)) {
+              giveawayHtml = '<div class="giveaway-box">' +
+                '<div class="giveaway-badge">🎁 Giveaway Account</div>' +
+                (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
+                '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;">EMAIL / USERNAME</div>' +
+                '<div class="giveaway-val-container" style="margin-bottom: 8px;">' +
+                  '<span class="giveaway-val" id="gw-email-' + u.id + '">' + esc(gw.email) + '</span>' +
+                  '<button class="copy-btn" id="gw-email-btn-' + u.id + '" onclick="copyTextById(\'gw-email-' + u.id + '\', \'gw-email-btn-' + u.id + '\')" title="Copy Email">' +
+                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
+                  '</button>' +
+                '</div>' +
+                '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">PASSWORD</div>' +
+                '<div class="giveaway-val-container">' +
+                  '<span class="giveaway-val" id="gw-pass-' + u.id + '">' + esc(gw.password) + '</span>' +
+                  '<button class="copy-btn" id="gw-pass-btn-' + u.id + '" onclick="copyTextById(\'gw-pass-' + u.id + '\', \'gw-pass-btn-' + u.id + '\')" title="Copy Password">' +
+                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+            } else if (gw.value) {
+              giveawayHtml = '<div class="giveaway-box">' +
+                '<div class="giveaway-badge">🎁 Giveaway</div>' +
+                (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
+                '<div class="giveaway-val-container">' +
+                  '<span class="giveaway-val" id="gw-val-' + u.id + '">' + esc(gw.value) + '</span>' +
+                  '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Credentials">' +
+                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+            }
           }
         } catch(e) {}
         // strip comment out from text
