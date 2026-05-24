@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="overscroll-behavior: none; background-color: #F0F2F5;">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Signature Digital — Admin</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E3E7E9;--inp:#F0F2F5;}
+html, body { overscroll-behavior: none; overscroll-behavior-y: none; overscroll-behavior-x: none; background-color: #F0F2F5; }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#F0F2F5;min-height:100vh;color:var(--txt);display:flex;flex-direction:column;}
 
 /* Login Form */
@@ -381,6 +382,26 @@ input:checked + .slider:before {transform:translateX(16px);}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// Zoom and gesture prevention controls
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) {
+    event.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('gesturestart', function(event) {
+  event.preventDefault();
+}, { passive: false });
+
+var lastTouchTime = 0;
+document.addEventListener('touchend', function(event) {
+  var now = new Date().getTime();
+  if (now - lastTouchTime <= 300) {
+    event.preventDefault();
+  }
+  lastTouchTime = now;
+}, false);
+
 const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
 const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -425,8 +446,22 @@ CREATE TABLE IF NOT EXISTS updates (
     image_url TEXT,
     views INT NOT NULL DEFAULT 0,
     btn_label TEXT,
-    btn_url TEXT
+    btn_url TEXT,
+    react_like INT NOT NULL DEFAULT 0,
+    react_love INT NOT NULL DEFAULT 0,
+    react_haha INT NOT NULL DEFAULT 0,
+    react_wow INT NOT NULL DEFAULT 0,
+    react_sad INT NOT NULL DEFAULT 0,
+    react_angry INT NOT NULL DEFAULT 0
 );
+
+-- NOTE: If your updates table already exists, please run these commands in your SQL Editor to add reaction columns:
+-- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_like INT NOT NULL DEFAULT 0;
+-- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_love INT NOT NULL DEFAULT 0;
+-- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_haha INT NOT NULL DEFAULT 0;
+-- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_wow INT NOT NULL DEFAULT 0;
+-- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_sad INT NOT NULL DEFAULT 0;
+-- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_angry INT NOT NULL DEFAULT 0;
 
 ALTER TABLE updates DISABLE ROW LEVEL SECURITY;
 
@@ -450,6 +485,26 @@ BEGIN
   UPDATE updates
   SET views = views + 1
   WHERE id = update_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- RPC reaction handler setup
+CREATE OR REPLACE FUNCTION react_to_post(update_id BIGINT, reaction TEXT, val INT)
+RETURNS VOID AS $$
+BEGIN
+  IF reaction = 'like' THEN
+    UPDATE updates SET react_like = GREATEST(0, react_like + val) WHERE id = update_id;
+  ELSIF reaction = 'love' THEN
+    UPDATE updates SET react_love = GREATEST(0, react_love + val) WHERE id = update_id;
+  ELSIF reaction = 'haha' THEN
+    UPDATE updates SET react_haha = GREATEST(0, react_haha + val) WHERE id = update_id;
+  ELSIF reaction = 'wow' THEN
+    UPDATE updates SET react_wow = GREATEST(0, react_wow + val) WHERE id = update_id;
+  ELSIF reaction = 'sad' THEN
+    UPDATE updates SET react_sad = GREATEST(0, react_sad + val) WHERE id = update_id;
+  ELSIF reaction = 'angry' THEN
+    UPDATE updates SET react_angry = GREATEST(0, react_angry + val) WHERE id = update_id;
+  END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -1239,6 +1294,15 @@ async function loadUpdates(){
         cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
       }
 
+      var reactSummaryList = [];
+      if (u.react_like) reactSummaryList.push('👍 ' + u.react_like);
+      if (u.react_love) reactSummaryList.push('❤️ ' + u.react_love);
+      if (u.react_haha) reactSummaryList.push('😆 ' + u.react_haha);
+      if (u.react_wow) reactSummaryList.push('😮 ' + u.react_wow);
+      if (u.react_sad) reactSummaryList.push('😢 ' + u.react_sad);
+      if (u.react_angry) reactSummaryList.push('😡 ' + u.react_angry);
+      var reactSummaryText = reactSummaryList.length > 0 ? ' &nbsp;|&nbsp; Reactions: ' + reactSummaryList.join(' ') : ' &nbsp;|&nbsp; Reactions: None';
+
       return '<div class="ucard" id="upd-card-'+u.id+'">'+
         '<div class="card-actions">'+
           '<button class="btn-edit" onclick="handleEdit(this)">Edit</button>'+
@@ -1249,7 +1313,7 @@ async function loadUpdates(){
         (cleanText?'<div class="utxt" style="margin-top:4px;">'+sanitize(cleanText)+'</div>':'')+
         giveawayPreview +
         (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:600;">Button: '+esc(u.btn_label)+' &rarr; <span style="font-weight:400;color:var(--sub);">'+esc(u.btn_url)+'</span></div>':'')+
-        '<div style="font-size:11px;color:var(--sub);margin-top:6px;">📊 '+ (u.views||0) +' view logs</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">📊 '+ (u.views||0) +' view logs' + reactSummaryText + '</div>'+
       '</div>';
     }).join('');
     
