@@ -455,13 +455,16 @@ CREATE TABLE IF NOT EXISTS updates (
     react_angry INT NOT NULL DEFAULT 0
 );
 
--- NOTE: If your updates table already exists, please run these commands in your SQL Editor to add reaction columns:
--- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_like INT NOT NULL DEFAULT 0;
--- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_love INT NOT NULL DEFAULT 0;
--- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_haha INT NOT NULL DEFAULT 0;
--- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_wow INT NOT NULL DEFAULT 0;
--- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_sad INT NOT NULL DEFAULT 0;
--- ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_angry INT NOT NULL DEFAULT 0;
+-- Ensure all columns exist even if the updates table was created in an earlier build
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_like INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_love INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_haha INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_wow INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_sad INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_angry INT NOT NULL DEFAULT 0;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_label TEXT;
+ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_url TEXT;
 
 ALTER TABLE updates DISABLE ROW LEVEL SECURITY;
 
@@ -483,7 +486,7 @@ CREATE OR REPLACE FUNCTION increment_view_count(update_id BIGINT)
 RETURNS VOID AS $$
 BEGIN
   UPDATE updates
-  SET views = views + 1
+  SET views = COALESCE(views, 0) + 1
   WHERE id = update_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -493,17 +496,17 @@ CREATE OR REPLACE FUNCTION react_to_post(update_id BIGINT, reaction TEXT, val IN
 RETURNS VOID AS $$
 BEGIN
   IF reaction = 'like' THEN
-    UPDATE updates SET react_like = GREATEST(0, react_like + val) WHERE id = update_id;
+    UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id = update_id;
   ELSIF reaction = 'love' THEN
-    UPDATE updates SET react_love = GREATEST(0, react_love + val) WHERE id = update_id;
+    UPDATE updates SET react_love = GREATEST(0, COALESCE(react_love, 0) + val) WHERE id = update_id;
   ELSIF reaction = 'haha' THEN
-    UPDATE updates SET react_haha = GREATEST(0, react_haha + val) WHERE id = update_id;
+    UPDATE updates SET react_haha = GREATEST(0, COALESCE(react_haha, 0) + val) WHERE id = update_id;
   ELSIF reaction = 'wow' THEN
-    UPDATE updates SET react_wow = GREATEST(0, react_wow + val) WHERE id = update_id;
+    UPDATE updates SET react_wow = GREATEST(0, COALESCE(react_wow, 0) + val) WHERE id = update_id;
   ELSIF reaction = 'sad' THEN
-    UPDATE updates SET react_sad = GREATEST(0, react_sad + val) WHERE id = update_id;
+    UPDATE updates SET react_sad = GREATEST(0, COALESCE(react_sad, 0) + val) WHERE id = update_id;
   ELSIF reaction = 'angry' THEN
-    UPDATE updates SET react_angry = GREATEST(0, react_angry + val) WHERE id = update_id;
+    UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id = update_id;
   END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -513,12 +516,12 @@ CREATE OR REPLACE FUNCTION adjust_follower(action TEXT)
 RETURNS VOID AS $$
 BEGIN
   IF action = 'follow' THEN
-    UPDATE followers SET count = count + 1 WHERE id = 1;
+    UPDATE followers SET count = COALESCE(count, 0) + 1 WHERE id = 1;
   ELSIF action = 'unfollow' THEN
-    UPDATE followers SET count = GREATEST(0, count - 1) WHERE id = 1;
+    UPDATE followers SET count = GREATEST(0, COALESCE(count, 0) - 1) WHERE id = 1;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;`;,TargetContent:`;
+$$ LANGUAGE plpgsql SECURITY DEFINER;`;
 
 function showSqlGuide() {
   document.getElementById('sql-code').textContent = SQL_SCRIPT_TEMPLATE;
