@@ -2,385 +2,565 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Signature Digital</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signature Digital — Admin</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#0a4a3a 0%,#075E54 30%,#0d7a6a 60%,#1a9b85 100%);min-height:100vh;display:flex;flex-direction:column;background-attachment:fixed;}
+:root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E3E7E9;--inp:#F0F2F5;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#F0F2F5;min-height:100vh;color:var(--txt);display:flex;flex-direction:column;}
 
-/* HEADER */
-#hdr{background:transparent;padding:16px 16px 0;position:sticky;top:0;z-index:100;}
-.hav{width:40px;height:40px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;margin-right:12px;flex-shrink:0;}
-.hname{font-size:16px;font-weight:600;color:#fff;}
-.hsub{font-size:12px;color:rgba(255,255,255,.65);}
+/* Login Form */
+#login-box{max-width:360px;width:100%;margin:100px auto auto;background:#fff;border-radius:24px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.05);text-align:center;}
+#login-box h2{font-size:22px;margin-bottom:8px;font-weight:700;}
+#login-box p{font-size:13px;color:var(--sub);margin-bottom:24px;}
+#login-box input{width:100%;padding:14px 18px;background:var(--inp);border:1.5px solid transparent;border-radius:12px;outline:none;font-size:15px;text-align:center;margin-bottom:16px;transition:all .2s;}
+#login-box input:focus{border-color:var(--g);background:#fff;}
+#login-box button{width:100%;padding:14px;background:var(--g);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;}
+#login-box button:hover{background:var(--dg);}
 
-/* UPDATES */
-#main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:16px 12px 24px;}
-.ucard{background:rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:18px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.2);margin-bottom:12px;}
-.umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);}
-.ubadge{background:rgba(37,211,102,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;flex-shrink:0;backdrop-filter:blur(4px);}
-.utime{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto;flex-shrink:0;}
-.utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
-.uimg{width:100%;border-radius:12px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.1);pointer-events:none;user-select:none;}
+/* Dashboard Navigation */
+#admin-wrap{display:none;width:100%;max-width:640px;margin:0 auto;padding:16px 12px 80px;flex:1;flex-direction:column;gap:16px;}
+#ahdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0 12px;border-bottom:1.5px solid var(--bdr);}
+#ahdr h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:6px;}
+#ahdr button{background:transparent;border:none;color:var(--sub);font-size:13px;font-weight:600;cursor:pointer;}
 
-/* Alert Modal */
-#alert-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-#alert-modal.show{display:flex;}
-.alert-box{background:rgba(7,94,84,.7);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:24px 22px 20px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2);position:relative;}
-.alert-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1;transition:background .2s;}
-.alert-close:hover{background:rgba(255,255,255,.25);}
-.alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;white-space:pre-wrap;}
-.alert-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
-.upd-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
-.uviews{display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08);}
-.uviews svg{width:13px;height:13px;fill:rgba(255,255,255,.4);}
-.uviews span{font-size:11px;color:rgba(255,255,255,.4);}
-#no-upd, #loading{text-align:center;padding:40px;color:rgba(255,255,255,.6);font-size:14px;}
+/* Panel Card */
+.pcard{background:#fff;border-radius:20px;padding:18px;border:1.5px solid var(--bdr);box-shadow:0 4px 16px rgba(0,0,0,.02);display:flex;flex-direction:column;gap:12px;}
+.ctitle{font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
 
-/* TOAST & HEADER MISC */
-.hinfo{flex:1;min-width:0;}
-.hfollowers{display:flex;align-items:center;gap:4px;margin-top:3px;}
-.hfollowers svg{width:12px;height:12px;fill:rgba(255,255,255,.7);}
-.hfollowers span{font-size:11px;color:rgba(255,255,255,.65);}
-.hdr-top{display:flex;align-items:center;gap:10px;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);padding:12px 16px;border-radius:24px;border:1px solid rgba(255,255,255,.18);}
-.hdr-pill-bar{padding:8px 16px 0;display:flex;justify-content:center;background:transparent;}
-.hwa-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);padding:10px 22px;border-radius:24px;border:1px solid rgba(255,255,255,.18);}
-.follow-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);backdrop-filter:blur(24px);padding:10px 18px;border-radius:24px;border:1px solid rgba(255,255,255,.18);cursor:pointer;font-size:13px;font-weight:600;color:#fff;}
-.follow-btn.followed{background:rgba(37,211,102,.3);border-color:rgba(37,211,102,.5);}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1.5px solid rgba(255,255,255,.15);box-shadow:0 8px 30px rgba(0,0,0,.5);backdrop-filter:blur(10px);}
+/* Text editor format tools */
+.fmt-bar{display:flex;gap:6px;background:var(--inp);padding:6px;border-radius:10px;}
+.fmt-btn{background:transparent;border:none;width:28px;height:28px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.fmt-btn:hover{background:rgba(0,0,0,.05);}
+
+/* Inputs */
+#post-txt, #edit-txt{min-height:90px;max-height:220px;overflow-y:auto;border:1.5px solid var(--bdr);border-radius:12px;padding:12px;outline:none;font-size:14px;line-height:1.5;background:#fff;}
+#post-txt:empty:before, #edit-txt:empty:before{content:attr(placeholder);color:#a0a0a0;}
+.field-row{display:flex;gap:8px;}
+.field-row input{flex:1;background:var(--inp);border:1.5px solid transparent;border-radius:10px;padding:10px 14px;outline:none;font-size:13px;}
+.field-row input:focus{border-color:var(--g);background:#fff;}
+
+/* Toggle Switch Styling */
+.toggle {position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;}
+.toggle input {opacity:0;width:0;height:0;}
+.slider {position:absolute;cursor:pointer;inset:0;background-color:#ccc;transition:.3s;border-radius:22px;}
+.slider:before {position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background-color:white;transition:.3s;border-radius:50%;}
+input:checked + .slider {background-color:var(--g);}
+input:checked + .slider:before {transform:translateX(16px);}
+
+/* Image select bar */
+#img-sel-bar{display:flex;align-items:center;justify-content:space-between;background:var(--inp);border-radius:12px;padding:8px 12px;margin-top:2px;}
+#img-sel-bar button{background:var(--g);border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+#img-preview img{max-height:140px;border-radius:10px;margin-top:8px;}
+
+/* Action Buttons */
+.btn{background:var(--g);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn:hover{background:var(--dg);}
+.btn-sec{background:var(--inp);color:var(--txt);border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* Feed logs */
+#updlist{display:flex;flex-direction:column;gap:12px;}
+.ucard{background:#fff;border-radius:18px;padding:14px;border:1.5px solid var(--bdr);position:relative;}
+.umeta{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.ubadge{background:var(--inp);color:var(--sub);font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.utime{font-size:11px;color:var(--sub);margin-left:auto;}
+.utxt{font-size:13px;color:var(--txt);line-height:1.5;white-space:pre-wrap;}
+.uimg{width:100%;max-height:220px;object-fit:contain;border-radius:10px;margin-top:8px;background:#f5f5f5;}
+.card-actions{position:absolute;top:10px;right:10px;display:flex;gap:4px;}
+.btn-edit, .btn-del{background:var(--inp);border:none;font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;cursor:pointer;}
+.btn-edit:hover{background:#e2e5e9;color:#2196F3;}
+.btn-del:hover{background:#fee;color:#f44336;}
+
+/* Modals */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:12px;z-index:90;}
+.dialog{background:#fff;border-radius:24px;border:1.5px solid var(--bdr);padding:20px;max-width:440px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,.15);display:flex;flex-direction:column;gap:14px;}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
 #toast.show{opacity:1;}
-
-/* GIVEAWAY DYNAMIC COMPONENT STYLES */
-.giveaway-box {
-  background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(18, 140, 126, 0.1) 100%);
-  border: 1px solid rgba(37, 211, 102, 0.3);
-  border-radius: 14px;
-  padding: 14px;
-  margin-top: 10px;
-  margin-bottom: 6px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-}
-.giveaway-badge {
-  background: rgba(37, 211, 102, 0.18);
-  border: 1px solid rgba(37, 211, 102, 0.4);
-  color: #25D366;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.giveaway-label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 4px;
-  display: block;
-}
-.giveaway-val-container {
-  display: flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 10px 12px;
-  position: relative;
-}
-.giveaway-val {
-  font-family: 'SF Mono', 'JetBrains Mono', 'Courier New', Courier, monospace;
-  font-size: 13px;
-  color: #25D366;
-  font-weight: 600;
-  word-break: break-all;
-  padding-right: 36px;
-  user-select: all;
-  flex: 1;
-  letter-spacing: 0.02em;
-}
-.copy-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #fff;
-  transition: all 0.2s;
-  outline: none;
-}
-.copy-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #25D366;
-}
-.copy-btn.copied {
-  background: #25D366;
-  border-color: #25D366;
-  color: #fff;
-}
 </style>
 </head>
 <body>
 
-<div id="hdr">
-  <div class="hdr-top">
-    <div style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;" onclick="window.open('https://wa.me/94778315058','_blank')">
-      <img class="hav" src="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/public/profile/633438052_122116907661099468_7006831602680973794_n.jpg" alt="Ahmad">
-      <div class="hinfo">
-        <div class="hname">Signature Digital</div>
-        <div class="hsub">Genuine Softwares at Affordable Prices</div>
-        <div class="hfollowers">
-          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-          <span id="follower-count">...</span>
-        </div>
+<div id="login-box">
+  <div style="font-size:36px;margin-bottom:12px;">🛡️</div>
+  <h2>Admin Entry</h2>
+  <p>Please type your security password to gain entry.</p>
+  <input type="password" id="pass-inp" placeholder="Key Password" onkeydown="if(event.key==='Enter') tryLogin()">
+  <button id="login-btn" onclick="tryLogin()">Login</button>
+</div>
+
+<div id="admin-wrap">
+  <div id="ahdr">
+    <h1>👨‍💻 System Admin</h1>
+    <button onclick="logout()">Disconnect</button>
+  </div>
+
+  <!-- Composer Panel -->
+  <div class="pcard">
+    <div class="ctitle">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      <span>Compose Update</span>
+    </div>
+    
+    <div class="fmt-bar">
+      <button class="fmt-btn" onclick="fmt('bold')"><b>B</b></button>
+      <button class="fmt-btn" onclick="fmt('italic')"><i>I</i></button>
+      <button class="fmt-btn" onclick="fmt('underline')"><u>U</u></button>
+      <button class="fmt-btn" onclick="fmt('strike')"><s>S</s></button>
+    </div>
+
+    <div id="post-txt" contenteditable="true" placeholder="Tell your audience about the latest software release..."></div>
+
+    <!-- Giveaway Settings UI -->
+    <div class="field-row" style="align-items: center; background: var(--inp); padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--bdr); margin-top: 2px;">
+      <label class="toggle" style="margin-right: 4px;">
+        <input type="checkbox" id="gw-enabled" onchange="toggleGwFields()">
+        <span class="slider"></span>
+      </label>
+      <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Include Copyable Giveaway Box</span>
+    </div>
+    <div class="field-row" id="gw-fields" style="display: none; margin-top: 2px; gap: 8px;">
+      <input type="text" id="gw-label" placeholder="Giveaway name / label (e.g. License Key)">
+      <input type="text" id="gw-value" placeholder="License credentials (MH37W-...)">
+    </div>
+
+    <div class="field-row">
+      <input type="text" id="btn-label" placeholder="Pill button label (optional)">
+      <input type="text" id="btn-url" placeholder="https://external-link.com">
+    </div>
+
+    <div id="img-sel-bar">
+      <span id="img-status" style="font-size:12px;color:var(--sub);font-weight:500;">No photo attached</span>
+      <button onclick="triggerFileSelect()">Add Photo</button>
+      <input type="file" id="file-inp" accept="image/*" style="display:none;" onchange="handleFileChange(this)">
+    </div>
+    
+    <div id="img-preview" style="display:none;position:relative;width:fit-content;">
+      <img id="prev-tag" src="" alt="">
+      <button onclick="clearImg()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;">&#10005;</button>
+    </div>
+
+    <button id="post-btn" class="btn" onclick="postUpdate()">Post Update</button>
+  </div>
+
+  <!-- Global Banner Config -->
+  <div class="pcard">
+    <div class="ctitle">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+      <span>Global Pop-up Broadcast</span>
+    </div>
+    
+    <div class="field-row" style="align-items: center; background: var(--inp); padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--bdr);">
+      <label class="toggle" style="margin-right: 4px;">
+        <input type="checkbox" id="alert-enabled" onchange="toggleAlertFields()">
+        <span class="slider"></span>
+      </label>
+      <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Broadcast active & visible</span>
+    </div>
+
+    <div id="alert-fields" style="display:none;flex-direction:column;gap:10px;">
+      <textarea id="alert-msg" placeholder="Broadcast system message..." style="width:100%;min-height:70px;padding:12px;border:1.5px solid var(--bdr);border-radius:12px;outline:none;font-size:13px;"></textarea>
+      <div class="field-row">
+        <input type="text" id="alert-btn" placeholder="Pill button label (optional)">
+        <input type="text" id="alert-url" placeholder="https://redirect-url.com">
       </div>
     </div>
+
+    <button id="alert-save-btn" class="btn" onclick="saveAlertConfig()">Save Broadcast Config</button>
   </div>
-  <div class="hdr-pill-bar" style="gap:10px;">
-    <a href="https://wa.me/94778315058" target="_blank" class="hwa-btn">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      <div>
-        <div style="font-size:10px;color:rgba(255,255,255,.65);line-height:1;">Active WhatsApp</div>
-        <div style="font-size:14px;font-weight:700;color:#fff;line-height:1.3;">+94 77 831 5058</div>
-      </div>
-    </a>
-    <button class="follow-btn" id="follow-btn" onclick="toggleFollow()">
-      <span class="btn-icon" id="follow-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></span>
-      <span class="btn-txt" id="follow-txt">Follow</span>
-    </button>
+
+  <!-- Announcement Posts List -->
+  <div style="margin-top:8px;">
+    <h3 style="font-size:14px;color:var(--sub);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;font-weight:700;">Sent Updates Timeline</h3>
+    <div id="updlist"></div>
   </div>
 </div>
 
-<div id="main">
-  <div id="loading">Loading updates...</div>
-  <div id="updlist"></div>
-  <div id="no-upd" style="display:none;">No updates yet. Check back soon!</div>
-</div>
+<!-- Edit Overlay Dialog -->
+<div id="edit-modal" class="overlay">
+  <div class="dialog">
+    <h3 style="font-size:15px;font-weight:700;">Edit Announcement Details</h3>
+    
+    <div class="fmt-bar">
+      <button class="fmt-btn" onclick="fmt('bold')"><b>B</b></button>
+      <button class="fmt-btn" onclick="fmt('italic')"><i>I</i></button>
+      <button class="fmt-btn" onclick="fmt('underline')"><u>U</u></button>
+      <button class="fmt-btn" onclick="fmt('strike')"><s>S</s></button>
+    </div>
 
-<div id="alert-modal">
-  <div class="alert-box">
-    <button class="alert-close" onclick="closeAlert()">&#10005;</button>
-    <div class="alert-msg" id="alert-msg"></div>
-    <div id="alert-btn-wrap" style="display:none;">
-      <a class="alert-btn" id="alert-btn-link" href="#" target="_blank"></a>
+    <div id="edit-txt" contenteditable="true" placeholder="Update description details..."></div>
+
+    <!-- Edit mode Giveaway configure options -->
+    <div class="field-row" style="align-items: center; background: var(--inp); padding: 8px 12px; border-radius: 12px; border: 1.5px solid var(--bdr);">
+      <label class="toggle" style="margin-right: 4px;">
+        <input type="checkbox" id="edit-gw-enabled" onchange="toggleEditGwFields()">
+        <span class="slider"></span>
+      </label>
+      <span style="font-size: 13px; font-weight: 600; color: var(--sub); flex: 1;">Include Copyable Giveaway Box</span>
+    </div>
+    <div class="field-row" id="edit-gw-fields" style="display: none; gap: 8px;">
+      <input type="text" id="edit-gw-label" placeholder="Giveaway name / label (e.g. License Key)">
+      <input type="text" id="edit-gw-value" placeholder="License credentials (MH37W-...)">
+    </div>
+
+    <div class="field-row">
+      <input type="text" id="edit-btn-label" placeholder="Button title">
+      <input type="text" id="edit-btn-url" placeholder="Target URL redirect font">
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn" style="flex:2;" onclick="saveEdit()">Apply Changes</button>
+      <button class="btn-sec" style="flex:1;" onclick="closeEdit()">Cancel</button>
     </div>
   </div>
 </div>
+
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
 const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
 const sb = supabase.createClient(SB_URL, SB_KEY);
+
+var imgFile = null;
+var editingId = null;
 
 function sanitize(t){
   if(!t) return '';
   var formatted = t.replace(/\n/g, '<br>');
   return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span', 'div', 'p'] });
 }
-
 function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function fmtTime(d){
-  var now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  var yest=new Date(today-86400000), md=new Date(d.getFullYear(),d.getMonth(),d.getDate());
-  var t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  if(md.getTime()===today.getTime()) return t;
-  if(md.getTime()===yest.getTime()) return 'Yesterday '+t;
-  return d.toLocaleDateString()+' '+t;
-}
-
-async function loadAlert(){
-  try{
-    var r=await sb.from('site_config').select('value').eq('key','alert').single();
-    if(!r.data) return;
-    var cfg=JSON.parse(r.data.value);
-    if(!cfg.enabled||!cfg.message) return;
-    if(sessionStorage.getItem('alert_seen')) return;
-    document.getElementById('alert-msg').textContent=cfg.message;
-    var bw=document.getElementById('alert-btn-wrap');
-    var bl=document.getElementById('alert-btn-link');
-    if(cfg.btn_label&&cfg.btn_url){
-      bl.textContent=cfg.btn_label;
-      bl.href=cfg.btn_url;
-      bw.style.display='';
-    }
-    document.getElementById('alert-modal').classList.add('show');
-  }catch(e){}
-}
-function closeAlert(){
-  document.getElementById('alert-modal').classList.remove('show');
-  sessionStorage.setItem('alert_seen','1');
-}
-
-function fmtCount(n){
-  if(n>=1000000) return (n/1000000).toFixed(1).replace('.0','')+'M';
-  if(n>=1000) return (n/1000).toFixed(1).replace('.0','')+'k';
-  return String(n);
-}
-
-async function trackFollower(){
-  var el=document.getElementById('follower-count');
-  try{
-    var r=await sb.from('followers').select('count').eq('id',1).single();
-    var current=r.data&&r.data.count?r.data.count:0;
-    if(el) el.textContent=fmtCount(current)+' followers';
-  }catch(e){ if(el) el.textContent='0 followers'; }
-  
-  var isFollowing=localStorage.getItem('sgd_follow')==='1';
-  setFollowedUI(isFollowing);
-}
-
-function setFollowedUI(followed){
-  var btn=document.getElementById('follow-btn');
-  var icon=document.getElementById('follow-icon');
-  var txt=document.getElementById('follow-txt');
-  if(!btn) return;
-  if(followed){
-    btn.classList.add('followed');
-    txt.textContent='Following';
-    icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-  } else {
-    btn.classList.remove('followed');
-    txt.textContent='Follow';
-    icon.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>';
-  }
-}
-
-async function toggleFollow(){
-  var isFollowing=localStorage.getItem('sgd_follow')==='1';
-  var action=isFollowing?'unfollow':'follow';
-  
-  try {
-    await sb.rpc('adjust_follower', { action: action });
-    
-    if(action==='follow'){
-      localStorage.setItem('sgd_follow','1');
-      setFollowedUI(true);
-    } else {
-      localStorage.removeItem('sgd_follow');
-      setFollowedUI(false);
-    }
-    trackFollower(); 
-  } catch(e) {}
-}
 
 function showToast(msg) {
   var t = document.getElementById('toast');
-  if(!t) return;
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-function copyGiveaway(uid) {
-  var el = document.getElementById('gw-val-' + uid);
-  var btn = document.getElementById('gw-btn-' + uid);
-  if (!el || !btn) return;
+function fmt(cmd) {
+  document.execCommand(cmd, false, null);
+  document.getElementById('post-txt').focus();
+}
+
+async function tryLogin(){
+  var p = document.getElementById('pass-inp').value;
+  var btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  try {
+    var r = await sb.from('site_config').select('value').eq('key','pwd').single();
+    if(r.data && r.data.value === p){
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('admin-wrap').style.display = 'flex';
+      sessionStorage.setItem('sgd_auth', '1');
+      loadUpdates();
+      loadAlertConfig();
+    } else {
+      showToast('Incorrect passcode authorization!');
+    }
+  } catch(e){
+    showToast('Network error verifying credentials');
+  }
+  btn.disabled = false;
+}
+
+function logout(){
+  sessionStorage.removeItem('sgd_auth');
+  window.location.reload();
+}
+
+if(sessionStorage.getItem('sgd_auth') === '1'){
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('admin-wrap').style.display = 'flex';
+  loadUpdates();
+  loadAlertConfig();
+}
+
+function triggerFileSelect(){
+  document.getElementById('file-inp').click();
+}
+
+function handleFileChange(inp){
+  if(inp.files && inp.files[0]){
+    imgFile = inp.files[0];
+    document.getElementById('img-status').textContent = 'Attached: ' + imgFile.name.substring(0,20);
+    var reader = new FileReader();
+    reader.onload = function(e){
+      document.getElementById('prev-tag').src = e.target.result;
+      document.getElementById('img-preview').style.display = 'block';
+    }
+    reader.readAsDataURL(imgFile);
+  }
+}
+
+function clearImg(){
+  imgFile = null;
+  document.getElementById('file-inp').value = '';
+  document.getElementById('img-status').textContent = 'No photo attached';
+  document.getElementById('img-preview').style.display = 'none';
+  document.getElementById('prev-tag').src = '';
+}
+
+function toggleGwFields() {
+  var active = document.getElementById('gw-enabled').checked;
+  document.getElementById('gw-fields').style.display = active ? 'flex' : 'none';
+}
+
+function toggleEditGwFields() {
+  var active = document.getElementById('edit-gw-enabled').checked;
+  document.getElementById('edit-gw-fields').style.display = active ? 'flex' : 'none';
+}
+
+function toggleAlertFields() {
+  var active = document.getElementById('alert-enabled').checked;
+  document.getElementById('alert-fields').style.display = active ? 'flex' : 'none';
+}
+
+async function uploadImg(file){
+  var ext = file.name.split('.').pop();
+  var name = Date.now() + '_' + Math.random().toString(36).substring(2,8) + '.' + ext;
+  var path = 'uploads/' + name;
+  var r = await sb.storage.from('profile').upload(path, file);
+  if(r.error) throw r.error;
+  return SB_URL + '/storage/v1/object/public/profile/' + path;
+}
+
+async function postUpdate() {
+  var txt = document.getElementById('post-txt').innerHTML.trim();
+  var btnLabel = document.getElementById('btn-label').value.trim();
+  var btnUrl = document.getElementById('btn-url').value.trim();
   
-  var keyText = el.textContent || el.innerText;
-  navigator.clipboard.writeText(keyText).then(function() {
-    btn.classList.add('copied');
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-    showToast('Copied to clipboard!');
-    setTimeout(function() {
-      btn.classList.remove('copied');
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-    }, 2000);
-  }).catch(function() {
-    // fallback view copy notice
-    alert("Key: " + keyText);
-  });
+  // Giveaway values
+  var gwActive = document.getElementById('gw-enabled').checked;
+  var gwLabel = document.getElementById('gw-label').value.trim();
+  var gwValue = document.getElementById('gw-value').value.trim();
+  
+  if (gwActive && !gwValue) {
+    return showToast('Giveaway credentials are required!');
+  }
+  
+  if (gwActive) {
+    var metadata = {
+      label: gwLabel || 'Credentials',
+      value: gwValue
+    };
+    txt = txt + '<!--GIVEAWAY_JSON:' + JSON.stringify(metadata) + '-->';
+  }
+
+  var imgUrl = null;
+  if (!txt && !imgFile) return showToast('Please enter text content first!');
+  
+  var btn = document.getElementById('post-btn');
+  btn.disabled = true; btn.textContent = 'Publishing...';
+  try {
+    if (imgFile) { 
+      imgUrl = await uploadImg(imgFile); 
+      clearImg(); 
+    }
+    var r = await sb.from('updates').insert({text:txt||'', image_url:imgUrl, views:0, btn_label:btnLabel||null, btn_url:btnUrl||null});
+    if (r.error) throw r.error;
+    document.getElementById('post-txt').innerHTML = '';
+    document.getElementById('btn-label').value = '';
+    document.getElementById('btn-url').value = '';
+    
+    // reset giveaways
+    document.getElementById('gw-enabled').checked = false;
+    document.getElementById('gw-label').value = '';
+    document.getElementById('gw-value').value = '';
+    toggleGwFields();
+    
+    showToast('Announcement published successfully.');
+    loadUpdates();
+  } catch(e) { 
+    showToast('Failed to post announcement.'); 
+  }
+  btn.disabled = false; btn.textContent = 'Post Update';
+}
+
+async function loadAlertConfig() {
+  try {
+    var r = await sb.from('site_config').select('value').eq('key','alert').single();
+    if(r.data){
+      var cfg = JSON.parse(r.data.value);
+      document.getElementById('alert-enabled').checked = !!cfg.enabled;
+      document.getElementById('alert-msg').value = cfg.message || '';
+      document.getElementById('alert-btn').value = cfg.btn_label || '';
+      document.getElementById('alert-url').value = cfg.btn_url || '';
+      toggleAlertFields();
+    }
+  } catch(e){}
+}
+
+async function saveAlertConfig() {
+  var active = document.getElementById('alert-enabled').checked;
+  var msg = document.getElementById('alert-msg').value.trim();
+  var btnLabel = document.getElementById('alert-btn').value.trim();
+  var btnUrl = document.getElementById('alert-url').value.trim();
+  
+  var payload = {
+    enabled: active,
+    message: msg,
+    btn_label: btnLabel,
+    btn_url: btnUrl
+  };
+  
+  var saveBtn = document.getElementById('alert-save-btn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
+  try {
+    var r = await sb.from('site_config').update({ value: JSON.stringify(payload) }).eq('key', 'alert');
+    if(r.error) throw r.error;
+    showToast('Broadcast settings updated!');
+  } catch(e){
+    showToast('Failed to save broadcast config.');
+  }
+  saveBtn.disabled = false; saveBtn.textContent = 'Save Broadcast Config';
+}
+
+function openEdit(id, txt, btnLabel, btnUrl) {
+  editingId = id;
+  var cleanText = txt || '';
+  var gwLabel = '';
+  var gwValue = '';
+  var gwActive = false;
+  
+  // Parse giveaway signature
+  var match = cleanText.match(/<!--GIVEAWAY_JSON:(.*?)-->/);
+  if(match && match[1]){
+    try {
+      var gw = JSON.parse(match[1]);
+      gwLabel = gw.label || '';
+      gwValue = gw.value || '';
+      gwActive = true;
+      cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
+    } catch(e){}
+  }
+
+  document.getElementById('edit-txt').innerHTML = cleanText;
+  document.getElementById('edit-btn-label').value = btnLabel;
+  document.getElementById('edit-btn-url').value = btnUrl;
+  
+  document.getElementById('edit-gw-enabled').checked = gwActive;
+  document.getElementById('edit-gw-label').value = gwLabel;
+  document.getElementById('edit-gw-value').value = gwValue;
+  toggleEditGwFields();
+
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeEdit(){
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId = null;
+}
+
+async function saveEdit(){
+  var txt = document.getElementById('edit-txt').innerHTML.trim();
+  var btnLabel = document.getElementById('edit-btn-label').value.trim();
+  var btnUrl = document.getElementById('edit-btn-url').value.trim();
+  
+  // Clean prior configurations
+  txt = txt.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
+  
+  var gwActive = document.getElementById('edit-gw-enabled').checked;
+  var gwLabel = document.getElementById('edit-gw-label').value.trim();
+  var gwValue = document.getElementById('edit-gw-value').value.trim();
+  
+  if (gwActive && !gwValue) {
+    return showToast('Giveaway credentials value is required!');
+  }
+  
+  if (gwActive) {
+    var metadata = {
+      label: gwLabel || 'Credentials',
+      value: gwValue
+    };
+    txt = txt + '<!--GIVEAWAY_JSON:' + JSON.stringify(metadata) + '-->';
+  }
+
+  try {
+    var r = await sb.from('updates').update({
+      text: txt,
+      btn_label: btnLabel || null,
+      btn_url: btnUrl || null
+    }).eq('id', editingId);
+    if(r.error) throw r.error;
+    closeEdit();
+    showToast('Saved changes!');
+    loadUpdates();
+  } catch(e){
+    showToast('Error saving changes.');
+  }
+}
+
+function handleEdit(btn) {
+  var card = btn.closest('.ucard');
+  var post = card._data;
+  openEdit(post.id, post.text||'', post.btn_label||'', post.btn_url||'');
+}
+
+async function deleteUpdate(uid){
+  if(!confirm('Are you absolute sure you want to delete this post?')) return;
+  try {
+    var r = await sb.from('updates').delete().eq('id', uid);
+    if(r.error) throw r.error;
+    showToast('Announcement deleted!');
+    loadUpdates();
+  } catch(e){
+    showToast('Failed to delete post.');
+  }
+}
+
+function fmtTime(d){
+  try{
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }catch(e){ return ''; }
 }
 
 async function loadUpdates(){
-  try{
-    var r = await sb.from('updates').select('*').order('created_at',{ascending:false}).limit(50);
-    document.getElementById('loading').style.display='none';
-    var list=document.getElementById('updlist'), none=document.getElementById('no-upd');
-    if(!r.data||!r.data.length){ none.style.display=''; return; }
-    none.style.display='none';
-    
+  var list = document.getElementById('updlist');
+  try {
+    var r = await sb.from('updates').select('*').order('created_at', {ascending:false});
+    if(r.error) throw r.error;
     list.innerHTML = r.data.map(function(u){
       var cleanText = u.text || '';
-      var giveawayHtml = '';
+      var giveawayPreview = '';
       
-      // Look for XML comment signature
       var match = cleanText.match(/<!--GIVEAWAY_JSON:(.*?)-->/);
-      if (match && match[1]) {
+      if(match && match[1]){
         try {
           var gw = JSON.parse(match[1]);
-          if (gw && gw.value) {
-            giveawayHtml = '<div class="giveaway-box">' +
-              '<div class="giveaway-badge">🎁 Giveaway</div>' +
-              (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
-              '<div class="giveaway-val-container">' +
-                '<span class="giveaway-val" id="gw-val-' + u.id + '">' + esc(gw.value) + '</span>' +
-                '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Credentials">' +
-                  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                '</button>' +
-              '</div>' +
-            '</div>';
+          if(gw && gw.value){
+            giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;align-items:center;gap:4px;">🎁 Giveaway: ' + esc(gw.label || 'Credentials') + ' &rarr; <code style="background:var(--inp);padding:2px 6px;border-radius:4px;color:var(--txt);font-weight:600;">' + esc(gw.value) + '</code></div>';
           }
-        } catch(e) {}
-        // strip comment out from text
+        } catch(e){}
         cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
       }
 
-      return '<div class="ucard">'+
-        '<div class="umeta">'+
-          '<span class="ubadge">UPDATE</span>'+
-          '<span class="utime">'+fmtTime(new Date(u.created_at))+'</span>'+
+      return '<div class="ucard" id="upd-card-'+u.id+'">'+
+        '<div class="card-actions">'+
+          '<button class="btn-edit" onclick="handleEdit(this)">Edit</button>'+
+          '<button class="btn-del" onclick="deleteUpdate(\''+u.id+'\')">Delete</button>'+
         '</div>'+
-        (u.image_url?'<img class="uimg" src="'+u.image_url+'" alt="">':'')+
-        (cleanText?'<div class="utxt">'+sanitize(cleanText)+'</div>':'')+
-        giveawayHtml +
-        (u.btn_label&&u.btn_url?'<a href="'+(u.btn_url.startsWith('http')?u.btn_url:'https://'+u.btn_url)+'" target="_blank" class="upd-btn">'+esc(u.btn_label)+'</a>':'')+
-        '<div class="uviews">'+
-          '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'+
-          '<span id="vc-'+u.id+'">'+(u.views||0)+'</span>'+
-        '</div>'+
+        '<div class="umeta"><span class="ubadge">UPDATE</span><span class="utime">'+fmtTime(new Date(u.created_at))+'</span></div>'+
+        (u.image_url?'<img class="uimg" src="'+u.image_url+'">':'')+
+        (cleanText?'<div class="utxt" style="margin-top:4px;">'+sanitize(cleanText)+'</div>':'')+
+        giveawayPreview +
+        (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:600;">Button: '+esc(u.btn_label)+' &rarr; <span style="font-weight:400;color:var(--sub);">'+esc(u.btn_url)+'</span></div>':'')+
+        '<div style="font-size:11px;color:var(--sub);margin-top:6px;">📊 '+ (u.views||0) +' view logs</div>'+
       '</div>';
     }).join('');
     
-    r.data.forEach(function(u){ trackView(u.id); });
-  }catch(e){ document.getElementById('loading').textContent='Failed to load updates.'; }
+    // Store original database structures on DOM nodes for easy editing parsing
+    r.data.forEach(function(u){
+      var el = document.getElementById('upd-card-'+u.id);
+      if(el) el._data = u;
+    });
+  } catch(e){
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub);">Error loading entries</div>';
+  }
 }
-
-async function trackView(uid){
-  var k='v_'+uid;
-  if(localStorage.getItem(k)) return;
-  localStorage.setItem(k,'1');
-  try{
-    await sb.rpc('increment_view_count', { update_id: uid });
-    var el=document.getElementById('vc-'+uid); 
-    if(el) el.textContent = parseInt(el.textContent) + 1;
-  }catch(e){}
-}
-
-loadUpdates();
-loadAlert();
-trackFollower();
 </script>
 </body>
 </html>
