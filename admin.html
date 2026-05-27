@@ -625,7 +625,18 @@ BEGIN
     UPDATE followers SET count = GREATEST(0, COALESCE(count, 0) - 1) WHERE id = 1;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;`;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant explicit execute permissions on all functions to active service client/anonymous/authenticated API users!
+GRANT EXECUTE ON FUNCTION verify_admin(TEXT, TEXT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_create_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_edit_update(TEXT, TEXT, BIGINT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_delete_update(TEXT, TEXT, BIGINT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_save_alert(TEXT, TEXT, TEXT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_update_credentials(TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION react_to_post(BIGINT, TEXT, INT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION increment_view_count(BIGINT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION adjust_follower(TEXT) TO anon, authenticated, public;`;
 
 function showSqlGuide() {
   document.getElementById('sql-code').textContent = SQL_SCRIPT_TEMPLATE;
@@ -683,7 +694,7 @@ async function tryLogin(){
     
     if (r.error) {
       console.warn('Database configuration issue:', r.error);
-      showToast('Database connection issue! Run setup SQL in Supabase.');
+      showToast('Database connection issue: ' + (r.error.message || JSON.stringify(r.error)) + '. Run setup SQL in Supabase.');
     } else {
       if (r.data === true) {
         sessionStorage.setItem('sgd_user', u);
@@ -1433,7 +1444,10 @@ async function loadUpdates(){
         (cleanText?'<div class="utxt" style="margin-top:4px;">'+sanitize(cleanText)+'</div>':'')+
         giveawayPreview +
         (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:600;">Button: '+esc(u.btn_label)+' &rarr; <span style="font-weight:400;color:var(--sub);">'+esc(u.btn_url)+'</span></div>':'')+
-        '<div style="font-size:11px;color:var(--sub);margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' + reactSummaryText + '</div>'+
+        '<div style="font-size:11px;color:var(--sub);margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' + 
+          reactSummaryText + 
+          (giveawayPreview ? ' &nbsp;|&nbsp; <span style="font-size:12.5px;">Account not working? <a href="https://wa.me/94778315058" target="_blank" style="text-decoration:underline;color:var(--dg);font-weight:600;">Report Admin now.</a></span>' : '') +
+        '</div>'+
       '</div>';
     }).join('');
     
