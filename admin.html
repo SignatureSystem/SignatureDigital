@@ -308,7 +308,7 @@ input:checked + .slider:before {transform:translateX(16px);}
 
 <!-- Edit Overlay Dialog -->
 <div id="edit-modal" class="overlay">
-  <div class="dialog">
+  <div class="dialog" style="max-height: 95vh; overflow-y: auto; max-width: 480px;">
     <h3 style="font-size:15px;font-weight:700;">Edit Announcement Details</h3>
     
     <div class="fmt-bar">
@@ -381,6 +381,77 @@ input:checked + .slider:before {transform:translateX(16px);}
       <span style="font-size:16px;">📄</span>
       <span id="edit-doc-prev-name" style="font-size:12px;color:var(--txt);font-weight:600;">file.txt</span>
       <button onclick="clearEditDoc(); return false;" style="background:none;color:#ff5252;border:none;cursor:pointer;font-size:14px;font-weight:bold;margin-left:8px;">&#10005;</button>
+    </div>
+
+    <!-- Real-time Live Preview Pane inside Edit Modal -->
+    <div style="margin-top: 10px; border-top: 1.5px dashed var(--bdr); padding-top: 10px; margin-bottom: 4px;">
+      <div class="ctitle" style="margin-bottom: 8px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+        <span>Live Edit View Preview</span>
+      </div>
+      
+      <!-- Gradient viewport reproducing index.html style -->
+      <div id="edit-preview-viewport" style="background: linear-gradient(135deg, #0a4a3a 0%, #075E54 30%, #0d7a6a 60%, #1a9b85 100%); border-radius: 18px; padding: 14px; color: #fff;">
+        <div id="edit-preview-ucard" style="background: rgba(255,255,255,.12); backdrop-filter: blur(24px); border-radius: 18px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.2); box-shadow: 0 8px 32px rgba(0,0,0,.2);">
+          
+          <!-- Header meta info -->
+          <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 9px; padding-bottom: 9px; border-bottom: 1px solid rgba(255,255,255,.1);">
+            <span style="background: rgba(37,211,102,.8); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9px; text-transform: uppercase;">UPDATE</span>
+            <span style="font-size: 11px; color: rgba(255,255,255,.5); margin-left: auto;">Just now</span>
+          </div>
+          
+          <!-- Image preview inside edit preview -->
+          <img id="edit-preview-img" src="" alt="" style="display: none; width: 100%; border-radius: 12px; margin-bottom: 10px; max-height: 240px; object-fit: contain; background: rgba(0,0,0,.15); border: 1px solid rgba(255,255,255,.1); pointer-events: none; user-select: none;">
+          
+          <!-- Text content edit preview -->
+          <div id="edit-preview-text" style="font-size: 14px; color: rgba(255,255,255,.95); line-height: 1.55; white-space: pre-wrap; word-wrap: break-word;"></div>
+          
+          <!-- Giveaway box edit preview -->
+          <div id="edit-preview-giveaway" style="display: none; background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(18, 140, 126, 0.1) 100%); border: 1px solid rgba(37, 211, 102, 0.3); border-radius: 14px; padding: 14px; margin-top: 10px; margin-bottom: 6px; position: relative;">
+            <div style="background: rgba(37, 211, 102, 0.18); border: 1px solid rgba(37, 211, 102, 0.4); color: #25D366; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; width: fit-content;">🎁 Giveaway</div>
+            <span id="edit-preview-gw-label" style="font-size: 11px; color: rgba(255, 255, 255, 0.6); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; display: block;"></span>
+            
+            <div id="edit-preview-gw-key-title" style="display: none; font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;">LICENSE KEY / CODE</div>
+            <div id="edit-preview-gw-single-container" style="display: none; align-items: center; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 10px 12px; position: relative;">
+              <span id="edit-preview-gw-value" style="font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; color: #25D366; font-weight: 600; word-break: break-all; flex: 1; text-align: left;"></span>
+              <button style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #fff;" onclick="return false;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
+
+            <div id="edit-preview-gw-account-container" style="display: none; flex-direction: column; gap: 8px;">
+              <div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-top: 4px;">EMAIL / USERNAME</div>
+              <div style="display: flex; align-items: center; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 10px 12px; position: relative;">
+                <span id="edit-preview-gw-email" style="font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; color: #25D366; font-weight: 600; word-break: break-all; flex: 1; text-align: left;"></span>
+                <button style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #fff;" onclick="return false;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+              <div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase;">PASSWORD</div>
+              <div style="display: flex; align-items: center; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 10px 12px; position: relative;">
+                <span id="edit-preview-gw-password" style="font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; color: #25D366; font-weight: 600; word-break: break-all; flex: 1; text-align: left;"></span>
+                <button style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #fff;" onclick="return false;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Download file attachment edit preview -->
+          <div id="edit-preview-file-attachment" style="display: none; margin-top: 10px; margin-bottom: 2px;">
+            <button style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#ffffff;border:none;border-radius:18px;padding:6px 16px;font-size:12px;font-weight:700;height:32px;pointer-events:none;outline:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span id="edit-preview-file-name">Download Attachment</span>
+            </button>
+          </div>
+          
+          <!-- Custom pill CTA button edit preview -->
+          <div id="edit-preview-cta-wrap" style="display: none; margin-top: 10px; text-align: left;">
+            <div id="edit-preview-cta-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 10px 22px; background: rgba(37, 211, 102, .3); backdrop-filter: blur(24px); border: 1px solid rgba(37, 211, 102, .5); border-radius: 24px; color: #fff; font-size: 13px; font-weight: 600;">Button Label</div>
+          </div>
+          
+        </div>
+      </div>
     </div>
 
     <div style="display:flex;gap:8px;margin-top:8px;">
@@ -723,8 +794,28 @@ function showToast(msg) {
 
 function fmt(cmd) {
   document.execCommand(cmd, false, null);
-  document.getElementById('post-txt').focus();
-  updatePostPreview();
+  var editModal = document.getElementById('edit-modal');
+  if (editModal && editModal.style.display === 'flex') {
+    var editTxt = document.getElementById('edit-txt');
+    if (editTxt) editTxt.focus();
+    updateEditPreview();
+  } else {
+    var postTxt = document.getElementById('post-txt');
+    if (postTxt) postTxt.focus();
+    updatePostPreview();
+  }
+}
+
+function handleDbError(err, context) {
+  console.error("Database error in " + context + ":", err);
+  var msg = err.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+  
+  if (msg.indexOf('schema cache') !== -1 || msg.indexOf('Could not find the function') !== -1 || msg.indexOf('best candidate function') !== -1 || msg.indexOf('does not exist') !== -1) {
+    showToast('⚠️ Database schema outdated! Automatically opening setup script guide...');
+    setTimeout(showSqlGuide, 1200);
+  } else {
+    showToast('Failed to ' + context + ': ' + msg);
+  }
 }
 
 async function tryLogin(){
@@ -745,8 +836,7 @@ async function tryLogin(){
     var r = await sb.rpc('verify_admin', { u: u, p: p });
     
     if (r.error) {
-      console.warn('Database configuration issue:', r.error);
-      showToast('Database connection issue: ' + (r.error.message || JSON.stringify(r.error)) + '. Run setup SQL in Supabase.');
+      handleDbError(r.error, 'verify admin');
     } else {
       if (r.data === true) {
         sessionStorage.setItem('sgd_user', u);
@@ -791,7 +881,33 @@ function bindLivePreview() {
   var btnUrl = document.getElementById('btn-url');
   if (btnUrl) btnUrl.addEventListener('input', updatePostPreview);
   
+  var editTxt = document.getElementById('edit-txt');
+  if (editTxt) {
+    editTxt.addEventListener('input', updateEditPreview);
+    editTxt.addEventListener('keyup', updateEditPreview);
+    editTxt.addEventListener('paste', updateEditPreview);
+  }
+  
+  var editGwLabel = document.getElementById('edit-gw-label');
+  if (editGwLabel) editGwLabel.addEventListener('input', updateEditPreview);
+  
+  var editGwValue = document.getElementById('edit-gw-value');
+  if (editGwValue) editGwValue.addEventListener('input', updateEditPreview);
+
+  var editGwEmail = document.getElementById('edit-gw-email');
+  if (editGwEmail) editGwEmail.addEventListener('input', updateEditPreview);
+
+  var editGwPassword = document.getElementById('edit-gw-password');
+  if (editGwPassword) editGwPassword.addEventListener('input', updateEditPreview);
+  
+  var editBtnLbl = document.getElementById('edit-btn-label');
+  if (editBtnLbl) editBtnLbl.addEventListener('input', updateEditPreview);
+
+  var editBtnUrl = document.getElementById('edit-btn-url');
+  if (editBtnUrl) editBtnUrl.addEventListener('input', updateEditPreview);
+
   updatePostPreview(); // render state once
+  updateEditPreview();
 }
 
 function enterAdmin() {
@@ -867,6 +983,7 @@ function handleEditFileChange(inp){
     reader.onload = function(e){
       document.getElementById('edit-prev-tag').src = e.target.result;
       document.getElementById('edit-img-preview').style.display = 'block';
+      updateEditPreview();
     }
     reader.readAsDataURL(editImgFile);
   }
@@ -879,6 +996,7 @@ function clearEditImg(){
   document.getElementById('edit-img-status').textContent = 'No photo attached';
   document.getElementById('edit-img-preview').style.display = 'none';
   document.getElementById('edit-prev-tag').src = '';
+  updateEditPreview();
 }
 
 function triggerDocSelect(){
@@ -914,6 +1032,7 @@ function handleEditDocFileChange(inp){
     document.getElementById('edit-doc-status').textContent = 'Attached file: ' + editDocFile.name.substring(0, 25);
     document.getElementById('edit-doc-prev-name').textContent = editDocFile.name;
     document.getElementById('edit-doc-preview').style.display = 'inline-flex';
+    updateEditPreview();
   }
 }
 
@@ -924,6 +1043,7 @@ function clearEditDoc(){
   document.getElementById('edit-file-doc-inp').value = '';
   document.getElementById('edit-doc-status').textContent = 'No downloadable file attached';
   document.getElementById('edit-doc-preview').style.display = 'none';
+  updateEditPreview();
 }
 
 async function uploadDoc(file){
@@ -1040,6 +1160,118 @@ function updatePostPreview() {
   }
 }
 
+function updateEditPreview() {
+  var rawTxt = document.getElementById('edit-txt').innerHTML;
+  var txtEl = document.getElementById('edit-preview-text');
+  
+  // Format visual empty state
+  var cleanTxt = rawTxt.replace(/<br\s*\/?>/gi, '').trim();
+  if (!cleanTxt || cleanTxt === '') {
+    txtEl.innerHTML = '<span style="color: rgba(255,255,255,0.45); font-style: italic;">(Composition will live render here)</span>';
+  } else {
+    txtEl.innerHTML = sanitize(rawTxt);
+  }
+  
+  // Giveaway elements preview
+  var gwActive = document.getElementById('edit-gw-enabled').checked;
+  var gwBox = document.getElementById('edit-preview-giveaway');
+  var pSingle = document.getElementById('edit-preview-gw-single-container');
+  var pAccount = document.getElementById('edit-preview-gw-account-container');
+  var pKeyTitle = document.getElementById('edit-preview-gw-key-title');
+  
+  if (gwActive) {
+    gwBox.style.display = 'block';
+    var label = document.getElementById('edit-gw-label').value.trim();
+    var typeSelector = document.querySelector('input[name="edit-gw-type"]:checked');
+    var type = typeSelector ? typeSelector.value : 'key';
+    
+    if (type === 'all') {
+      pSingle.style.display = 'flex';
+      pAccount.style.display = 'flex';
+      pKeyTitle.style.display = 'block';
+      
+      var val = document.getElementById('edit-gw-value').value.trim();
+      var email = document.getElementById('edit-gw-email').value.trim();
+      var pass = document.getElementById('edit-gw-password').value.trim();
+      
+      var dispVal = val.length > 32 ? val.substring(0, 32) + '...' : val;
+      var dispEmail = email.length > 32 ? email.substring(0, 32) + '...' : email;
+      var dispPass = pass.length > 32 ? pass.substring(0, 32) + '...' : pass;
+
+      document.getElementById('edit-preview-gw-label').textContent = label ? label : 'Giveaway Pack';
+      document.getElementById('edit-preview-gw-value').textContent = val ? dispVal : '(Key empty)';
+      document.getElementById('edit-preview-gw-email').textContent = email ? dispEmail : 'account@example.com';
+      document.getElementById('edit-preview-gw-password').textContent = pass ? dispPass : '••••••••';
+    } else if (type === 'account') {
+      pSingle.style.display = 'none';
+      pAccount.style.display = 'flex';
+      pKeyTitle.style.display = 'none';
+      
+      var email = document.getElementById('edit-gw-email').value.trim();
+      var pass = document.getElementById('edit-gw-password').value.trim();
+      var dispEmail = email.length > 32 ? email.substring(0, 32) + '...' : email;
+      var dispPass = pass.length > 32 ? pass.substring(0, 32) + '...' : pass;
+
+      document.getElementById('edit-preview-gw-label').textContent = label ? label : 'Account Login';
+      document.getElementById('edit-preview-gw-email').textContent = email ? dispEmail : 'account@example.com';
+      document.getElementById('edit-preview-gw-password').textContent = pass ? dispPass : '••••••••';
+    } else {
+      pSingle.style.display = 'flex';
+      pAccount.style.display = 'none';
+      pKeyTitle.style.display = 'none';
+      
+      var val = document.getElementById('edit-gw-value').value.trim();
+      var dispVal = val.length > 32 ? val.substring(0, 32) + '...' : val;
+
+      document.getElementById('edit-preview-gw-label').textContent = label ? label : 'License Key';
+      document.getElementById('edit-preview-gw-value').textContent = val ? dispVal : 'MH37W-XXXXX-XXXXX';
+    }
+  } else {
+    gwBox.style.display = 'none';
+  }
+  
+  // Action Pill Button elements preview
+  var btnLbl = document.getElementById('edit-btn-label').value.trim();
+  var btnWrap = document.getElementById('edit-preview-cta-wrap');
+  var btnTag = document.getElementById('edit-preview-cta-btn');
+  
+  if (btnLbl) {
+    btnWrap.style.display = 'block';
+    btnTag.textContent = btnLbl;
+  } else {
+    btnWrap.style.display = 'none';
+  }
+  
+  // File download attachment elements preview
+  var filePreviewWrap = document.getElementById('edit-preview-file-attachment');
+  var fileNameSpan = document.getElementById('edit-preview-file-name');
+  if (editDocFile) {
+    filePreviewWrap.style.display = 'block';
+    fileNameSpan.textContent = 'Download ' + editDocFile.name;
+  } else if (editDocUrl) {
+    filePreviewWrap.style.display = 'block';
+    fileNameSpan.textContent = 'Download ' + (editDocName || 'Attachment');
+  } else {
+    filePreviewWrap.style.display = 'none';
+  }
+  
+  // Image preview block
+  var editPrevImg = document.getElementById('edit-preview-img');
+  if (editImgFile) {
+    var reader = new FileReader();
+    reader.onload = function(e){
+      editPrevImg.src = e.target.result;
+      editPrevImg.style.display = 'block';
+    };
+    reader.readAsDataURL(editImgFile);
+  } else if (editImgUrl) {
+    editPrevImg.src = editImgUrl;
+    editPrevImg.style.display = 'block';
+  } else {
+    editPrevImg.style.display = 'none';
+  }
+}
+
 function toggleGwFields() {
   var active = document.getElementById('gw-enabled').checked;
   document.getElementById('gw-fields').style.display = active ? 'flex' : 'none';
@@ -1071,6 +1303,7 @@ function toggleEditGwFields() {
   if (active) {
     toggleEditGwType();
   }
+  updateEditPreview();
 }
 
 function toggleEditGwType() {
@@ -1086,6 +1319,7 @@ function toggleEditGwType() {
     document.getElementById('edit-gw-key-group').style.display = 'flex';
     document.getElementById('edit-gw-account-group').style.display = 'none';
   }
+  updateEditPreview();
 }
 
 function toggleAlertFields() {
@@ -1227,8 +1461,7 @@ async function postUpdate() {
     showToast('Announcement published successfully.');
     loadUpdates();
   } catch(e) { 
-    console.error('Error in postUpdate:', e);
-    showToast('Failed to post announcement: ' + (e.message || e.details || JSON.stringify(e))); 
+    handleDbError(e, 'post announcement'); 
   }
   btn.disabled = false; btn.textContent = 'Post Update';
 }
@@ -1414,6 +1647,7 @@ function openEdit(id, txt, btnLabel, btnUrl, imageUrl) {
   }
   
   toggleEditGwFields();
+  updateEditPreview();
 
   document.getElementById('edit-modal').style.display = 'flex';
 }
@@ -1521,8 +1755,7 @@ async function saveEdit(){
     showToast('Saved changes!');
     loadUpdates();
   } catch(e){
-    console.error('Error saving changes:', e);
-    showToast('Error saving changes: ' + (e.message || JSON.stringify(e)));
+    handleDbError(e, 'save changes');
   } finally {
     if (applyBtn) {
       applyBtn.disabled = false;
@@ -1551,8 +1784,7 @@ async function deleteUpdate(uid){
     showToast('Announcement deleted!');
     loadUpdates();
   } catch(e){
-    console.error('Error deleting updates:', e);
-    showToast('Failed to delete post: ' + (e.message || JSON.stringify(e)));
+    handleDbError(e, 'delete post');
   }
 }
 
