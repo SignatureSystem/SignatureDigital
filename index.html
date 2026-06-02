@@ -767,6 +767,7 @@ function sanitize(t){
 }
 
 function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 function fmtTime(d){
   var now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -865,7 +866,7 @@ function copyTextById(elId, btnId) {
   var btn = document.getElementById(btnId);
   if (!el || !btn) return;
   
-  var keyText = el.textContent || el.innerText;
+  var keyText = el.getAttribute('data-fullval') || el.textContent || el.innerText;
   navigator.clipboard.writeText(keyText).then(function() {
     btn.classList.add('copied');
     btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
@@ -884,7 +885,7 @@ function copyGiveaway(uid) {
   var btn = document.getElementById('gw-btn-' + uid);
   if (!el || !btn) return;
   
-  var keyText = el.textContent || el.innerText;
+  var keyText = el.getAttribute('data-fullval') || el.textContent || el.innerText;
   navigator.clipboard.writeText(keyText).then(function() {
     btn.classList.add('copied');
     btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
@@ -948,27 +949,35 @@ async function loadUpdates(){
         try {
           var gw = JSON.parse(match[1]);
           if (gw) {
+            var fullVal = gw.value || '';
+            var fullEmail = gw.email || '';
+            var fullPass = gw.password || '';
+            
+            var displayVal = fullVal.length > 32 ? fullVal.substring(0, 32) + '...' : fullVal;
+            var displayEmail = fullEmail.length > 32 ? fullEmail.substring(0, 32) + '...' : fullEmail;
+            var displayPass = fullPass.length > 32 ? fullPass.substring(0, 32) + '...' : fullPass;
+
             if (gw.type === 'all' || (gw.value && gw.email && gw.password)) {
               giveawayHtml = '<div class="giveaway-box">' +
                 '<div class="giveaway-badge">🎁 Giveaway Info</div>' +
                 (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
                 '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;">LICENSE KEY / CODE</div>' +
                 '<div class="giveaway-val-container" style="margin-bottom: 8px;">' +
-                  '<span class="giveaway-val" id="gw-val-' + u.id + '">' + esc(gw.value) + '</span>' +
+                  '<span class="giveaway-val" id="gw-val-' + u.id + '" data-fullval="' + escAttr(fullVal) + '">' + esc(displayVal) + '</span>' +
                   '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Key">' +
                     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
                   '</button>' +
                 '</div>' +
                 '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">EMAIL / USERNAME</div>' +
                 '<div class="giveaway-val-container" style="margin-bottom: 8px;">' +
-                  '<span class="giveaway-val" id="gw-email-' + u.id + '">' + esc(gw.email) + '</span>' +
+                  '<span class="giveaway-val" id="gw-email-' + u.id + '" data-fullval="' + escAttr(fullEmail) + '">' + esc(displayEmail) + '</span>' +
                   '<button class="copy-btn" id="gw-email-btn-' + u.id + '" onclick="copyTextById(\'gw-email-' + u.id + '\', \'gw-email-btn-' + u.id + '\')" title="Copy Email">' +
                     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
                   '</button>' +
                 '</div>' +
                 '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">PASSWORD</div>' +
                 '<div class="giveaway-val-container">' +
-                  '<span class="giveaway-val" id="gw-pass-' + u.id + '">' + esc(gw.password) + '</span>' +
+                  '<span class="giveaway-val" id="gw-pass-' + u.id + '" data-fullval="' + escAttr(fullPass) + '">' + esc(displayPass) + '</span>' +
                   '<button class="copy-btn" id="gw-pass-btn-' + u.id + '" onclick="copyTextById(\'gw-pass-' + u.id + '\', \'gw-pass-btn-' + u.id + '\')" title="Copy Password">' +
                     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
                   '</button>' +
@@ -980,14 +989,14 @@ async function loadUpdates(){
                 (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
                 '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;">EMAIL / USERNAME</div>' +
                 '<div class="giveaway-val-container" style="margin-bottom: 8px;">' +
-                  '<span class="giveaway-val" id="gw-email-' + u.id + '">' + esc(gw.email) + '</span>' +
+                  '<span class="giveaway-val" id="gw-email-' + u.id + '" data-fullval="' + escAttr(fullEmail) + '">' + esc(displayEmail) + '</span>' +
                   '<button class="copy-btn" id="gw-email-btn-' + u.id + '" onclick="copyTextById(\'gw-email-' + u.id + '\', \'gw-email-btn-' + u.id + '\')" title="Copy Email">' +
                     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
                   '</button>' +
                 '</div>' +
                 '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">PASSWORD</div>' +
                 '<div class="giveaway-val-container">' +
-                  '<span class="giveaway-val" id="gw-pass-' + u.id + '">' + esc(gw.password) + '</span>' +
+                  '<span class="giveaway-val" id="gw-pass-' + u.id + '" data-fullval="' + escAttr(fullPass) + '">' + esc(displayPass) + '</span>' +
                   '<button class="copy-btn" id="gw-pass-btn-' + u.id + '" onclick="copyTextById(\'gw-pass-' + u.id + '\', \'gw-pass-btn-' + u.id + '\')" title="Copy Password">' +
                     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
                   '</button>' +
@@ -998,7 +1007,7 @@ async function loadUpdates(){
                 '<div class="giveaway-badge">🎁 Giveaway</div>' +
                 (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
                 '<div class="giveaway-val-container">' +
-                  '<span class="giveaway-val" id="gw-val-' + u.id + '">' + esc(gw.value) + '</span>' +
+                  '<span class="giveaway-val" id="gw-val-' + u.id + '" data-fullval="' + escAttr(fullVal) + '">' + esc(displayVal) + '</span>' +
                   '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Credentials">' +
                     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
                   '</button>' +
