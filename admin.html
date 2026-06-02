@@ -171,6 +171,19 @@ input:checked + .slider:before {transform:translateX(16px);}
       <button onclick="clearImg()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;">&#10005;</button>
     </div>
 
+    <!-- Downloadable document attachment option -->
+    <div id="doc-sel-bar" style="display:flex;align-items:center;justify-content:space-between;background:var(--inp);border-radius:12px;padding:8px 12px;margin-top:8px;">
+      <span id="doc-status" style="font-size:12px;color:var(--sub);font-weight:500;">No downloadable file attached</span>
+      <button class="btn-sec" style="padding: 6px 14px; font-size:12px; font-weight:600; cursor:pointer;" onclick="triggerDocSelect(); return false;">Attach File (.txt, .zip, .pdf)</button>
+      <input type="file" id="file-doc-inp" accept=".txt,.pdf,.zip,.rar,.doc,.docx" style="display:none;" onchange="handleDocFileChange(this)">
+    </div>
+    
+    <div id="doc-preview" style="display:none;align-items:center;gap:8px;margin-top:6px;background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 12px;width:fit-content;">
+      <span style="font-size:16px;">📄</span>
+      <span id="doc-prev-name" style="font-size:12px;color:var(--txt);font-weight:600;">file.txt</span>
+      <button onclick="clearDoc(); return false;" style="background:none;color:#ff5252;border:none;cursor:pointer;font-size:14px;font-weight:bold;margin-left:8px;">&#10005;</button>
+    </div>
+
     <!-- Real-time Live Preview Pane -->
     <div style="margin-top: 14px; border-top: 1px dashed var(--bdr); padding-top: 14px; margin-bottom: 14px;">
       <div class="ctitle" style="margin-bottom: 8px;">
@@ -349,7 +362,20 @@ input:checked + .slider:before {transform:translateX(16px);}
       <button onclick="clearEditImg()" style="position:absolute;top:14px;right:10px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;">&#10005;</button>
     </div>
 
-    <div style="display:flex;gap:8px;margin-top:4px;">
+    <!-- Edit downloadable file select bar & preview -->
+    <div id="edit-doc-sel-bar" style="display:flex;align-items:center;justify-content:space-between;background:var(--inp);border-radius:12px;padding:8px 12px;margin-top:8px;">
+      <span id="edit-doc-status" style="font-size:12px;color:var(--sub);font-weight:500;">No downloadable file attached</span>
+      <button class="btn-sec" style="padding: 6px 14px; font-size:12px; font-weight:600; cursor:pointer;" onclick="triggerEditDocSelect(); return false;">Change Attached File</button>
+      <input type="file" id="edit-file-doc-inp" accept=".txt,.pdf,.zip,.rar,.doc,.docx" style="display:none;" onchange="handleEditDocFileChange(this)">
+    </div>
+    
+    <div id="edit-doc-preview" style="display:none;align-items:center;gap:8px;margin-top:6px;background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 12px;width:fit-content;">
+      <span style="font-size:16px;">📄</span>
+      <span id="edit-doc-prev-name" style="font-size:12px;color:var(--txt);font-weight:600;">file.txt</span>
+      <button onclick="clearEditDoc(); return false;" style="background:none;color:#ff5252;border:none;cursor:pointer;font-size:14px;font-weight:bold;margin-left:8px;">&#10005;</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn" style="flex:2;" onclick="saveEdit()">Apply Changes</button>
       <button class="btn-sec" style="flex:1;" onclick="closeEdit()">Cancel</button>
     </div>
@@ -409,6 +435,11 @@ var imgFile = null;
 var editImgFile = null;
 var editImgUrl = null;
 var editingId = null;
+
+var docFile = null;
+var editDocFile = null;
+var editDocUrl = null;
+var editDocName = null;
 
 const SQL_SCRIPT_TEMPLATE = `-- Create site_config table if missing
 CREATE TABLE IF NOT EXISTS site_config (
@@ -519,8 +550,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Drop existing function signatures if they exist to prevent PostgreSQL parameter change errors!
+DROP FUNCTION IF EXISTS secure_edit_update(TEXT, TEXT, BIGINT, TEXT, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS secure_delete_update(TEXT, TEXT, BIGINT);
+DROP FUNCTION IF EXISTS react_to_post(BIGINT, TEXT, INT);
+DROP FUNCTION IF EXISTS increment_view_count(BIGINT);
+
+DROP FUNCTION IF EXISTS secure_edit_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS secure_delete_update(TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS react_to_post(TEXT, TEXT, INT);
+DROP FUNCTION IF EXISTS increment_view_count(TEXT);
+
 -- SECURE MUTATION RPC: Edit an update entry (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_edit_update(u TEXT, p TEXT, uid BIGINT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
+CREATE OR REPLACE FUNCTION secure_edit_update(u TEXT, p TEXT, uid TEXT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
 RETURNS VOID AS $$
 BEGIN
   IF NOT verify_admin(u, p) THEN
@@ -532,19 +574,19 @@ BEGIN
       image_url = t_img_url,
       btn_label = t_btn_label,
       btn_url = t_btn_url
-  WHERE id = uid;
+  WHERE id::text = uid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- SECURE MUTATION RPC: Delete an update (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_delete_update(u TEXT, p TEXT, uid BIGINT)
+CREATE OR REPLACE FUNCTION secure_delete_update(u TEXT, p TEXT, uid TEXT)
 RETURNS VOID AS $$
 BEGIN
   IF NOT verify_admin(u, p) THEN
     RAISE EXCEPTION 'Unauthorized admin credentials!';
   END IF;
   
-  DELETE FROM updates WHERE id = uid;
+  DELETE FROM updates WHERE id::text = uid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -581,7 +623,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Safe reaction counter: uses secure definer to increment to prevent client logic tampering
-CREATE OR REPLACE FUNCTION react_to_post(update_id BIGINT, reaction TEXT, val INT)
+CREATE OR REPLACE FUNCTION react_to_post(update_id TEXT, reaction TEXT, val INT)
 RETURNS VOID AS $$
 BEGIN
   -- Validate input value to prevent people from sending random values (-1000 or +1000000)
@@ -590,28 +632,28 @@ BEGIN
   END IF;
   
   IF reaction = 'like' THEN
-    UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'love' THEN
-    UPDATE updates SET react_love = GREATEST(0, COALESCE(react_love, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_love = GREATEST(0, COALESCE(react_love, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'haha' THEN
-    UPDATE updates SET react_haha = GREATEST(0, COALESCE(react_haha, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_haha = GREATEST(0, COALESCE(react_haha, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'wow' THEN
-    UPDATE updates SET react_wow = GREATEST(0, COALESCE(react_wow, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_wow = GREATEST(0, COALESCE(react_wow, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'sad' THEN
-    UPDATE updates SET react_sad = GREATEST(0, COALESCE(react_sad, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_sad = GREATEST(0, COALESCE(react_sad, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'angry' THEN
-    UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id::text = update_id;
   END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- RPC views increment tool setup
-CREATE OR REPLACE FUNCTION increment_view_count(update_id BIGINT)
+CREATE OR REPLACE FUNCTION increment_view_count(update_id TEXT)
 RETURNS VOID AS $$
 BEGIN
   UPDATE updates
   SET views = COALESCE(views, 0) + 1
-  WHERE id = update_id;
+  WHERE id::text = update_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -630,12 +672,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Grant explicit execute permissions on all functions to active service client/anonymous/authenticated API users!
 GRANT EXECUTE ON FUNCTION verify_admin(TEXT, TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION secure_create_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_edit_update(TEXT, TEXT, BIGINT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_delete_update(TEXT, TEXT, BIGINT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_edit_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_delete_update(TEXT, TEXT, TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION secure_save_alert(TEXT, TEXT, TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION secure_update_credentials(TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION react_to_post(BIGINT, TEXT, INT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION increment_view_count(BIGINT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION react_to_post(TEXT, TEXT, INT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION increment_view_count(TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION adjust_follower(TEXT) TO anon, authenticated, public;`;
 
 function showSqlGuide() {
@@ -827,6 +869,70 @@ function clearEditImg(){
   document.getElementById('edit-img-status').textContent = 'No photo attached';
   document.getElementById('edit-img-preview').style.display = 'none';
   document.getElementById('edit-prev-tag').src = '';
+}
+
+function triggerDocSelect(){
+  document.getElementById('file-doc-inp').click();
+}
+
+function handleDocFileChange(inp){
+  if(inp.files && inp.files[0]){
+    docFile = inp.files[0];
+    document.getElementById('doc-status').textContent = 'Attached file: ' + docFile.name.substring(0,25);
+    document.getElementById('doc-prev-name').textContent = docFile.name;
+    document.getElementById('doc-preview').style.display = 'inline-flex';
+    updatePostPreview();
+  }
+}
+
+function clearDoc(){
+  docFile = null;
+  document.getElementById('file-doc-inp').value = '';
+  document.getElementById('doc-status').textContent = 'No downloadable file attached';
+  document.getElementById('doc-preview').style.display = 'none';
+  updatePostPreview();
+}
+
+function triggerEditDocSelect(){
+  document.getElementById('edit-file-doc-inp').click();
+}
+
+function handleEditDocFileChange(inp){
+  if(inp.files && inp.files[0]){
+    editDocFile = inp.files[0];
+    editDocName = editDocFile.name;
+    document.getElementById('edit-doc-status').textContent = 'Attached file: ' + editDocFile.name.substring(0, 25);
+    document.getElementById('edit-doc-prev-name').textContent = editDocFile.name;
+    document.getElementById('edit-doc-preview').style.display = 'inline-flex';
+  }
+}
+
+function clearEditDoc(){
+  editDocFile = null;
+  editDocUrl = null;
+  editDocName = null;
+  document.getElementById('edit-file-doc-inp').value = '';
+  document.getElementById('edit-doc-status').textContent = 'No downloadable file attached';
+  document.getElementById('edit-doc-preview').style.display = 'none';
+}
+
+async function uploadDoc(file){
+  try {
+    var ext = file.name.split('.').pop();
+    var name = Date.now() + '_' + Math.random().toString(36).substring(2,8) + '.' + ext;
+    var path = 'uploads/' + name;
+    var r = await sb.storage.from('profile').upload(path, file);
+    if(r.error) throw r.error;
+    return SB_URL + '/storage/v1/object/public/profile/' + path;
+  } catch (err) {
+    console.warn('Document storage upload failed: ' + err.message + '. Falling back to Base64 data URL.');
+    try {
+      var base64Data = await getOriginalBase64(file);
+      return base64Data;
+    } catch (base64Err) {
+      throw new Error('File parsing failed: ' + base64Err.message);
+    }
+  }
 }
 
 function updatePostPreview() {
@@ -1045,14 +1151,24 @@ async function postUpdate() {
   }
 
   var imgUrl = null;
-  if (!txt && !imgFile) return showToast('Please enter text content first!');
+  var uploadedDocUrl = null;
+  var uploadedDocName = null;
+  if (!txt && !imgFile && !docFile) return showToast('Please enter text content first!');
   
   var btn = document.getElementById('post-btn');
   btn.disabled = true; btn.textContent = 'Publishing...';
   try {
+    if (docFile) {
+      uploadedDocUrl = await uploadDoc(docFile);
+      uploadedDocName = docFile.name;
+      txt = txt + '<!--FILE_JSON:' + JSON.stringify({ url: uploadedDocUrl, name: uploadedDocName }) + '-->';
+    }
     if (imgFile) { 
       imgUrl = await uploadImg(imgFile); 
       clearImg(); 
+    }
+    if (docFile) {
+      clearDoc();
     }
     var username = sessionStorage.getItem('sgd_user') || 'admin';
     var password = sessionStorage.getItem('sgd_pass') || 'admin';
@@ -1177,7 +1293,23 @@ function openEdit(id, txt, btnLabel, btnUrl, imageUrl) {
   editImgFile = null;
   editImgUrl = imageUrl;
   
+  editDocFile = null;
+  editDocUrl = null;
+  editDocName = null;
+  
   var cleanText = txt || '';
+  
+  // Parse file attachments metadata
+  var fileMatch = cleanText.match(/<!--FILE_JSON:(.*?)-->/);
+  if (fileMatch && fileMatch[1]) {
+    try {
+      var fileObj = JSON.parse(fileMatch[1]);
+      editDocUrl = fileObj.url;
+      editDocName = fileObj.name;
+      cleanText = cleanText.replace(/<!--FILE_JSON:(.*?)-->/g, '');
+    } catch(e) {}
+  }
+  
   var gwLabel = '';
   var gwValue = '';
   var gwEmail = '';
@@ -1211,6 +1343,7 @@ function openEdit(id, txt, btnLabel, btnUrl, imageUrl) {
 
   // Reset file selector input element file list
   document.getElementById('edit-file-inp').value = '';
+  document.getElementById('edit-file-doc-inp').value = '';
 
   // Update edit mode image previews
   if (imageUrl) {
@@ -1221,6 +1354,17 @@ function openEdit(id, txt, btnLabel, btnUrl, imageUrl) {
     document.getElementById('edit-img-status').textContent = 'No photo attached';
     document.getElementById('edit-prev-tag').src = '';
     document.getElementById('edit-img-preview').style.display = 'none';
+  }
+
+  // Update edit mode downloadable document preview
+  if (editDocUrl) {
+    document.getElementById('edit-doc-status').textContent = 'Attached: ' + (editDocName || 'File document').substring(0, 20);
+    document.getElementById('edit-doc-prev-name').textContent = editDocName || 'Attached File';
+    document.getElementById('edit-doc-preview').style.display = 'inline-flex';
+  } else {
+    document.getElementById('edit-doc-status').textContent = 'No downloadable file attached';
+    document.getElementById('edit-doc-prev-name').textContent = '';
+    document.getElementById('edit-doc-preview').style.display = 'none';
   }
 
   document.getElementById('edit-txt').innerHTML = cleanText;
@@ -1257,6 +1401,7 @@ async function saveEdit(){
   
   // Clean prior configurations
   txt = txt.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
+  txt = txt.replace(/<!--FILE_JSON:(.*?)-->/g, '');
   
   var gwActive = document.getElementById('edit-gw-enabled').checked;
   var gwLabel = document.getElementById('edit-gw-label').value.trim();
@@ -1268,11 +1413,8 @@ async function saveEdit(){
     
     if (type === 'all') {
       var val = document.getElementById('edit-gw-value').value.trim();
-      var em = document.getElementById('edit-edit-gw-email') ? document.getElementById('edit-edit-gw-email').value.trim() : document.getElementById('edit-gw-email').value.trim();
-      var pw = document.getElementById('edit-edit-gw-password') ? document.getElementById('edit-edit-gw-password').value.trim() : document.getElementById('edit-gw-password').value.trim();
-      // Wait, let's use the real element IDs: edit-gw-value, edit-gw-email, edit-gw-password
-      em = document.getElementById('edit-gw-email').value.trim();
-      pw = document.getElementById('edit-gw-password').value.trim();
+      var em = document.getElementById('edit-gw-email').value.trim();
+      var pw = document.getElementById('edit-gw-password').value.trim();
       if (!val || !em || !pw) {
         return showToast('License key, email, and password are all required!');
       }
@@ -1320,6 +1462,17 @@ async function saveEdit(){
     var finalImgUrl = editImgUrl;
     if (editImgFile) {
       finalImgUrl = await uploadImg(editImgFile);
+    }
+
+    var finalDocUrl = editDocUrl;
+    var finalDocName = editDocName;
+    if (editDocFile) {
+      finalDocUrl = await uploadDoc(editDocFile);
+      finalDocName = editDocFile.name;
+    }
+
+    if (finalDocUrl) {
+      txt = txt + '<!--FILE_JSON:' + JSON.stringify({ url: finalDocUrl, name: finalDocName }) + '-->';
     }
 
     var username = sessionStorage.getItem('sgd_user') || 'admin';
@@ -1434,6 +1587,18 @@ async function loadUpdates(){
       if (u.react_angry) reactSummaryList.push('😡 ' + u.react_angry);
       var reactSummaryText = reactSummaryList.length > 0 ? 'Reactions: ' + reactSummaryList.join(' ') : 'Reactions: None';
 
+      var fileDocPreview = '';
+      var fileMatch = cleanText.match(/<!--FILE_JSON:(.*?)-->/);
+      if (fileMatch && fileMatch[1]) {
+        try {
+          var fileObj = JSON.parse(fileMatch[1]);
+          if (fileObj && fileObj.url) {
+            fileDocPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;align-items:center;gap:4px;">📎 Attached File: ' + esc(fileObj.name || 'document') + ' &rarr; <a href="' + fileObj.url + '" target="_blank" style="color:var(--txt);text-decoration:underline;background:var(--inp);padding:2px 6px;border-radius:4px;">Download link</a></div>';
+          }
+        } catch(e){}
+        cleanText = cleanText.replace(/<!--FILE_JSON:(.*?)-->/g, '');
+      }
+
       return '<div class="ucard" id="upd-card-'+u.id+'">'+
         '<div class="card-actions">'+
           '<button class="btn-edit" onclick="handleEdit(this)">Edit</button>'+
@@ -1443,6 +1608,7 @@ async function loadUpdates(){
         (u.image_url?'<img class="uimg" src="'+u.image_url+'">':'')+
         (cleanText?'<div class="utxt" style="margin-top:4px;">'+sanitize(cleanText)+'</div>':'')+
         giveawayPreview +
+        fileDocPreview +
         (u.btn_label?'<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:600;">Button: '+esc(u.btn_label)+' &rarr; <span style="font-weight:400;color:var(--sub);">'+esc(u.btn_url)+'</span></div>':'')+
         '<div style="font-size:11px;color:var(--sub);margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' + 
           reactSummaryText + 
