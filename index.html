@@ -899,6 +899,25 @@ function copyGiveaway(uid) {
   });
 }
 
+async function downloadFileForce(url, fileName) {
+  try {
+    showToast('Downloading attached file...');
+    var res = await fetch(url);
+    var blob = await res.blob();
+    var blobUrl = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName || 'download.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch (e) {
+    console.error('Blob download failed, opening in new tab:', e);
+    window.open(url, '_blank');
+  }
+}
+
 async function loadUpdates(){
   try{
     var r = await sb.from('updates').select('*').order('created_at',{ascending:false}).limit(50);
@@ -992,6 +1011,23 @@ async function loadUpdates(){
         cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
       }
 
+      var fileHtml = '';
+      var fileMatch = cleanText.match(/<!--FILE_JSON:(.*?)-->/);
+      if (fileMatch && fileMatch[1]) {
+        try {
+          var fileObj = JSON.parse(fileMatch[1]);
+          if (fileObj && fileObj.url) {
+            fileHtml = '<div style="margin-top: 10px; margin-bottom: 2px;">' +
+              '<button onclick="downloadFileForce(\'' + fileObj.url + '\', \'' + (fileObj.name || 'file.txt').replace(/'/g, "\\'") + '\')" class="download-att-btn" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#ffffff;border:none;border-radius:18px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(37,211,102,0.25);transition:transform 0.2s, background-color 0.2s;height:32px;">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' +
+                '<span>Download ' + esc(fileObj.name || 'Attachment') + '</span>' +
+              '</button>' +
+            '</div>';
+          }
+        } catch(e) {}
+        cleanText = cleanText.replace(/<!--FILE_JSON:(.*?)-->/g, '');
+      }
+
       // Cache counts locally for reactive state
       activeStateCounts[u.id] = {
         react_like: u.react_like || 0,
@@ -1010,6 +1046,7 @@ async function loadUpdates(){
         (u.image_url?'<img class="uimg" src="'+u.image_url+'" alt="">':'')+
         (cleanText?'<div class="utxt">'+sanitize(cleanText)+'</div>':'')+
         giveawayHtml +
+        fileHtml +
         '<div class="u-action-bar">'+
           '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'+
             '<div class="u-react-container" id="react-container-'+u.id+'" onmouseenter="startReactHover(\''+u.id+'\')" onmouseleave="endReactHover(\''+u.id+'\')">'+
@@ -1176,8 +1213,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Drop existing function signatures if they exist to prevent PostgreSQL parameter change errors!
+DROP FUNCTION IF EXISTS secure_edit_update(TEXT, TEXT, BIGINT, TEXT, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS secure_delete_update(TEXT, TEXT, BIGINT);
+DROP FUNCTION IF EXISTS react_to_post(BIGINT, TEXT, INT);
+DROP FUNCTION IF EXISTS increment_view_count(BIGINT);
+
+DROP FUNCTION IF EXISTS secure_edit_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS secure_delete_update(TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS react_to_post(TEXT, TEXT, INT);
+DROP FUNCTION IF EXISTS increment_view_count(TEXT);
+
 -- SECURE MUTATION RPC: Edit an update entry (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_edit_update(u TEXT, p TEXT, uid BIGINT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
+CREATE OR REPLACE FUNCTION secure_edit_update(u TEXT, p TEXT, uid TEXT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
 RETURNS VOID AS $$
 BEGIN
   IF NOT verify_admin(u, p) THEN
@@ -1189,19 +1237,19 @@ BEGIN
       image_url = t_img_url,
       btn_label = t_btn_label,
       btn_url = t_btn_url
-  WHERE id = uid;
+  WHERE id::text = uid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- SECURE MUTATION RPC: Delete an update (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_delete_update(u TEXT, p TEXT, uid BIGINT)
+CREATE OR REPLACE FUNCTION secure_delete_update(u TEXT, p TEXT, uid TEXT)
 RETURNS VOID AS $$
 BEGIN
   IF NOT verify_admin(u, p) THEN
     RAISE EXCEPTION 'Unauthorized admin credentials!';
   END IF;
   
-  DELETE FROM updates WHERE id = uid;
+  DELETE FROM updates WHERE id::text = uid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -1238,7 +1286,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Safe reaction counter: uses secure definer to increment to prevent client logic tampering
-CREATE OR REPLACE FUNCTION react_to_post(update_id BIGINT, reaction TEXT, val INT)
+CREATE OR REPLACE FUNCTION react_to_post(update_id TEXT, reaction TEXT, val INT)
 RETURNS VOID AS $$
 BEGIN
   -- Validate input value to prevent people from sending random values (-1000 or +1000000)
@@ -1247,28 +1295,28 @@ BEGIN
   END IF;
   
   IF reaction = 'like' THEN
-    UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'love' THEN
-    UPDATE updates SET react_love = GREATEST(0, COALESCE(react_love, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_love = GREATEST(0, COALESCE(react_love, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'haha' THEN
-    UPDATE updates SET react_haha = GREATEST(0, COALESCE(react_haha, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_haha = GREATEST(0, COALESCE(react_haha, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'wow' THEN
-    UPDATE updates SET react_wow = GREATEST(0, COALESCE(react_wow, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_wow = GREATEST(0, COALESCE(react_wow, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'sad' THEN
-    UPDATE updates SET react_sad = GREATEST(0, COALESCE(react_sad, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_sad = GREATEST(0, COALESCE(react_sad, 0) + val) WHERE id::text = update_id;
   ELSIF reaction = 'angry' THEN
-    UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id = update_id;
+    UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id::text = update_id;
   END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- RPC views increment tool setup
-CREATE OR REPLACE FUNCTION increment_view_count(update_id BIGINT)
+CREATE OR REPLACE FUNCTION increment_view_count(update_id TEXT)
 RETURNS VOID AS $$
 BEGIN
   UPDATE updates
   SET views = COALESCE(views, 0) + 1
-  WHERE id = update_id;
+  WHERE id::text = update_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -1287,12 +1335,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Grant explicit execute permissions on all functions to active service client/anonymous/authenticated API users!
 GRANT EXECUTE ON FUNCTION verify_admin(TEXT, TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION secure_create_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_edit_update(TEXT, TEXT, BIGINT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_delete_update(TEXT, TEXT, BIGINT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_edit_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION secure_delete_update(TEXT, TEXT, TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION secure_save_alert(TEXT, TEXT, TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION secure_update_credentials(TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION react_to_post(BIGINT, TEXT, INT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION increment_view_count(BIGINT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION react_to_post(TEXT, TEXT, INT) TO anon, authenticated, public;
+GRANT EXECUTE ON FUNCTION increment_view_count(TEXT) TO anon, authenticated, public;
 GRANT EXECUTE ON FUNCTION adjust_follower(TEXT) TO anon, authenticated, public;`;
 
 function showSqlGuide() {
