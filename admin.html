@@ -703,6 +703,7 @@ function sanitize(t){
   return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span', 'div', 'p'] });
 }
 function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 function showToast(msg) {
   var t = document.getElementById('toast');
@@ -969,10 +970,14 @@ function updatePostPreview() {
       var email = document.getElementById('gw-email').value.trim();
       var pass = document.getElementById('gw-password').value.trim();
       
+      var dispVal = val.length > 32 ? val.substring(0, 32) + '...' : val;
+      var dispEmail = email.length > 32 ? email.substring(0, 32) + '...' : email;
+      var dispPass = pass.length > 32 ? pass.substring(0, 32) + '...' : pass;
+
       document.getElementById('preview-gw-label').textContent = label ? label : 'Giveaway Info';
-      document.getElementById('preview-gw-value').textContent = val ? val : 'MH37W-XXXXX-XXXXX';
-      document.getElementById('preview-gw-email').textContent = email ? email : 'account@example.com';
-      document.getElementById('preview-gw-password').textContent = pass ? pass : '••••••••';
+      document.getElementById('preview-gw-value').textContent = val ? dispVal : 'MH37W-XXXXX-XXXXX';
+      document.getElementById('preview-gw-email').textContent = email ? dispEmail : 'account@example.com';
+      document.getElementById('preview-gw-password').textContent = pass ? dispPass : '••••••••';
     } else if (type === 'account') {
       pSingle.style.display = 'none';
       pAccount.style.display = 'flex';
@@ -980,17 +985,22 @@ function updatePostPreview() {
       
       var email = document.getElementById('gw-email').value.trim();
       var pass = document.getElementById('gw-password').value.trim();
+      var dispEmail = email.length > 32 ? email.substring(0, 32) + '...' : email;
+      var dispPass = pass.length > 32 ? pass.substring(0, 32) + '...' : pass;
+
       document.getElementById('preview-gw-label').textContent = label ? label : 'Account Login';
-      document.getElementById('preview-gw-email').textContent = email ? email : 'account@example.com';
-      document.getElementById('preview-gw-password').textContent = pass ? pass : '••••••••';
+      document.getElementById('preview-gw-email').textContent = email ? dispEmail : 'account@example.com';
+      document.getElementById('preview-gw-password').textContent = pass ? dispPass : '••••••••';
     } else {
       pSingle.style.display = 'flex';
       pAccount.style.display = 'none';
       pKeyTitle.style.display = 'none';
       
       var val = document.getElementById('gw-value').value.trim();
+      var dispVal = val.length > 32 ? val.substring(0, 32) + '...' : val;
+
       document.getElementById('preview-gw-label').textContent = label ? label : 'License Key';
-      document.getElementById('preview-gw-value').textContent = val ? val : 'MH37W-XXXXX-XXXXX';
+      document.getElementById('preview-gw-value').textContent = val ? dispVal : 'MH37W-XXXXX-XXXXX';
     }
   } else {
     gwBox.style.display = 'none';
@@ -1553,25 +1563,33 @@ async function loadUpdates(){
         try {
           var gw = JSON.parse(match[1]);
           if(gw){
+            var fullVal = gw.value || '';
+            var fullEmail = gw.email || '';
+            var fullPass = gw.password || '';
+            
+            var displayVal = fullVal.length > 32 ? fullVal.substring(0, 32) + '...' : fullVal;
+            var displayEmail = fullEmail.length > 32 ? fullEmail.substring(0, 32) + '...' : fullEmail;
+            var displayPass = fullPass.length > 32 ? fullPass.substring(0, 32) + '...' : fullPass;
+
             if (gw.type === 'all' || (gw.value && gw.email && gw.password)) {
               giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;flex-direction:column;gap:4px;">' +
                 '<div>🎁 Giveaway Free Pack: ' + esc(gw.label || 'Credentials & Account') + '</div>' +
                 '<div style="margin-left:12px;font-weight:500;font-size:11px;color:var(--txt);">' +
-                  'Key: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;">' + esc(gw.value) + '</code><br>' +
-                  'Email: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;margin-top:2px;display:inline-block;">' + esc(gw.email) + '</code> ' +
-                  'Password: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;margin-top:2px;display:inline-block;">' + esc(gw.password) + '</code>' +
+                  'Key: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;" title="' + escAttr(fullVal) + '">' + esc(displayVal) + '</code><br>' +
+                  'Email: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;margin-top:2px;display:inline-block;" title="' + escAttr(fullEmail) + '">' + esc(displayEmail) + '</code> ' +
+                  'Password: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;margin-top:2px;display:inline-block;" title="' + escAttr(fullPass) + '">' + esc(displayPass) + '</code>' +
                 '</div>' +
               '</div>';
             } else if (gw.type === 'account' || (gw.email && gw.password)) {
               giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;flex-direction:column;gap:4px;">' +
                 '<div>🎁 Giveaway Account: ' + esc(gw.label || 'Account Login') + '</div>' +
                 '<div style="margin-left:12px;font-weight:500;font-size:11px;color:var(--txt);">' +
-                  'Email: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;">' + esc(gw.email) + '</code> ' +
-                  'Password: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;">' + esc(gw.password) + '</code>' +
+                  'Email: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;" title="' + escAttr(fullEmail) + '">' + esc(displayEmail) + '</code> ' +
+                  'Password: <code style="background:var(--inp);padding:2px 6px;border-radius:4px;font-weight:600;" title="' + escAttr(fullPass) + '">' + esc(displayPass) + '</code>' +
                 '</div>' +
               '</div>';
             } else if (gw.value) {
-              giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;align-items:center;gap:4px;">🎁 Giveaway: ' + esc(gw.label || 'Credentials') + ' &rarr; <code style="background:var(--inp);padding:2px 6px;border-radius:4px;color:var(--txt);font-weight:600;">' + esc(gw.value) + '</code></div>';
+              giveawayPreview = '<div style="margin-top:8px;font-size:12px;color:var(--dg);font-weight:700;display:flex;align-items:center;gap:4px;">🎁 Giveaway: ' + esc(gw.label || 'Credentials') + ' &rarr; <code style="background:var(--inp);padding:2px 6px;border-radius:4px;color:var(--txt);font-weight:600;" title="' + escAttr(fullVal) + '">' + esc(displayVal) + '</code></div>';
             }
           }
         } catch(e){}
