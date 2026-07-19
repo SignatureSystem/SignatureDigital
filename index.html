@@ -7,47 +7,58 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--g:#25D366;--dg:#128C7E;--hdr:#075E54;--bg:#ECE5DD;--txt:#111;--sub:#667781;--bdr:#E9EDEF;}
-html, body { overscroll-behavior: none; overscroll-behavior-y: none; overscroll-behavior-x: none; background-color: #0a4a3a; touch-action: manipulation; }
+:root{--g:#34d882;--dg:#0a9c73;--hdr:#075e54;--bg:#ece5dd;--txt:#111;--sub:#667781;--bdr:#e9edef;--glass:rgba(14,67,57,.34);--glass-strong:rgba(10,58,49,.52);--glass-line:rgba(255,255,255,.24);--glass-shine:rgba(255,255,255,.16);}
+html, body { overscroll-behavior: none; overscroll-behavior-y: none; overscroll-behavior-x: none; background-color: #073e35; touch-action: manipulation; }
 button, a, .u-react-btn, .u-react-counts, .u-emoji-btn { touch-action: manipulation; }
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#0a4a3a 0%,#075E54 30%,#0d7a6a 60%,#1a9b85 100%);min-height:100vh;display:flex;flex-direction:column;background-attachment:fixed;}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at 12% -8%,rgba(120,255,210,.32),transparent 31%),radial-gradient(circle at 104% 18%,rgba(74,202,255,.24),transparent 31%),radial-gradient(circle at 48% 104%,rgba(34,255,166,.20),transparent 38%),linear-gradient(145deg,#073d36 0%,#075e54 45%,#0c7769 100%);min-height:100vh;display:flex;flex-direction:column;background-attachment:fixed;color:#fff;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(112deg,rgba(255,255,255,.10),transparent 20% 72%,rgba(255,255,255,.07)),radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.09),transparent 42%);mix-blend-mode:screen;z-index:-1;}
 
 /* HEADER */
-#hdr{background:transparent;padding:16px 16px 0;position:sticky;top:0;z-index:100;}
-.hav{width:40px;height:40px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;margin-right:12px;flex-shrink:0;}
+#hdr{background:linear-gradient(to bottom,rgba(5,54,47,.46),transparent);padding:16px 16px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+.hav{width:40px;height:40px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;margin-right:12px;flex-shrink:0;border:1px solid rgba(255,255,255,.50);box-shadow:0 3px 10px rgba(0,0,0,.22),inset 0 1px 1px rgba(255,255,255,.42);}
 .hname{font-size:16px;font-weight:600;color:#fff;}
 .hsub{font-size:12px;color:rgba(255,255,255,.65);}
 
 /* UPDATES */
 #main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:16px 12px 24px;}
-.ucard{background:rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:18px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.2);margin-bottom:12px;}
+.ucard{background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.075));backdrop-filter:blur(38px) saturate(165%);-webkit-backdrop-filter:blur(38px) saturate(165%);border-radius:24px;padding:14px 16px;box-shadow:0 14px 34px rgba(0,25,20,.22),inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,0,0,.08);border:1px solid var(--glass-line);margin-bottom:12px;position:relative;overflow:hidden;}
+.ucard::before{content:"";position:absolute;inset:0;background:linear-gradient(118deg,rgba(255,255,255,.18),transparent 24% 74%,rgba(255,255,255,.08));pointer-events:none;}
+.ucard>*{position:relative;z-index:1;}
 .umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);}
 .ubadge{background:rgba(37,211,102,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;flex-shrink:0;backdrop-filter:blur(4px);}
 .utime{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto;flex-shrink:0;}
 .utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
-.uimg{width:100%;border-radius:12px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.1);pointer-events:none;user-select:none;}
+.uimg{width:100%;border-radius:17px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 6px 14px rgba(0,0,0,.13);pointer-events:none;user-select:none;}
 
 /* Alert Modal */
 #alert-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 #alert-modal.show{display:flex;}
-.alert-box{background:rgba(7,94,84,.7);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:24px 22px 20px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2);position:relative;}
+.alert-box{background:linear-gradient(135deg,rgba(22,101,84,.78),rgba(8,55,47,.66));backdrop-filter:blur(40px) saturate(170%);-webkit-backdrop-filter:blur(40px) saturate(170%);border:1px solid rgba(255,255,255,.30);border-radius:28px;padding:24px 22px 20px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.34);position:relative;}
 
 /* SQL Guide Modal Styles */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:12px;z-index:1000;}
-.dialog{background:#fff;border-radius:24px;border:1.5px solid #e3e7e9;padding:20px;max-width:540px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:14px;color:#111;}
+.dialog{background:linear-gradient(135deg,rgba(240,255,250,.92),rgba(211,245,237,.78));backdrop-filter:blur(40px) saturate(165%);-webkit-backdrop-filter:blur(40px) saturate(165%);border-radius:28px;border:1.5px solid rgba(255,255,255,.68);padding:20px;max-width:540px;width:100%;box-shadow:0 18px 52px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.72);display:flex;flex-direction:column;gap:14px;color:#10251f;}
 .alert-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1;transition:background .2s;}
 .alert-close:hover{background:rgba(255,255,255,.25);}
 .alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;white-space:pre-wrap;}
 .alert-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
+.channel-box{background:linear-gradient(135deg,rgba(20,112,91,.82),rgba(7,58,48,.72));}
+#channel-modal{z-index:1200;}
+.channel-icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;margin:0 auto 13px;background:linear-gradient(145deg,#43e28e,#1aab70);border:1px solid rgba(255,255,255,.58);box-shadow:0 7px 16px rgba(0,0,0,.20),inset 0 1px 1px rgba(255,255,255,.5);}
+.channel-title{text-align:center;font-size:18px;font-weight:750;letter-spacing:-.02em;margin-bottom:7px;color:#fff;}
+.channel-message{text-align:center;font-size:14px;line-height:1.55;color:rgba(255,255,255,.88);margin:0 auto 18px;max-width:255px;}
+.channel-follow{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:18px;background:linear-gradient(135deg,#4ce795,#22bd76);border:1px solid rgba(255,255,255,.52);box-shadow:0 7px 16px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.48);color:#fff;font-weight:800;font-size:14px;text-decoration:none;transition:transform .2s ease,filter .2s ease;}
+.channel-follow:hover{transform:translateY(-1px);filter:brightness(1.07);}
 .upd-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
 #no-upd, #loading{text-align:center;padding:40px;color:rgba(255,255,255,.6);font-size:14px;}
 
 /* TOAST & HEADER MISC */
 .hinfo{flex:1;min-width:0;}
 
-.hdr-top{display:flex;align-items:center;gap:10px;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);padding:12px 16px;border-radius:24px;border:1px solid rgba(255,255,255,.18);}
+.hdr-top{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.07));backdrop-filter:blur(36px) saturate(165%);-webkit-backdrop-filter:blur(36px) saturate(165%);padding:12px 16px;border-radius:24px;border:1px solid rgba(255,255,255,.30);box-shadow:0 10px 24px rgba(0,24,20,.17),inset 0 1px 0 rgba(255,255,255,.34);}
 .hdr-pill-bar{padding:8px 16px 0;display:flex;justify-content:center;background:transparent;}
-.hwa-btn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;background:rgba(7,94,84,.6);backdrop-filter:blur(24px);padding:12px 28px;border-radius:26px;border:1px solid rgba(255,255,255,.18);transition:all 0.2s;}
+.hwa-btn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.06));backdrop-filter:blur(36px) saturate(165%);-webkit-backdrop-filter:blur(36px) saturate(165%);padding:12px 28px;border-radius:22px;border:1px solid rgba(255,255,255,.28);box-shadow:0 7px 18px rgba(0,25,20,.16),inset 0 1px 0 rgba(255,255,255,.34);transition:transform .2s ease,background .2s ease,box-shadow .2s ease;}
+.hwa-btn:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(255,255,255,.10));box-shadow:0 10px 22px rgba(0,25,20,.23),inset 0 1px 0 rgba(255,255,255,.42);}
 .hdr-pill-bar .hwa-btn{padding:11px 14px;flex:1;}
 
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1.5px solid rgba(255,255,255,.15);box-shadow:0 8px 30px rgba(0,0,0,.5);backdrop-filter:blur(10px);}
@@ -55,9 +66,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 
 /* GIVEAWAY DYNAMIC COMPONENT STYLES */
 .giveaway-box {
-  background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(18, 140, 126, 0.1) 100%);
-  border: 1px solid rgba(37, 211, 102, 0.3);
-  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(79, 246, 164, 0.22) 0%, rgba(42, 178, 164, 0.10) 100%);
+  border: 1px solid rgba(190, 255, 220, 0.30);
+  border-radius: 18px;
   padding: 14px;
   margin-top: 10px;
   margin-bottom: 6px;
@@ -92,9 +103,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 .giveaway-val-container {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  background: rgba(5, 45, 37, 0.28);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
   padding: 10px 12px;
   position: relative;
 }
@@ -169,7 +181,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
   color: rgba(255, 255, 255, 0.65);
   padding: 6px 14px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(14px);
   transition: all 0.2s;
   user-select: none;
   -webkit-user-select: none;
@@ -193,10 +207,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
   position: absolute;
   bottom: 125%;
   left: 0;
-  background: rgba(18, 40, 32, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(16, 65, 55, 0.72);
+  backdrop-filter: blur(34px) saturate(170%);
+  -webkit-backdrop-filter: blur(34px) saturate(170%);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
   border-radius: 30px;
   padding: 6px 10px;
   display: none;
@@ -259,10 +273,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
   bottom: 125%;
   left: 0;
   width: 170px;
-  background: rgba(18, 40, 32, 0.98);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  background: rgba(16, 65, 55, 0.78);
+  backdrop-filter: blur(34px) saturate(170%);
+  -webkit-backdrop-filter: blur(34px) saturate(170%);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
   border-radius: 16px;
   padding: 10px 12px;
   display: none;
@@ -276,10 +290,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
 
 /* SKELETON LOADER STYLES */
 .sk-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  background: linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.06));
+  backdrop-filter: blur(30px) saturate(160%);
+  border-radius: 24px;
   padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   margin-bottom: 12px;
 }
 .sk-pulse {
@@ -364,6 +379,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sy
     <div id="alert-btn-wrap" style="display:none;">
       <a class="alert-btn" id="alert-btn-link" href="#" target="_blank"></a>
     </div>
+  </div>
+</div>
+<div id="channel-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="channel-title">
+  <div class="alert-box channel-box">
+    <button class="alert-close" onclick="closeChannelPopup()" aria-label="Close">&#10005;</button>
+    <div class="channel-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="25" height="25" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </div>
+    <h2 id="channel-title" class="channel-title">Follow Channel for Warranty</h2>
+    <p class="channel-message">Follow our WhatsApp Channel for warranty &amp; updates.</p>
+    <a class="channel-follow" href="https://whatsapp.com/channel/0029Vb4Q8vtBPzjf9imWaj3b" target="_blank" rel="noopener" onclick="closeChannelPopup()">Follow Channel <span aria-hidden="true">→</span></a>
   </div>
 </div>
 <div id="toast"></div>
@@ -797,6 +823,13 @@ async function loadAlert(){
 function closeAlert(){
   document.getElementById('alert-modal').classList.remove('show');
   sessionStorage.setItem('alert_seen','1');
+}
+
+function showChannelPopup(){
+  document.getElementById('channel-modal').style.display='flex';
+}
+function closeChannelPopup(){
+  document.getElementById('channel-modal').style.display='none';
 }
 
 function fmtCount(n){
@@ -1325,6 +1358,7 @@ function copySqlScript() {
 
 loadUpdates();
 loadAlert();
+showChannelPopup();
 </script>
 </body>
 </html>
