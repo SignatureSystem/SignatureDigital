@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color:#073e35;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Signature Digital — Secure OTP</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--g:#34d882;--dg:#0a9c73;--glass:rgba(14,67,57,.34);--glass-strong:rgba(10,58,49,.52);--glass-line:rgba(255,255,255,.24)}
+html,body{min-height:100%;overscroll-behavior:none;background:#073e35;touch-action:manipulation}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;display:flex;flex-direction:column;color:#fff;background:radial-gradient(circle at 12% -8%,rgba(120,255,210,.32),transparent 31%),radial-gradient(circle at 104% 18%,rgba(74,202,255,.24),transparent 31%),radial-gradient(circle at 48% 104%,rgba(34,255,166,.20),transparent 38%),linear-gradient(145deg,#073d36 0%,#075e54 45%,#0c7769 100%);background-attachment:fixed}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(112deg,rgba(255,255,255,.10),transparent 20% 72%,rgba(255,255,255,.07)),radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.09),transparent 42%);mix-blend-mode:screen;z-index:0}
+button,input{font:inherit}
+#hdr{position:sticky;top:0;z-index:10;padding:16px 16px 0;background:linear-gradient(to bottom,rgba(5,54,47,.46),transparent);backdrop-filter:blur(2px)}
+.hdr-top,.bar,.card{background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.07));backdrop-filter:blur(36px) saturate(165%);-webkit-backdrop-filter:blur(36px) saturate(165%);border:1px solid rgba(255,255,255,.30);box-shadow:0 10px 28px rgba(0,24,20,.18),inset 0 1px 0 rgba(255,255,255,.34)}
+.hdr-top{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:24px}
+.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.5);box-shadow:0 3px 10px rgba(0,0,0,.22);flex-shrink:0}
+.hname{font-size:16px;font-weight:650}.hsub{font-size:12px;color:rgba(255,255,255,.65);margin-top:2px}
+.bar-wrap{padding:8px 0 0;display:flex;justify-content:center}.bar{width:100%;padding:11px 14px;border-radius:22px;text-decoration:none;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:700}
+#main{position:relative;z-index:1;width:100%;max-width:640px;margin:0 auto;padding:18px 12px 32px}
+.card{border-radius:28px;padding:20px;position:relative;overflow:hidden}.card:before{content:"";position:absolute;inset:0;background:linear-gradient(118deg,rgba(255,255,255,.18),transparent 24% 74%,rgba(255,255,255,.08));pointer-events:none}.card>*{position:relative;z-index:1}
+.title{font-size:24px;font-weight:760;letter-spacing:-.03em}.muted{color:rgba(255,255,255,.65);font-size:13px;line-height:1.5}
+.label{display:block;color:rgba(255,255,255,.58);font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin:18px 0 7px}
+.input{width:100%;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(0,30,25,.28);color:#fff;outline:none;padding:13px 14px;font-size:15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.input::placeholder{color:rgba(255,255,255,.36)}.input:focus{border-color:rgba(52,216,130,.75);box-shadow:0 0 0 3px rgba(52,216,130,.12),inset 0 1px 0 rgba(255,255,255,.1)}
+.btn{width:100%;border:1px solid rgba(255,255,255,.50);border-radius:17px;padding:12px 16px;margin-top:12px;background:linear-gradient(135deg,#4ce795,#22bd76);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.48);transition:.2s}.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.status{margin-top:12px;min-height:20px;font-size:12px;color:rgba(255,255,255,.72);text-align:center}.error{color:#ffd0d0}.success{color:#b8ffd4}
+#otpPanel{display:none}.otp-box{margin-top:16px;padding:18px;border-radius:22px;background:rgba(4,47,39,.30);border:1px solid rgba(255,255,255,.18);text-align:center}.otp{font-family:'SF Mono','JetBrains Mono','Courier New',monospace;font-size:48px;font-weight:800;letter-spacing:.12em;line-height:1.05;text-shadow:0 4px 22px rgba(0,0,0,.20);user-select:all}.timer{margin-top:10px;font-size:12px;color:rgba(255,255,255,.62)}.meter{height:6px;border-radius:99px;background:rgba(255,255,255,.10);overflow:hidden;margin-top:10px}.meter i{display:block;height:100%;width:100%;background:#34d882;transform-origin:left center;transition:width .2s linear}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.meta div{padding:11px 12px;border-radius:15px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}.meta b{display:block;font-size:10px;color:rgba(255,255,255,.50);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}.meta span{font-size:12px;color:rgba(255,255,255,.92);word-break:break-word}
+.hidden{display:none!important}.foot{padding:14px 3px 0;text-align:center;color:rgba(255,255,255,.38);font-size:11px}.lock{font-size:38px;margin-bottom:8px}
+@media(max-width:430px){.otp{font-size:40px}.card{padding:17px}.title{font-size:22px}}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div class="hdr-top">
+    <img class="avatar" src="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/public/profile/633438052_122116907661099468_7006831602680973794_n.jpg" alt="Signature Digital">
+    <div><div class="hname">Signature Digital</div><div class="hsub">Genuine Softwares at Affordable Prices</div></div>
+  </div>
+  <div class="bar-wrap"><a class="bar" href="https://wa.me/94778315058" target="_blank" rel="noopener">WhatsApp Support · +94 77 831 5058</a></div>
+</div>
+
+<main id="main">
+  <section class="card" id="loginPanel">
+    <div class="lock">🔐</div>
+    <div class="title">Secure OTP Access</div>
+    <div class="muted" style="margin-top:7px">Enter your valid Signature Digital license key to access the live authenticator code.</div>
+    <label class="label" for="licenseKey">License Key</label>
+    <input class="input" id="licenseKey" autocomplete="off" spellcheck="false" placeholder="Enter your license key">
+    <button class="btn" id="loginBtn">Verify License</button>
+    <div class="status" id="loginStatus"></div>
+  </section>
+
+  <section class="card" id="otpPanel">
+    <div class="title">Authenticator Code</div>
+    <div class="muted" style="margin-top:7px">This code is generated on the server and updates automatically.</div>
+    <div class="otp-box">
+      <div class="otp" id="otp">------</div>
+      <div class="timer" id="timer">Waiting for code…</div>
+      <div class="meter"><i id="meter"></i></div>
+    </div>
+    <div class="meta">
+      <div><b>Plan</b><span id="plan">—</span></div>
+      <div><b>License Expires</b><span id="expires">—</span></div>
+    </div>
+    <button class="btn" id="logoutBtn" style="margin-top:14px;background:rgba(255,255,255,.10)">Sign Out</button>
+    <div class="status" id="otpStatus"></div>
+  </section>
+  <div class="foot">Protected by Signature Digital license verification.</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let otpTimer = null;
+let statusPoll = null;
+let remaining = 0;
+let period = 30;
+
+function setStatus(el, msg, cls=''){ el.textContent = msg || ''; el.className = 'status ' + cls; }
+function formatExpiry(value){
+  if(!value) return '—';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleString([], {dateStyle:'medium', timeStyle:'short'});
+}
+
+async function api(url, options={}){
+  const r = await fetch(url, {...options, credentials:'include', headers:{'Content-Type':'application/json', ...(options.headers||{})}, cache:'no-store'});
+  let data={};
+  try { data = await r.json(); } catch(e) {}
+  if(!r.ok) throw Object.assign(new Error(data.error || 'Request failed'), {status:r.status, data});
+  return data;
+}
+
+function renderOtp(data){
+  $('otp').textContent = data.otp || '------';
+  remaining = Number(data.remaining || 0);
+  period = Number(data.period || 30);
+  $('timer').textContent = remaining + 's remaining';
+  $('meter').style.width = Math.max(0, Math.min(100, (remaining / period) * 100)) + '%';
+  $('plan').textContent = data.plan || '—';
+  $('expires').textContent = formatExpiry(data.expires);
+}
+
+async function refreshOtp(){
+  try {
+    const data = await api('/api/otp');
+    renderOtp(data);
+    setStatus($('otpStatus'), 'Live and connected.', 'success');
+  } catch(e){
+    $('otp').textContent = '------';
+    setStatus($('otpStatus'), e.message || 'Access denied.', 'error');
+    if(e.status === 401 || e.status === 403){ showLogin(); }
+  }
+}
+
+function startRealtime(){
+  clearInterval(otpTimer); clearInterval(statusPoll);
+  refreshOtp();
+  otpTimer = setInterval(() => {
+    if(remaining > 0) remaining--;
+    $('timer').textContent = remaining + 's remaining';
+    $('meter').style.width = Math.max(0, Math.min(100, (remaining / period) * 100)) + '%';
+    if(remaining <= 1) refreshOtp();
+  }, 1000);
+  statusPoll = setInterval(refreshOtp, 5000);
+}
+
+function showOtp(){ $('loginPanel').style.display='none'; $('otpPanel').style.display='block'; startRealtime(); }
+function showLogin(){ clearInterval(otpTimer); clearInterval(statusPoll); $('otpPanel').style.display='none'; $('loginPanel').style.display='block'; $('licenseKey').focus(); }
+
+$('loginBtn').addEventListener('click', async () => {
+  const key = $('licenseKey').value.trim();
+  if(!key){ setStatus($('loginStatus'), 'Please enter your license key.', 'error'); return; }
+  $('loginBtn').disabled = true;
+  setStatus($('loginStatus'), 'Checking license…');
+  try {
+    await api('/api/license/login', {method:'POST', body:JSON.stringify({key})});
+    $('licenseKey').value = '';
+    setStatus($('loginStatus'), '');
+    showOtp();
+  } catch(e){ setStatus($('loginStatus'), e.message || 'Invalid license.', 'error'); }
+  finally { $('loginBtn').disabled = false; }
+});
+
+$('licenseKey').addEventListener('keydown', e => { if(e.key === 'Enter') $('loginBtn').click(); });
+$('logoutBtn').addEventListener('click', async () => { try { await api('/api/license/logout', {method:'POST', body:'{}'}); } catch(e) {} showLogin(); });
+
+(async function init(){
+  try { await api('/api/license/status'); showOtp(); }
+  catch(e){ showLogin(); }
+})();
+</script>
+</body>
+</html>
