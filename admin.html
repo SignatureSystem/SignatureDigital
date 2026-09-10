@@ -2001,20 +2001,24 @@ async function loadUpdates(){
   async function api(path, method, body){
     var c = conn();
     if(!c.url || !c.secret) throw new Error('Set Flow URL and ADMIN_SECRET first');
-    var opts = { method: method||'GET', headers: {} };
-    if((method||'GET')!=='GET') opts.headers['Content-Type']='application/json';
+    method = method||'GET';
     var u = c.url + path;
-    if((method||'GET')==='GET'){
+    var opts = { method: method };
+    if(method==='GET'){
       u += (path.indexOf('?')>=0?'&':'?') + 'secret=' + encodeURIComponent(c.secret);
     } else {
+      opts.headers = {'Content-Type':'application/json'};
       body = body||{};
       body.secret = c.secret;
       opts.body = JSON.stringify(body);
     }
     var r = await fetch(u, opts);
+    var raw = await r.text();
     var j = {};
-    try { j = await r.json(); } catch(e){ j = {error:'bad json '+r.status}; }
-    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    try { j = raw ? JSON.parse(raw) : {}; } catch(e){
+      throw new Error('HTTP '+r.status+' from '+u+' (not JSON: '+(raw||'').slice(0,80)+')');
+    }
+    if(!r.ok) throw new Error((j.error||('HTTP '+r.status))+' from '+u);
     return j;
   }
   function hoursExpiry(hrs){
