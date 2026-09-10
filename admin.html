@@ -106,6 +106,74 @@ input:checked + .slider:before {transform:translateX(16px);}
     </div>
   </div>
 
+
+  <!-- License Manager — VEO + GPT Flow servers -->
+  <div class="pcard" id="lic-card">
+    <div class="ctitle"><span>🔑 License Manager (VEO / GPT)</span></div>
+    <p style="font-size:12px;color:var(--sub);">Same APIs as WhatsApp !veo / !gpt. Secrets stay in this browser session only.</p>
+    <div class="field-row">
+      <button class="btn" id="lic-tab-veo" onclick="licSetTarget('veo')" style="flex:1">VEO Flow</button>
+      <button class="btn-sec" id="lic-tab-gpt" onclick="licSetTarget('gpt')" style="flex:1">GPT Flow</button>
+    </div>
+    <div class="field-row"><input type="url" id="lic-url" placeholder="https://your-flow.up.railway.app"></div>
+    <div class="field-row"><input type="password" id="lic-secret" placeholder="ADMIN_SECRET"></div>
+    <button class="btn-sec" onclick="licSaveConn()">Save connection for this session</button>
+    <div id="lic-conn-status" style="font-size:12px;color:var(--sub)"></div>
+
+    <div class="ctitle" style="margin-top:8px">License key</div>
+    <div class="field-row">
+      <input type="text" id="lic-key" placeholder="license key">
+      <input type="text" id="lic-hours" placeholder="hours" style="max-width:90px">
+      <input type="text" id="lic-limit" placeholder="device limit" style="max-width:110px">
+    </div>
+    <div class="field-row" style="flex-wrap:wrap">
+      <button class="btn" onclick="licAdd()">Add</button>
+      <button class="btn-sec" onclick="licExtend()">Extend</button>
+      <button class="btn-sec" onclick="licReduce()">Reduce</button>
+      <button class="btn-sec" onclick="licRevoke()" style="color:#c62828">Revoke</button>
+    </div>
+    <div class="field-row" style="flex-wrap:wrap">
+      <button class="btn-sec" onclick="licReset()">Reset devices</button>
+      <button class="btn-sec" onclick="licSetLimit()">Set device limit</button>
+      <button class="btn-sec" onclick="licCheck()">Check key</button>
+      <button class="btn-sec" onclick="licRefresh()">Refresh list</button>
+    </div>
+    <div id="lic-action-out" style="font-size:12px;white-space:pre-wrap;background:var(--inp);border-radius:10px;padding:8px;min-height:36px"></div>
+    <div id="lic-list" style="font-size:12px;max-height:240px;overflow:auto;background:var(--inp);border-radius:12px;padding:10px"></div>
+
+    <div class="ctitle">Shared login account</div>
+    <div class="field-row"><input type="text" id="lic-email" placeholder="email"></div>
+    <div class="field-row"><input type="text" id="lic-pass" placeholder="password"></div>
+    <div class="field-row"><input type="text" id="lic-totp" placeholder="TOTP base32 secret (never shown to users)"></div>
+    <div class="field-row">
+      <button class="btn" onclick="licSetAccount()">Save email+password</button>
+      <button class="btn-sec" onclick="licSetTotp()">Save TOTP secret</button>
+      <button class="btn-sec" onclick="licGetAccount()">Load account</button>
+    </div>
+
+    <div class="ctitle">Cookie slots (1 / 2 / 3)</div>
+    <textarea id="lic-cookies" placeholder="Paste Netscape cookie text for the selected slot" style="width:100%;min-height:90px;border:1.5px solid var(--bdr);border-radius:12px;padding:10px;font-size:12px;font-family:monospace"></textarea>
+    <div class="field-row">
+      <select id="lic-slot" style="flex:1;padding:10px;border-radius:10px;background:var(--inp);border:none">
+        <option value="1">Slot 1</option>
+        <option value="2">Slot 2</option>
+        <option value="3">Slot 3</option>
+      </select>
+      <button class="btn" onclick="licSetCookies()">Save slot</button>
+      <button class="btn-sec" onclick="licGetCookies()">Load slot</button>
+    </div>
+    <div class="field-row">
+      <button class="btn-sec" onclick="licSlotEnabled(true)">Enable slot</button>
+      <button class="btn-sec" onclick="licSlotEnabled(false)">Disable slot</button>
+    </div>
+
+    <div class="ctitle">UI config / debug</div>
+    <div class="field-row">
+      <button class="btn-sec" onclick="licGetUi()">Get UI config</button>
+      <button class="btn-sec" onclick="licDebug()">Debug</button>
+    </div>
+  </div>
+
   <!-- Composer Panel -->
   <div class="pcard">
     <div class="ctitle">
@@ -1902,5 +1970,180 @@ async function loadUpdates(){
   }
 }
 </script>
+
+
+
+<script>
+(function(){
+  var TARGET = 'veo';
+  function $(id){ return document.getElementById(id); }
+  function keyPref(k){ return 'sgd_lic_'+TARGET+'_'+k; }
+  function out(msg){ var el=$('lic-action-out'); if(el) el.textContent = msg; }
+  window.licSetTarget = function(t){
+    TARGET = t==='gpt' ? 'gpt' : 'veo';
+    if($('lic-tab-veo')) $('lic-tab-veo').className = TARGET==='veo'?'btn':'btn-sec';
+    if($('lic-tab-gpt')) $('lic-tab-gpt').className = TARGET==='gpt'?'btn':'btn-sec';
+    if($('lic-url')) $('lic-url').value = sessionStorage.getItem(keyPref('url')) || '';
+    if($('lic-secret')) $('lic-secret').value = sessionStorage.getItem(keyPref('secret')) || '';
+    if($('lic-conn-status')) $('lic-conn-status').textContent = TARGET.toUpperCase() + ' selected';
+  };
+  window.licSaveConn = function(){
+    sessionStorage.setItem(keyPref('url'), ($('lic-url').value||'').replace(/\/$/,''));
+    sessionStorage.setItem(keyPref('secret'), $('lic-secret').value||'');
+    out('Saved ' + TARGET.toUpperCase() + ' connection in this session.');
+  };
+  function conn(){
+    return {
+      url: (sessionStorage.getItem(keyPref('url')) || ($('lic-url')&&$('lic-url').value) || '').replace(/\/$/,''),
+      secret: sessionStorage.getItem(keyPref('secret')) || ($('lic-secret')&&$('lic-secret').value) || ''
+    };
+  }
+  async function api(path, method, body){
+    var c = conn();
+    if(!c.url || !c.secret) throw new Error('Set Flow URL and ADMIN_SECRET first');
+    var opts = { method: method||'GET', headers: {'Content-Type':'application/json'} };
+    var u = c.url + path;
+    if((method||'GET')==='GET'){
+      u += (path.indexOf('?')>=0?'&':'?') + 'secret=' + encodeURIComponent(c.secret);
+    } else {
+      body = body||{};
+      body.secret = c.secret;
+      opts.body = JSON.stringify(body);
+    }
+    var r = await fetch(u, opts);
+    var j = {};
+    try { j = await r.json(); } catch(e){ j = {error:'bad json '+r.status}; }
+    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    return j;
+  }
+  function hoursExpiry(hrs){
+    var exp = new Date(Date.now()+(hrs||24)*3600*1000);
+    function pad(n){return n<10?'0'+n:''+n}
+    return exp.getFullYear()+'-'+pad(exp.getMonth()+1)+'-'+pad(exp.getDate())+'T'+pad(exp.getHours())+':'+pad(exp.getMinutes())+':'+pad(exp.getSeconds());
+  }
+  window.licAdd = async function(){
+    try{
+      var key=$('lic-key').value.trim();
+      var hrs=parseInt($('lic-hours').value,10)||24;
+      var j=await api('/admin/add-license','POST',{key:key, expires:hoursExpiry(hrs), plan:'ultra'});
+      out('Added '+key+' until '+j.expires); licRefresh();
+    }catch(e){ out('Add failed: '+e.message); }
+  };
+  window.licExtend = async function(){
+    try{
+      var j=await api('/admin/extend-license','POST',{key:$('lic-key').value.trim(), hours:parseInt($('lic-hours').value,10)||24});
+      out('Extended → '+j.expires); licRefresh();
+    }catch(e){ out('Extend failed: '+e.message); }
+  };
+  window.licReduce = async function(){
+    try{
+      var j=await api('/admin/reduce-license','POST',{key:$('lic-key').value.trim(), hours:parseInt($('lic-hours').value,10)||24});
+      out('Reduced → '+j.expires); licRefresh();
+    }catch(e){ out('Reduce failed: '+e.message); }
+  };
+  window.licRevoke = async function(){
+    if(!confirm('Revoke this license?')) return;
+    try{
+      await api('/admin/revoke-license','POST',{key:$('lic-key').value.trim()});
+      out('Revoked'); licRefresh();
+    }catch(e){ out('Revoke failed: '+e.message); }
+  };
+  window.licReset = async function(){
+    try{
+      var key=$('lic-key').value.trim();
+      var j=await api('/admin/reset-device?key='+encodeURIComponent(key),'GET');
+      out(j.message||JSON.stringify(j,null,2));
+    }catch(e){ out('Reset failed: '+e.message); }
+  };
+  window.licSetLimit = async function(){
+    try{
+      var j=await api('/admin/set-device-limit','POST',{key:$('lic-key').value.trim(), limit:parseInt($('lic-limit').value,10)||1});
+      out('Limit '+j.old_limit+' → '+j.new_limit+' purged='+(j.purged_count||0));
+      licRefresh();
+    }catch(e){ out('Set limit failed: '+e.message); }
+  };
+  window.licCheck = async function(){
+    try{
+      var key=$('lic-key').value.trim();
+      var j=await api('/admin/check-license?key='+encodeURIComponent(key),'GET');
+      out(JSON.stringify(j,null,2));
+    }catch(e){ out('Check failed: '+e.message); }
+  };
+  window.licSetAccount = async function(){
+    try{
+      var j=await api('/admin/set-account','POST',{email:$('lic-email').value.trim(), password:$('lic-pass').value.trim()});
+      out('Account saved: '+(j.email||''));
+    }catch(e){ out('Account save failed: '+e.message); }
+  };
+  window.licSetTotp = async function(){
+    try{
+      var j=await api('/admin/set-totp','POST',{totp_secret:$('lic-totp').value.trim()});
+      out(j.totp_secret_set ? 'TOTP secret saved (code is generated on server)' : JSON.stringify(j));
+      $('lic-totp').value='';
+    }catch(e){ out('TOTP save failed: '+e.message); }
+  };
+  window.licGetAccount = async function(){
+    try{
+      var j=await api('/admin/get-account','GET');
+      var a=j.account||{};
+      $('lic-email').value=a.email||'';
+      $('lic-pass').value=a.password||'';
+      out('Loaded '+ (a.email||'') + (a.totp_code?' · current TOTP '+a.totp_code:''));
+    }catch(e){ out('Load account failed: '+e.message); }
+  };
+  function cookiePath(slot, kind){
+    slot=String(slot||'1');
+    if(kind==='set') return slot==='1'?'/admin/set-cookies':('/admin/set-cookies'+slot);
+    return slot==='1'?'/admin/get-cookies':('/admin/get-cookies'+slot);
+  }
+  window.licSetCookies = async function(){
+    try{
+      var slot=$('lic-slot').value;
+      var text=$('lic-cookies').value;
+      var j=await api(cookiePath(slot,'set'),'POST',{cookies:text});
+      out('Slot '+slot+' saved ('+(j.length||0)+' chars)');
+    }catch(e){ out('Cookie save failed: '+e.message); }
+  };
+  window.licGetCookies = async function(){
+    try{
+      var slot=$('lic-slot').value;
+      var j=await api(cookiePath(slot,'get'),'GET');
+      $('lic-cookies').value=j.cookies_netscape||'';
+      out('Loaded slot '+slot+' ('+(j.length||0)+' chars)');
+    }catch(e){ out('Cookie load failed: '+e.message); }
+  };
+  window.licSlotEnabled = async function(enabled){
+    try{
+      var slot=parseInt($('lic-slot').value,10);
+      var j=await api('/admin/set-cookie-enabled','POST',{slot:slot, enabled:!!enabled});
+      out('Slot '+slot+' '+(j.enabled?'enabled':'disabled'));
+    }catch(e){ out('Slot toggle failed: '+e.message); }
+  };
+  window.licGetUi = async function(){
+    try{ out(JSON.stringify(await api('/admin/get-ui-config','GET'),null,2)); }
+    catch(e){ out('UI config failed: '+e.message); }
+  };
+  window.licDebug = async function(){
+    try{ out(JSON.stringify(await api('/debug','GET'),null,2)); }
+    catch(e){ out('Debug failed: '+e.message); }
+  };
+  window.licRefresh = async function(){
+    try{
+      var j=await api('/admin/licenses','GET');
+      var licenses=j.licenses||{}, devices=j.devices||{}, keys=Object.keys(licenses).sort();
+      if(!keys.length){ $('lic-list').textContent='No licenses.'; return; }
+      $('lic-list').innerHTML = keys.map(function(k){
+        var e=licenses[k]||{};
+        var d=devices[k];
+        var n=Array.isArray(d)?d.length:(d?1:0);
+        return '<div style="padding:6px 0;border-bottom:1px solid #e3e7e9;cursor:pointer" onclick="document.getElementById(\'lic-key\').value=\''+k+'\'"><b>'+k+'</b> · '+(e.expires||'')+' · devices '+n+'/'+(e.device_limit||1)+'</div>';
+      }).join('');
+      out('Loaded '+keys.length+' licenses on '+TARGET.toUpperCase());
+    }catch(e){ $('lic-list').textContent='List failed: '+e.message; }
+  };
+  document.addEventListener('DOMContentLoaded', function(){ if($('lic-url')) licSetTarget('veo'); });
+})();
+</script>
+
 </body>
 </html>
