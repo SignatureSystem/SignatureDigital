@@ -2001,7 +2001,8 @@ async function loadUpdates(){
   async function api(path, method, body){
     var c = conn();
     if(!c.url || !c.secret) throw new Error('Set Flow URL and ADMIN_SECRET first');
-    var opts = { method: method||'GET', headers: {'Content-Type':'application/json'} };
+    var opts = { method: method||'GET', headers: {} };
+    if((method||'GET')!=='GET') opts.headers['Content-Type']='application/json';
     var u = c.url + path;
     if((method||'GET')==='GET'){
       u += (path.indexOf('?')>=0?'&':'?') + 'secret=' + encodeURIComponent(c.secret);
