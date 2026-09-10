@@ -117,7 +117,7 @@ input:checked + .slider:before {transform:translateX(16px);}
     </div>
     <div class="field-row"><input type="url" id="lic-url" placeholder="https://your-flow.up.railway.app"></div>
     <div class="field-row"><input type="password" id="lic-secret" placeholder="ADMIN_SECRET"></div>
-    <button class="btn-sec" onclick="licSaveConn()">Save connection for this session</button>
+    <button class="btn" onclick="licSaveConn()">Authenticate</button>
     <div id="lic-conn-status" style="font-size:12px;color:var(--sub)"></div>
 
     <div class="ctitle" style="margin-top:8px">License key</div>
@@ -1977,25 +1977,47 @@ async function loadUpdates(){
 (function(){
   var TARGET = 'veo';
   function $(id){ return document.getElementById(id); }
+  var DEFAULT_URL = { veo: 'https://flow-80.up.railway.app', gpt: 'https://gpt-production-1dba.up.railway.app' };
   function keyPref(k){ return 'sgd_lic_'+TARGET+'_'+k; }
+  function storeGet(k){ return localStorage.getItem(k) || sessionStorage.getItem(k) || ''; }
+  function storeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} sessionStorage.setItem(k,v); }
   function out(msg){ var el=$('lic-action-out'); if(el) el.textContent = msg; }
   window.licSetTarget = function(t){
     TARGET = t==='gpt' ? 'gpt' : 'veo';
     if($('lic-tab-veo')) $('lic-tab-veo').className = TARGET==='veo'?'btn':'btn-sec';
     if($('lic-tab-gpt')) $('lic-tab-gpt').className = TARGET==='gpt'?'btn':'btn-sec';
-    if($('lic-url')) $('lic-url').value = sessionStorage.getItem(keyPref('url')) || '';
-    if($('lic-secret')) $('lic-secret').value = sessionStorage.getItem(keyPref('secret')) || '';
+    if($('lic-url')) $('lic-url').value = storeGet(keyPref('url')) || DEFAULT_URL[TARGET];
+    if($('lic-secret')) $('lic-secret').value = storeGet(keyPref('secret')) || '';
     if($('lic-conn-status')) $('lic-conn-status').textContent = TARGET.toUpperCase() + ' selected';
   };
-  window.licSaveConn = function(){
-    sessionStorage.setItem(keyPref('url'), ($('lic-url').value||'').replace(/\/$/,''));
-    sessionStorage.setItem(keyPref('secret'), $('lic-secret').value||'');
-    out('Saved ' + TARGET.toUpperCase() + ' connection in this session.');
+  window.licSaveConn = async function(){
+    if($('lic-url') && !$('lic-url').value.trim()) $('lic-url').value = DEFAULT_URL[TARGET];
+    storeSet(keyPref('url'), normUrl($('lic-url').value||DEFAULT_URL[TARGET]));
+    var secret = ($('lic-secret')&&$('lic-secret').value||'').trim();
+    if(!secret){ out('Enter ADMIN_SECRET first.'); return; }
+    storeSet(keyPref('secret'), secret);
+    out('Checking '+TARGET.toUpperCase()+' …');
+    try{
+      var j = await api('/admin/licenses','GET');
+      var n = Object.keys((j&&j.licenses)||{}).length;
+      out('Authentication successful for '+TARGET.toUpperCase()+' ('+n+' licenses).');
+      if($('lic-conn-status')) $('lic-conn-status').textContent = TARGET.toUpperCase()+' authenticated';
+      licRefresh();
+    }catch(e){
+      out('Authentication failed: '+e.message);
+      if($('lic-conn-status')) $('lic-conn-status').textContent = TARGET.toUpperCase()+' auth failed';
+    }
   };
+  function normUrl(u){
+    u = String(u||'').trim().replace(/\/$/,'');
+    if(!u) return '';
+    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
   function conn(){
     return {
-      url: (sessionStorage.getItem(keyPref('url')) || ($('lic-url')&&$('lic-url').value) || '').replace(/\/$/,''),
-      secret: sessionStorage.getItem(keyPref('secret')) || ($('lic-secret')&&$('lic-secret').value) || ''
+      url: normUrl(storeGet(keyPref('url')) || ($('lic-url')&&$('lic-url').value) || DEFAULT_URL[TARGET]),
+      secret: storeGet(keyPref('secret')) || ($('lic-secret')&&$('lic-secret').value) || ''
     };
   }
   async function api(path, method, body){
@@ -2029,20 +2051,28 @@ async function loadUpdates(){
   window.licAdd = async function(){
     try{
       var key=$('lic-key').value.trim();
-      var hrs=parseInt($('lic-hours').value,10)||24;
+      var hrs=parseInt($('lic-hours').value,10);
+      if(!key){ out('Enter a license key.'); return; }
+      if(!hrs||hrs<1){ out('Enter duration in hours first.'); return; }
       var j=await api('/admin/add-license','POST',{key:key, expires:hoursExpiry(hrs), plan:'ultra'});
       out('Added '+key+' until '+j.expires); licRefresh();
     }catch(e){ out('Add failed: '+e.message); }
   };
   window.licExtend = async function(){
     try{
-      var j=await api('/admin/extend-license','POST',{key:$('lic-key').value.trim(), hours:parseInt($('lic-hours').value,10)||24});
+      var key=$('lic-key').value.trim(); var hrs=parseInt($('lic-hours').value,10);
+      if(!key){ out('Enter a license key.'); return; }
+      if(!hrs||hrs<1){ out('Enter duration in hours first.'); return; }
+      var j=await api('/admin/extend-license','POST',{key:key, hours:hrs});
       out('Extended → '+j.expires); licRefresh();
     }catch(e){ out('Extend failed: '+e.message); }
   };
   window.licReduce = async function(){
     try{
-      var j=await api('/admin/reduce-license','POST',{key:$('lic-key').value.trim(), hours:parseInt($('lic-hours').value,10)||24});
+      var key=$('lic-key').value.trim(); var hrs=parseInt($('lic-hours').value,10);
+      if(!key){ out('Enter a license key.'); return; }
+      if(!hrs||hrs<1){ out('Enter duration in hours first.'); return; }
+      var j=await api('/admin/reduce-license','POST',{key:key, hours:hrs});
       out('Reduced → '+j.expires); licRefresh();
     }catch(e){ out('Reduce failed: '+e.message); }
   };
@@ -2062,7 +2092,10 @@ async function loadUpdates(){
   };
   window.licSetLimit = async function(){
     try{
-      var j=await api('/admin/set-device-limit','POST',{key:$('lic-key').value.trim(), limit:parseInt($('lic-limit').value,10)||1});
+      var key=$('lic-key').value.trim(); var limit=parseInt($('lic-limit').value,10);
+      if(!key){ out('Enter a license key.'); return; }
+      if(!limit||limit<1){ out('Enter device limit first.'); return; }
+      var j=await api('/admin/set-device-limit','POST',{key:key, limit:limit});
       out('Limit '+j.old_limit+' → '+j.new_limit+' purged='+(j.purged_count||0));
       licRefresh();
     }catch(e){ out('Set limit failed: '+e.message); }
