@@ -242,8 +242,8 @@ input:checked + .slider:before {transform:translateX(16px);}
     <!-- Downloadable document attachment option -->
     <div id="doc-sel-bar" style="display:flex;align-items:center;justify-content:space-between;background:var(--inp);border-radius:12px;padding:8px 12px;margin-top:8px;">
       <span id="doc-status" style="font-size:12px;color:var(--sub);font-weight:500;">No downloadable file attached</span>
-      <button class="btn-sec" style="padding: 6px 14px; font-size:12px; font-weight:600; cursor:pointer;" onclick="triggerDocSelect(); return false;">Attach File (.txt, .zip, .pdf)</button>
-      <input type="file" id="file-doc-inp" accept=".txt,.pdf,.zip,.rar,.doc,.docx" style="display:none;" onchange="handleDocFileChange(this)">
+      <button class="btn-sec" style="padding: 6px 14px; font-size:12px; font-weight:600; cursor:pointer;" onclick="triggerDocSelect(); return false;">Attach File (.txt, .zip, .pdf, .apk)</button>
+      <input type="file" id="file-doc-inp" accept=".txt,.pdf,.zip,.rar,.doc,.docx,.apk,application/vnd.android.package-archive" style="display:none;" onchange="handleDocFileChange(this)">
     </div>
     
     <div id="doc-preview" style="display:none;align-items:center;gap:8px;margin-top:6px;background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 12px;width:fit-content;">
@@ -442,7 +442,7 @@ input:checked + .slider:before {transform:translateX(16px);}
     <div id="edit-doc-sel-bar" style="display:flex;align-items:center;justify-content:space-between;background:var(--inp);border-radius:12px;padding:8px 12px;margin-top:8px;">
       <span id="edit-doc-status" style="font-size:12px;color:var(--sub);font-weight:500;">No downloadable file attached</span>
       <button class="btn-sec" style="padding: 6px 14px; font-size:12px; font-weight:600; cursor:pointer;" onclick="triggerEditDocSelect(); return false;">Change Attached File</button>
-      <input type="file" id="edit-file-doc-inp" accept=".txt,.pdf,.zip,.rar,.doc,.docx" style="display:none;" onchange="handleEditDocFileChange(this)">
+      <input type="file" id="edit-file-doc-inp" accept=".txt,.pdf,.zip,.rar,.doc,.docx,.apk,application/vnd.android.package-archive" style="display:none;" onchange="handleEditDocFileChange(this)">
     </div>
     
     <div id="edit-doc-preview" style="display:none;align-items:center;gap:8px;margin-top:6px;background:rgba(255,255,255,0.06);border-radius:8px;padding:6px 12px;width:fit-content;">
