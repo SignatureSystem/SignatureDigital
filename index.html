@@ -141,9 +141,9 @@ a { color: var(--link); }
 .brand-card { padding-top: 24px; }
 .brand { display: flex; align-items: center; gap: 14px; }
 .mark {
-  width: 50px; height: 50px; flex: none;
-  background: #000; color: #fff;
-  border-radius: 12px;
+  width: 64px; height: 64px; flex: none;
+  background: transparent; color: inherit;
+  border-radius: 50%;
   display: grid; place-items: center;
   font-weight: 800; font-size: 20px; letter-spacing: -.5px;
    overflow: hidden;
@@ -152,7 +152,7 @@ a { color: var(--link); }
 .mark img {
    width: 100%; height: 100%; display: block;
    object-fit: cover;
-   border-radius: inherit;
+   border-radius: 50%;
 }
 .brand h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.3px; line-height: 1.1; }
 .brand p { margin: 3px 0 0; font-size: 14px; color: var(--muted); }
@@ -357,6 +357,27 @@ footer { display: flex; justify-content: center; margin-top: 26px; color: #fff; 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* Disable Android/iOS blue tap highlight and unwanted selection boxes */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+button, a, .dl, .cta, .pill-link, .tab, .copy {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+button:focus, a:focus, .dl:focus, .cta:focus, .pill-link:focus, .tab:focus, .copy:focus {
+  outline: none;
+}
+
+::selection {
+  background: transparent;
+  color: inherit;
+}
+
 </style>
 </head>
 <body class="modal-open">
@@ -830,6 +851,16 @@ You do not need to edit anything below this line up to Section 8.
     followBtn.focus();
   }
 })();
+
+  // ---------- Disable right click and text selection ----------
+  document.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+  });
+
+  document.addEventListener("selectstart", function (e) {
+    e.preventDefault();
+  });
+
 </script>
 
 <!--
