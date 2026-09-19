@@ -1,1364 +1,961 @@
 <!DOCTYPE html>
-<html lang="en" style="overscroll-behavior: none; background-color: #0a4a3a;">
+<!--
+=====================================================================
+SIGNATURE DIGITAL – FILE MAP (use Ctrl+F and search the section name)
+=====================================================================
+  STYLES (CSS)
+    CSS 1  Theme colors
+    CSS 2  Page basics
+    CSS 3  Cards
+    CSS 4  Header and contact buttons
+    CSS 5  Top tabs
+    CSS 6  Post parts (badge, banner, features)
+    CSS 7  Giveaway boxes and Copy buttons
+    CSS 8  Buttons (Buy now)
+    CSS 8B Download picker (Android, Windows, Chrome)
+    CSS 9  Popup
+    CSS 10 Footer and toast
+    CSS 11 Mobile and accessibility
+
+  PAGE (HTML), top to bottom
+    SECTION 1  HEADER: brand name and the two contact buttons
+    SECTION 2  TABS: Home, Buy Softwares, Free Gifts
+    SECTION 3  POSTS
+       3A  HOME ONLY POSTS   (downloads and notices. Shown on Home tab only)
+       3B  BUY SOFTWARES     (shown on Home tab AND Buy Softwares tab)
+       3C  FREE GIFTS        (shown on Home tab AND Free Gifts tab)
+    SECTION 4  FOOTER: Signature Digital text
+    SECTION 5  POPUP: Follow channel window on page load
+    SECTION 6  TOAST: small message bubble
+    SECTION 7  SCRIPT: tabs, Copy buttons, device detection, popup
+    SECTION 8  POST TEMPLATES (copy and paste library, at the very bottom)
+
+  HOW NEW POSTS WORK
+    Which tab a post shows in depends on WHICH SECTION you paste it into.
+    Home always shows everything. Each section has its own ready-to-paste
+    templates in a comment at the top of that section.
+=====================================================================
+-->
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Signature Digital</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-:root{--g:#34d882;--dg:#0a9c73;--hdr:#075e54;--bg:#ece5dd;--txt:#111;--sub:#667781;--bdr:#e9edef;--glass:rgba(14,67,57,.34);--glass-strong:rgba(10,58,49,.52);--glass-line:rgba(255,255,255,.24);--glass-shine:rgba(255,255,255,.16);}
-html, body { overscroll-behavior: none; overscroll-behavior-y: none; overscroll-behavior-x: none; background-color: #073e35; touch-action: manipulation; }
-button, a, .u-react-btn, .u-react-counts, .u-emoji-btn { touch-action: manipulation; }
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at 12% -8%,rgba(120,255,210,.32),transparent 31%),radial-gradient(circle at 104% 18%,rgba(74,202,255,.24),transparent 31%),radial-gradient(circle at 48% 104%,rgba(34,255,166,.20),transparent 38%),linear-gradient(145deg,#073d36 0%,#075e54 45%,#0c7769 100%);min-height:100vh;display:flex;flex-direction:column;background-attachment:fixed;color:#fff;}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(112deg,rgba(255,255,255,.10),transparent 20% 72%,rgba(255,255,255,.07)),radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.09),transparent 42%);mix-blend-mode:screen;z-index:-1;}
+/* =====================================================================
+   CSS 1. THEME COLORS (change colors here; --wa-1 and --wa-2 are the green WhatsApp buttons)
+   ===================================================================== */
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 
-/* HEADER */
-#hdr{background:linear-gradient(to bottom,rgba(5,54,47,.46),transparent);padding:16px 16px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
-.hav{width:40px;height:40px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;margin-right:12px;flex-shrink:0;border:1px solid rgba(255,255,255,.50);box-shadow:0 3px 10px rgba(0,0,0,.22),inset 0 1px 1px rgba(255,255,255,.42);}
-.hname{font-size:16px;font-weight:600;color:#fff;}
-.hsub{font-size:12px;color:rgba(255,255,255,.65);}
+  --navy-deep: #021448;
+  --navy: #0b2f7a;
+  --sky: #5bc3e8;
+  --blue-1: #4d8df7;
+  --blue-2: #3a78e6;
+  --teal: #2fd8b8;
+  --wa-1: #22b95f;
+  --wa-2: #14954a;
+  --card-top: #ffffff;
+  --card-bottom: #f0f0f0;
+  --card-edge: #d4d4d4;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --field: #ffffff;
+  --field-border: #e2e2e2;
+  --outline: #c9c9c9;
+  --link: #3a78e6;
+  --shadow: 0 18px 40px rgba(0, 10, 50, .35);
+  --font: "Figtree", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --card-top: #1b2745;
+    --card-bottom: #142038;
+    --card-edge: #0a1226;
+    --text: #f2f5fb;
+    --muted: #9aa8c7;
+    --field: #0f1a31;
+    --field-border: #2a3a5f;
+    --outline: #3b4d76;
+    --link: #7db0ff;
+    --shadow: 0 18px 40px rgba(0, 0, 0, .5);
+  }
+}
+:root[data-theme="dark"] {
+  --card-top: #1b2745;
+  --card-bottom: #142038;
+  --card-edge: #0a1226;
+  --text: #f2f5fb;
+  --muted: #9aa8c7;
+  --field: #0f1a31;
+  --field-border: #2a3a5f;
+  --outline: #3b4d76;
+  --link: #7db0ff;
+  --shadow: 0 18px 40px rgba(0, 0, 0, .5);
+}
 
-/* UPDATES */
-#main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:16px 12px 24px;}
-.ucard{background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.075));backdrop-filter:blur(38px) saturate(165%);-webkit-backdrop-filter:blur(38px) saturate(165%);border-radius:24px;padding:14px 16px;box-shadow:0 14px 34px rgba(0,25,20,.22),inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,0,0,.08);border:1px solid var(--glass-line);margin-bottom:12px;position:relative;overflow:hidden;}
-.ucard::before{content:"";position:absolute;inset:0;background:linear-gradient(118deg,rgba(255,255,255,.18),transparent 24% 74%,rgba(255,255,255,.08));pointer-events:none;}
-.ucard>*{position:relative;z-index:1;}
-.umeta{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1);}
-.ubadge{background:rgba(37,211,102,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9px;flex-shrink:0;backdrop-filter:blur(4px);}
-.utime{font-size:11px;color:rgba(255,255,255,.5);margin-left:auto;flex-shrink:0;}
-.utxt{font-size:14px;color:rgba(255,255,255,.95);line-height:1.55;white-space:pre-wrap;word-wrap:break-word;}
-.uimg{width:100%;border-radius:17px;margin-bottom:10px;max-height:320px;object-fit:contain;background:rgba(0,0,0,.15);display:block;border:1px solid rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 6px 14px rgba(0,0,0,.13);pointer-events:none;user-select:none;}
+/* =====================================================================
+   CSS 2. PAGE BASICS (background, font, page width)
+   ===================================================================== */
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  color: var(--text);
+  background-color: var(--navy-deep);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 0% 100%, rgba(91,195,232,.85) 0%, rgba(91,195,232,0) 70%),
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(5,20,70,.9) 0%, rgba(5,20,70,0) 70%),
+    linear-gradient(170deg, #021448 0%, #0a2a70 55%, #0e3c8e 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; }
+a { color: var(--link); }
+:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.wrap { width: 100%; max-width: 580px; margin: 0 auto; padding: 28px 16px 40px; }
 
-/* Alert Modal */
-#alert-modal{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-#alert-modal.show{display:flex;}
-.alert-box{background:linear-gradient(135deg,rgba(22,101,84,.78),rgba(8,55,47,.66));backdrop-filter:blur(40px) saturate(170%);-webkit-backdrop-filter:blur(40px) saturate(170%);border:1px solid rgba(255,255,255,.30);border-radius:28px;padding:24px 22px 20px;max-width:340px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.34);position:relative;}
+/* =====================================================================
+   CSS 3. CARDS (every box on the page, this also sets the spacing
+   between posts: margin-bottom below)
+   ===================================================================== */
+.card {
+  background: linear-gradient(180deg, var(--card-top), var(--card-bottom));
+  border-radius: 22px;
+  box-shadow: var(--shadow), inset 0 -4px 0 var(--card-edge);
+  padding: 22px 22px 26px;
+  margin-bottom: 16px;
+}
 
-/* SQL Guide Modal Styles */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:12px;z-index:1000;}
-.dialog{background:linear-gradient(135deg,rgba(240,255,250,.92),rgba(211,245,237,.78));backdrop-filter:blur(40px) saturate(165%);-webkit-backdrop-filter:blur(40px) saturate(165%);border-radius:28px;border:1.5px solid rgba(255,255,255,.68);padding:20px;max-width:540px;width:100%;box-shadow:0 18px 52px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.72);display:flex;flex-direction:column;gap:14px;color:#10251f;}
-.alert-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1;transition:background .2s;}
-.alert-close:hover{background:rgba(255,255,255,.25);}
-.alert-msg{font-size:14px;color:rgba(255,255,255,.95);line-height:1.6;margin-bottom:16px;padding-right:20px;white-space:pre-wrap;}
-.alert-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
-.channel-box{background:linear-gradient(135deg,rgba(20,112,91,.82),rgba(7,58,48,.72));}
-#channel-modal{z-index:1200;}
-.channel-icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;margin:0 auto 13px;background:linear-gradient(145deg,#43e28e,#1aab70);border:1px solid rgba(255,255,255,.58);box-shadow:0 7px 16px rgba(0,0,0,.20),inset 0 1px 1px rgba(255,255,255,.5);}
-.channel-title{text-align:center;font-size:18px;font-weight:750;letter-spacing:-.02em;margin-bottom:7px;color:#fff;}
-.channel-message{text-align:center;font-size:14px;line-height:1.55;color:rgba(255,255,255,.88);margin:0 auto 18px;max-width:255px;}
-.channel-follow{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:18px;background:linear-gradient(135deg,#4ce795,#22bd76);border:1px solid rgba(255,255,255,.52);box-shadow:0 7px 16px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.48);color:#fff;font-weight:800;font-size:14px;text-decoration:none;transition:transform .2s ease,filter .2s ease;}
-.channel-follow:hover{transform:translateY(-1px);filter:brightness(1.07);}
-.upd-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:10px 22px;background:rgba(37,211,102,.3);backdrop-filter:blur(24px);border:1px solid rgba(37,211,102,.5);border-radius:24px;color:#fff;font-size:13px;font-weight:600;text-decoration:none;}
-#no-upd, #loading{text-align:center;padding:40px;color:rgba(255,255,255,.6);font-size:14px;}
+/* =====================================================================
+   CSS 4. HEADER AND CONTACT BUTTONS
+   ===================================================================== */
+.brand-card { padding-top: 24px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.mark {
+  width: 50px; height: 50px; flex: none;
+  background: #000; color: #fff;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 20px; letter-spacing: -.5px;
+   overflow: hidden;
+}
 
-/* TOAST & HEADER MISC */
-.hinfo{flex:1;min-width:0;}
+.mark img {
+   width: 100%; height: 100%; display: block;
+   object-fit: cover;
+   border-radius: inherit;
+}
+.brand h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.3px; line-height: 1.1; }
+.brand p { margin: 3px 0 0; font-size: 14px; color: var(--muted); }
 
-.hdr-top{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.07));backdrop-filter:blur(36px) saturate(165%);-webkit-backdrop-filter:blur(36px) saturate(165%);padding:12px 16px;border-radius:24px;border:1px solid rgba(255,255,255,.30);box-shadow:0 10px 24px rgba(0,24,20,.17),inset 0 1px 0 rgba(255,255,255,.34);}
-.hdr-pill-bar{padding:8px 16px 0;display:flex;justify-content:center;background:transparent;}
-.hwa-btn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.06));backdrop-filter:blur(36px) saturate(165%);-webkit-backdrop-filter:blur(36px) saturate(165%);padding:12px 28px;border-radius:22px;border:1px solid rgba(255,255,255,.28);box-shadow:0 7px 18px rgba(0,25,20,.16),inset 0 1px 0 rgba(255,255,255,.34);transition:transform .2s ease,background .2s ease,box-shadow .2s ease;}
-.hwa-btn:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(255,255,255,.10));box-shadow:0 10px 22px rgba(0,25,20,.23),inset 0 1px 0 rgba(255,255,255,.42);}
-.hdr-pill-bar .hwa-btn{padding:11px 14px;flex:1;}
+.contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.pill-link {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 62px; padding: 10px 12px; border: 0; border-radius: 999px;
+  background: linear-gradient(180deg, var(--wa-1), var(--wa-2));
+  color: #fff; text-decoration: none; text-align: center;
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 8px 18px rgba(0,10,50,.3);
+  transition: transform .12s ease, filter .12s ease;
+}
+.pill-link small { font-size: 12px; opacity: .85; font-weight: 500; }
+.pill-link strong { font-size: 15px; font-weight: 700; }
+.pill-link:hover { filter: brightness(1.06); }
+.pill-link:active { transform: translateY(2px); }
 
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1.5px solid rgba(255,255,255,.15);box-shadow:0 8px 30px rgba(0,0,0,.5);backdrop-filter:blur(10px);}
-#toast.show{opacity:1;}
+/* =====================================================================
+   CSS 5. TOP TABS (Home, Buy Softwares, Free Gifts)
+   ===================================================================== */
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab {
+  flex: 1 1 0; border: 2px solid rgba(255,255,255,.55); background: transparent; color: #fff;
+  font-weight: 700; font-size: 14px; padding: 11px 10px; border-radius: 999px; text-align: center;
+  transition: background .15s ease, color .15s ease;
+}
+.tab:hover { background: rgba(255,255,255,.14); }
+.tab[aria-pressed="true"] { background: #fff; color: var(--navy); border-color: #fff; }
 
-/* GIVEAWAY DYNAMIC COMPONENT STYLES */
-.giveaway-box {
-  background: linear-gradient(135deg, rgba(79, 246, 164, 0.22) 0%, rgba(42, 178, 164, 0.10) 100%);
-  border: 1px solid rgba(190, 255, 220, 0.30);
-  border-radius: 18px;
-  padding: 14px;
-  margin-top: 10px;
-  margin-bottom: 6px;
+/* =====================================================================
+   CSS 6. POST PARTS (badge, time, title, banner, features)
+   ===================================================================== */
+.post-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.badge {
+  display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 800;
+  color: #fff; background: linear-gradient(90deg, var(--blue-1), var(--teal));
+}
+.badge.gift { background: linear-gradient(90deg, #f7b731, #f0803c); }
+.badge.notice { background: linear-gradient(90deg, #8b93a8, #6b738a); }
+.time { font-size: 13px; color: var(--muted); }
+.post h2 { margin: 0 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -.2px; line-height: 1.3; }
+.post .lede { margin: 6px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+
+/* Colored banner (b1 = purple, b2 = orange-pink, b3 = teal) */
+.banner {
+  border-radius: 16px; overflow: hidden; margin: 14px 0; aspect-ratio: 16 / 9;
+  display: grid; place-items: center; text-align: center; color: #fff; padding: 16px;
   position: relative;
-  overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.giveaway-badge {
-  background: rgba(37, 211, 102, 0.18);
-  border: 1px solid rgba(37, 211, 102, 0.4);
-  color: #25D366;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.banner .big { font-size: clamp(30px, 8vw, 44px); font-weight: 800; letter-spacing: -1px; line-height: 1; }
+.banner .sub { margin-top: 8px; font-weight: 700; font-size: clamp(13px, 3.4vw, 16px); opacity: .95; }
+.banner.b1 { background: linear-gradient(135deg, #1a237e 0%, #4d2bc7 55%, #2fd8b8 130%); }
+.banner.b2 { background: linear-gradient(135deg, #ff7a59 0%, #c0398f 55%, #4d2bc7 100%); }
+.banner.b3 { background: linear-gradient(135deg, #0b6b8a 0%, #2fd8b8 100%); }
+.banner::before, .banner::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.12); }
+.banner::before { width: 160px; height: 160px; right: -40px; top: -50px; }
+.banner::after { width: 110px; height: 110px; left: -30px; bottom: -40px; }
+.banner > * { position: relative; z-index: 1; }
+.banner-img { display: block; width: 100%; height: auto; border-radius: 16px; margin: 14px 0; }
+
+/* Feature list with green ticks */
+.post h2 + .features { margin-top: 12px; }
+.features { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.features li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.4; }
+.features li::before {
+  content: ""; flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%;
+  background: var(--teal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-6.5' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat;
 }
-.giveaway-label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 4px;
-  display: block;
+
+/* =====================================================================
+   CSS 7. GIVEAWAY BOXES AND COPY BUTTONS
+   ===================================================================== */
+.creds { border: 2px dashed var(--outline); border-radius: 16px; padding: 14px; margin: 12px 0 4px; display: grid; gap: 12px; }
+.creds-title { font-weight: 700; font-size: 14px; }
+.field .label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+.field .row { display: flex; align-items: center; gap: 8px; background: var(--field); border: 2px solid var(--field-border); border-radius: 12px; padding: 4px 4px 4px 12px; }
+.field input {
+  flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text);
+  font: 500 15px/1.2 var(--font); padding: 9px 0; outline: none;
 }
-.giveaway-val-container {
-  display: flex;
-  align-items: center;
-  background: rgba(5, 45, 37, 0.28);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 14px;
-  padding: 10px 12px;
-  position: relative;
+.copy {
+  flex: none; border: 0; border-radius: 9px; padding: 8px 14px; font-weight: 700; font-size: 13px;
+  background: rgba(58,120,230,.12); color: var(--link); transition: background .15s ease, color .15s ease;
 }
-.giveaway-val {
-  font-family: 'SF Mono', 'JetBrains Mono', 'Courier New', Courier, monospace;
-  font-size: 13px;
-  color: #25D366;
-  font-weight: 600;
-  word-break: break-all;
-  padding-right: 36px;
-  user-select: all;
-  flex: 1;
-  letter-spacing: 0.02em;
+.copy:hover { background: rgba(58,120,230,.22); }
+.copy.done { background: var(--teal); color: #032a22; }
+
+/* =====================================================================
+   CSS 8. BUTTONS (Download, Buy now)
+   ===================================================================== */
+.actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.actions .cta:only-child { margin-left: auto; }
+.actions.center { justify-content: center; }
+.actions.center .cta:only-child { margin-left: 0; }
+.cta {
+  display: inline-block; border: 0; border-radius: 999px; padding: 12px 22px; font-weight: 800; font-size: 14px; color: #fff;
+  text-decoration: none; text-align: center;
+  background: linear-gradient(180deg, var(--blue-1), var(--blue-2));
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
+  transition: transform .12s ease, filter .12s ease;
 }
-.copy-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #fff;
-  transition: all 0.2s;
-  outline: none;
+.cta:hover { filter: brightness(1.07); }
+.cta:active { transform: translateY(2px); }
+.empty { text-align: center; color: #fff; padding: 30px 10px; font-weight: 600; display: none; }
+
+/* =====================================================================
+   CSS 8B. DOWNLOAD PICKER (three buttons: Android, Windows, Chrome)
+   The buttons that work on the visitor's device get class "match"
+   from the script and turn blue.
+   ===================================================================== */
+.downloads { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; margin-top: 20px; }
+.dl {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 14px 6px 12px; border: 2px solid var(--field-border); background: var(--field);
+  border-radius: 16px; color: var(--text); text-decoration: none; text-align: center;
+  transition: transform .12s ease, border-color .15s ease, filter .12s ease;
 }
-.copy-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #25D366;
+.dl svg { width: 30px; height: 30px; margin-bottom: 8px; color: var(--link); }
+.dl-cap { font-size: 11px; font-weight: 600; color: var(--muted); }
+.dl-name { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
+.dl-meta { font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+.dl:hover { border-color: var(--blue-1); }
+.dl:active { transform: translateY(2px); }
+.dl.match {
+  background: linear-gradient(180deg, var(--blue-1), var(--blue-2)); border-color: transparent; color: #fff;
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
 }
-.copy-btn.copied {
+.dl.match:hover { filter: brightness(1.07); }
+.dl.match svg, .dl.match .dl-cap, .dl.match .dl-meta { color: #fff; }
+.dl.match .dl-cap, .dl.match .dl-meta { opacity: .85; }
+.dl-tag {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  background: var(--teal); color: #032a22; font-size: 11px; font-weight: 800;
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,10,50,.25);
+}
+.dl.soon { opacity: .55; pointer-events: none; }
+
+/* =====================================================================
+   CSS 9. POPUP (Follow channel window that shows on every page load)
+   ===================================================================== */
+body.modal-open { overflow: hidden; }
+.overlay {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  background: rgba(2, 12, 40, .55);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.overlay[hidden] { display: none; }
+.modal {
+  position: relative; width: 100%; max-width: 340px; text-align: center;
+  background: linear-gradient(180deg, var(--card-top), var(--card-bottom));
+  border-radius: 24px; padding: 30px 22px 24px;
+  box-shadow: var(--shadow), inset 0 -4px 0 var(--card-edge);
+  animation: pop .28s ease-out both;
+}
+@keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+.modal-icon {
+  width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 16px; display: grid; place-items: center;
   background: #25D366;
-  border-color: #25D366;
-  color: #fff;
 }
+.modal-icon svg { width: 36px; height: 36px; }
+.modal h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; letter-spacing: -.3px; }
+.modal p { margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: var(--muted); }
+.modal .cta { display: block; width: 100%; padding: 14px 22px; font-size: 15px; }
+.modal-close {
+  position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid var(--outline); background: transparent; color: var(--muted);
+  display: grid; place-items: center; padding: 0;
+  transition: color .15s ease, border-color .15s ease;
+}
+.modal-close:hover { color: var(--link); border-color: var(--blue-1); }
+.modal-close svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 
-/* ACTION BAR & REACTIONS SYSTEM */
-.u-action-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  position: relative;
-}
-.u-react-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.u-react-btn {
-  background: transparent;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.65);
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255,255,255,.12);
-  backdrop-filter: blur(14px);
-  transition: all 0.2s;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.u-react-btn:hover, .u-react-btn:active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-}
-.u-react-btn.active {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-.u-react-btn.like { color: #fff; }
-.u-react-btn.love { color: #f1948a; }
-.u-react-btn.haha { color: #f7dc6f; }
-.u-react-btn.wow { color: #f5b041; }
-.u-react-btn.sad { color: #f7dc6f; }
-.u-react-btn.angry { color: #f1948a; }
+/* =====================================================================
+   CSS 10. FOOTER AND TOAST
+   ===================================================================== */
+footer { display: flex; justify-content: center; margin-top: 26px; color: #fff; }
+.stamp { font-weight: 800; font-size: 15px; line-height: 1; letter-spacing: 2px; text-align: center; white-space: nowrap; }
 
-.u-react-popup {
-  position: absolute;
-  bottom: 125%;
-  left: 0;
-  background: rgba(16, 65, 55, 0.72);
-  backdrop-filter: blur(34px) saturate(170%);
-  -webkit-backdrop-filter: blur(34px) saturate(170%);
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
-  border-radius: 30px;
-  padding: 6px 10px;
-  display: none;
-  gap: 12px;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.55), inset 0 1.5px 1px rgba(255,255,255,0.2);
-  z-index: 210;
-  animation: reactPopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-origin: bottom left;
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: #000; color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 600; font-size: 14px;
+  max-width: calc(100% - 32px); text-align: center; transition: opacity .2s ease, transform .2s ease; z-index: 30;
 }
-.u-react-popup.show {
-  display: flex;
-}
-@keyframes reactPopIn {
-  0% { transform: scale(0.6) translateY(20px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-.u-emoji-btn {
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 26px;
-  cursor: pointer;
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  padding: 2px;
-}
-.u-emoji-btn:hover {
-  transform: scale(1.4) translateY(-6px);
-}
-.u-react-counts {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.65);
-  background: rgba(0, 0, 0, 0.22);
-  border-radius: 14px;
-  padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  user-select: none;
-}
-.u-react-emoji-icons {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-}
-.u-react-emoji-icons span {
-  font-size: 13px;
-  display: inline-block;
-}
-.u-react-emoji-icons span:not(:first-child) {
-  margin-left: -4px;
-}
-.u-react-total-num {
-  font-weight: 700;
-  margin-left: 2px;
-}
-.u-react-breakdown-pop {
-  position: absolute;
-  bottom: 125%;
-  left: 0;
-  width: 170px;
-  background: rgba(16, 65, 55, 0.78);
-  backdrop-filter: blur(34px) saturate(170%);
-  -webkit-backdrop-filter: blur(34px) saturate(170%);
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
-  border-radius: 16px;
-  padding: 10px 12px;
-  display: none;
-  flex-direction: column;
-  align-items: flex-start;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.55), inset 0 1.5px 1px rgba(255,255,255,0.2);
-  z-index: 220;
-  animation: reactPopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-origin: bottom left;
-}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* SKELETON LOADER STYLES */
-.sk-card {
-  background: linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.06));
-  backdrop-filter: blur(30px) saturate(160%);
-  border-radius: 24px;
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  margin-bottom: 12px;
+/* =====================================================================
+   CSS 11. MOBILE AND ACCESSIBILITY
+   ===================================================================== */
+@media (max-width: 420px) {
+  .card { padding: 18px 16px 22px; border-radius: 20px; }
+  .contact-row { grid-template-columns: 1fr; }
+  .cta { padding: 12px 18px; }
+  .tab { font-size: 13px; padding: 10px 6px; }
+  .downloads { gap: 8px; }
+  .dl { padding: 12px 4px 10px; }
+  .dl-name { font-size: 15px; }
+  .dl-meta { font-size: 11px; }
 }
-.sk-pulse {
-  animation: skPulse 1.5s infinite ease-in-out;
-}
-@keyframes skPulse {
-  0% { opacity: 0.55; }
-  50% { opacity: 0.25; }
-  100% { opacity: 0.55; }
-}
-.sk-line {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }
 </style>
 </head>
-<body>
+<body class="modal-open">
+<div class="wrap">
 
-<div id="hdr">
-  <div class="hdr-top">
-    <div style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;" onclick="window.open('https://wa.me/94778315058','_blank')">
-      <img class="hav" src="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/public/profile/633438052_122116907661099468_7006831602680973794_n.jpg" alt="Ahmad">
-      <div class="hinfo">
-        <div class="hname">Signature Digital</div>
-        <div class="hsub">Genuine Softwares at Affordable Prices</div>
-
+  <!--
+  =====================================================================
+  SECTION 1. HEADER
+  Brand name, tagline and the two contact buttons.
+  To change the phone number, edit the text inside <strong>.
+  To add your real links, replace href="#" with your WhatsApp links.
+  =====================================================================
+  -->
+  <header class="card brand-card">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><img src="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/me.jpg?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvbWUuanBnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4OTgyNzUzNSwiZXhwIjo2NzIyODM2NzU1NTM1fQ.__qdOqa6RIHUHRx0nsOc-SNFeIjcwhXNrGCJ-FXPKuU" alt="Signature Digital logo"></div>
+      <div>
+        <h1>Signature Digital</h1>
+        <p>Genuine software at affordable prices</p>
       </div>
     </div>
-  </div>
-  <div class="hdr-pill-bar" style="gap:8px; align-items: center;">
-    <a href="https://wa.me/94778315058" target="_blank" class="hwa-btn" style="flex:1;min-width:0;padding:11px 14px;">
-      <svg viewBox="0 0 24 24" width="19" height="19" fill="#fff" style="flex-shrink:0;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      <div style="min-width:0;">
-        <div style="font-size:10px;color:rgba(255,255,255,.65);line-height:1;">Active WhatsApp</div>
-        <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;white-space:nowrap;">+94 77 831 5058</div>
-      </div>
-    </a>
-    <a href="https://whatsapp.com/channel/0029Vb4Q8vtBPzjf9imWaj3b" target="_blank" class="hwa-btn" style="flex:1;min-width:0;padding:11px 14px;">
-      <svg viewBox="0 0 24 24" width="19" height="19" fill="#fff" style="flex-shrink:0;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      <div style="min-width:0;">
-        <div style="font-size:10px;color:rgba(255,255,255,.65);line-height:1;">WhatsApp Channel</div>
-        <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;white-space:nowrap;">Follow & Updates</div>
-      </div>
-    </a>
-  </div>
+    <div class="contact-row">
+      <a class="pill-link" href="https://wa.me/94778315058">
+        <small>Active WhatsApp</small>
+        <strong>+94 77 831 5058</strong>
+      </a>
+      <a class="pill-link" href="https://whatsapp.com/channel/0029Vb4Q8vtBPzjf9imWaj3b">
+        <small>WhatsApp channel</small>
+        <strong>Follow &amp; updates</strong>
+      </a>
+    </div>
+  </header>
+
+
+  <!--
+  =====================================================================
+  SECTION 2. TABS
+  Home shows every post. Buy Softwares shows only section 3B.
+  Free Gifts shows only section 3C.
+  To rename a tab, change the text between the > and < of the button.
+  =====================================================================
+  -->
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab" type="button" data-filter="all" aria-pressed="true">Home</button>
+    <button class="tab" type="button" data-filter="software" aria-pressed="false">Buy Softwares</button>
+    <button class="tab" type="button" data-filter="gifts" aria-pressed="false">Free Gifts</button>
+  </nav>
+
+
+  <!--
+  =====================================================================
+  SECTION 3. POSTS
+  Three groups. The Home tab shows all three, from top to bottom.
+    3A  HOME ONLY POSTS
+    3B  BUY SOFTWARES
+    3C  FREE GIFTS
+  Inside each group, newest post goes at the TOP.
+  =====================================================================
+  -->
+  <main id="feed">
+
+
+    <!--
+    #####################################################################
+    SECTION 3A. HOME ONLY POSTS
+    Shown on the Home tab only (downloads, updates, announcements).
+
+    HOW TO ADD A POST HERE
+      1. Copy a template below (from <article to </article>).
+      2. Paste it right under the line "PASTE NEW HOME POSTS BELOW".
+      3. Change the text and time, and put your link in href="#" on each of
+         the three download buttons (Android, Windows, Chrome).
+      4. The small line under each platform name is the version, for example
+         "v1.3". Change it to anything you like.
+      5. If one version is not ready yet, change that button's opening tag
+         from <a class="dl" ... href="#"> to <span class="dl soon" ...> and its
+         closing </a> to </span>, then write "Coming soon" as the small line.
+         The button stays visible but greyed out and cannot be clicked.
+      6. To show only two buttons, delete the third button block. The two left
+         will share the full width.
+      7. Devices are detected automatically. The buttons that work on the
+         visitor's device turn blue and get a "Your device" tag.
+
+    TEMPLATE: DOWNLOAD POST (three buttons)
+      <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>App name – latest version</h2>
+        <p class="lede">Pick the version for your device.</p>
+        <div class="downloads">
+          <a class="dl" data-platform="android" href="#">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 9h12v9a1 1 0 0 1-1 1h-1v3a1.5 1.5 0 0 1-3 0v-3h-2v3a1.5 1.5 0 0 1-3 0v-3H7a1 1 0 0 1-1-1V9z"/><path d="M4.5 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5zM17 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5z"/><path fill-rule="evenodd" d="M6.2 8a5.8 5.8 0 0 1 11.6 0H6.2zM9.2 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0zM13.3 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0z"/><path d="M8.4 1.6l1.4 2.2M15.6 1.6l-1.4 2.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Android</span>
+            <span class="dl-meta">v1.0</span>
+          </a>
+          <a class="dl" data-platform="windows" href="#">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6l7.6-1v7H3V5.6zM11.7 4.4L21 3v8.6h-9.3V4.4zM3 12.6h7.6v7L3 18.4v-5.8zM11.7 12.6H21V21l-9.3-1.4v-7z"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Windows</span>
+            <span class="dl-meta">v1.0</span>
+          </a>
+          <a class="dl" data-platform="chrome" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none"/><path d="M12 8.4h8.4M8.9 13.8L4.7 6.6M15.1 13.8l-4.2 7.2"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Chrome</span>
+            <span class="dl-meta">Extension</span>
+          </a>
+        </div>
+      </article>
+
+    TEMPLATE: TEXT NOTICE
+      <article class="card post">
+        <div class="post-head"><span class="badge notice">Notice</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Notice title</h2>
+        <p class="lede">Write your message here.</p>
+      </article>
+    #####################################################################
+    -->
+    <div class="feed-group" data-group="updates">
+
+      <!-- >>> PASTE NEW HOME POSTS BELOW THIS LINE (newest first) <<< -->
+
+      <!-- POST: Voxa Ultra downloads -->
+      <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Veo 3 Ultra</h2>
+        <p class="lede">Pick the version for your device.</p>
+        <div class="downloads">
+          <a class="dl" data-platform="android" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra.apk?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEuYXBrIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4OTgyNjYwMywiZXhwIjo1NjY4NzU0NjAzfQ._i2jbZS26JkmO0edMKwRnSGRslyxj_E9CcrEaow3yhA">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 9h12v9a1 1 0 0 1-1 1h-1v3a1.5 1.5 0 0 1-3 0v-3h-2v3a1.5 1.5 0 0 1-3 0v-3H7a1 1 0 0 1-1-1V9z"/><path d="M4.5 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5zM17 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5z"/><path fill-rule="evenodd" d="M6.2 8a5.8 5.8 0 0 1 11.6 0H6.2zM9.2 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0zM13.3 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0z"/><path d="M8.4 1.6l1.4 2.2M15.6 1.6l-1.4 2.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Android</span>
+            <span class="dl-meta">v1.0</span>
+          </a>
+          <a class="dl" data-platform="windows" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo3Ultra.exe?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvM1VsdHJhLmV4ZSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODk4MjY1NjIsImV4cCI6Mzg4NDU5Njc1NDU2Mn0.8QDmSGkc9FNBR48de0Sn-CQ3nkPelrvnxx8i_R66iPo">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6l7.6-1v7H3V5.6zM11.7 4.4L21 3v8.6h-9.3V4.4zM3 12.6h7.6v7L3 18.4v-5.8zM11.7 12.6H21V21l-9.3-1.4v-7z"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Windows</span>
+            <span class="dl-meta">v1.3</span>
+          </a>
+          <a class="dl" data-platform="chrome" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEuemlwIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4OTgyNjU4MywiZXhwIjo2NzIyODM2NzU0NTgzfQ.t-kmVe9nYWCALsI3pzOJYB1FfPJHcw5riFlIt6pwVaA">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none"/><path d="M12 8.4h8.4M8.9 13.8L4.7 6.6M15.1 13.8l-4.2 7.2"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Chrome</span>
+            <span class="dl-meta">Extension</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- POST: Notara Plus downloads -->
+      <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">9/19/2026 06:39 PM</span></div>
+        <h2>ChatGPT Plus</h2>
+        <p class="lede">Pick the version for your device.</p>
+        <div class="downloads">
+          <a class="dl" data-platform="android" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/ChatGPT%20Plus.apk?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvQ2hhdEdQVCBQbHVzLmFwayIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODk4MjY2MzcsImV4cCI6NTY2ODc1NDYzN30.gz9bjZha0AoSMgE6bvOuskUFKkphcnZwgG0P5yMxN2g">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 9h12v9a1 1 0 0 1-1 1h-1v3a1.5 1.5 0 0 1-3 0v-3h-2v3a1.5 1.5 0 0 1-3 0v-3H7a1 1 0 0 1-1-1V9z"/><path d="M4.5 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5zM17 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5z"/><path fill-rule="evenodd" d="M6.2 8a5.8 5.8 0 0 1 11.6 0H6.2zM9.2 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0zM13.3 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0z"/><path d="M8.4 1.6l1.4 2.2M15.6 1.6l-1.4 2.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Android</span>
+            <span class="dl-meta">v1.1</span>
+          </a>
+          <a class="dl" data-platform="windows" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/ChatGPT%20Plus.exe?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvQ2hhdEdQVCBQbHVzLmV4ZSIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODk4MjY2NTYsImV4cCI6Mzg4NDU5Njc1NDY1Nn0.DYQL3-Y-34jUW1uURTWub-dvqKLhdn-cdAHxWTUM3RI">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6l7.6-1v7H3V5.6zM11.7 4.4L21 3v8.6h-9.3V4.4zM3 12.6h7.6v7L3 18.4v-5.8zM11.7 12.6H21V21l-9.3-1.4v-7z"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Windows</span>
+            <span class="dl-meta">v1.3</span>
+          </a>
+          <a class="dl" data-platform="chrome" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/ChatGPT%20Plus.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvQ2hhdEdQVCBQbHVzLnppcCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODk4MjY2NzIsImV4cCI6Mzg4NDU5Njc1NDY3Mn0.CM_0PJJQMlwfH8wnfoRL-pPs6ShrzNIzvRaFgkcrGJw">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none"/><path d="M12 8.4h8.4M8.9 13.8L4.7 6.6M15.1 13.8l-4.2 7.2"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Chrome</span>
+            <span class="dl-meta">Extension</span>
+          </a>
+        </div>
+      </article>
+
+      <!-- POST: Channel notice 
+      <article class="card post">
+        <div class="post-head"><span class="badge notice">Notice</span><span class="time">5/23/2026 09:51 PM</span></div>
+        <h2>Channel notice</h2>
+        <p class="lede">Our WhatsApp channel was banned, so we can't rely on it anymore. All updates and offers will be posted right here.</p>
+      </article> -->
+
+      <!-- END OF SECTION 3A. Older Home posts stay above this line. -->
+    </div>
+
+
+    <!--
+    #####################################################################
+    SECTION 3B. BUY SOFTWARES
+    Shown on the Home tab AND the Buy Softwares tab.
+
+    HOW TO ADD A POST HERE
+      1. Copy the template below (from <article to </article>).
+      2. Paste it right under the line "PASTE NEW SOFTWARE POSTS BELOW".
+      3. Change the text and time, and put your link in href="#".
+
+    TEMPLATE: PRODUCT POST
+      <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Product name – Rs. 2,450 per month</h2>
+        <ul class="features">
+          <li>Feature one</li>
+          <li>Feature two</li>
+          <li>Feature three</li>
+        </ul>
+        <div class="actions center"><a class="cta" href="#">Buy now</a></div>
+      </article>
+    #####################################################################
+    -->
+    <div class="feed-group" data-group="software">
+
+      <!-- >>> PASTE NEW SOFTWARE POSTS BELOW THIS LINE (newest first) <<< -->
+
+      <!-- POST: CapCut Pro -->
+      <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">5/28/2026 01:37 AM</span></div>
+        <h2>CapCut Pro – Rs. 1,750 per month</h2>
+        <ul class="features">
+          <li>Activated on your own email</li>
+          <li>You can change the email and password</li>
+          <li>No log-out issues</li>
+          <li>Use on up to 4 devices</li>
+          <li>Works on Android, iPhone, Mac and Windows</li>
+        </ul>
+        <div class="actions center"><a class="cta" href="https://wa.me/94778315058">Buy now</a></div>
+      </article>
+	  
+	   <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">5/28/2026 01:37 AM</span></div>
+        <h2>ChatGPT Plus – Rs. 1,750 per month</h2>
+        <ul class="features">
+          <li>Unlimited Message - GPT 5.5 Mini</li>
+          <li>Unlimited File Uploads</li>
+          <li>Unlimited Voice Chat</li>
+          <li>No Warranty for Image Generation</li>
+          <li>No Warranty for Codex Usage</li>
+        </ul>
+        <div class="actions center"><a class="cta" href="https://wa.me/94778315058">Buy now</a></div>
+      </article>
+
+      <!-- END OF SECTION 3B. Older software posts stay above this line. -->
+    </div>
+
+
+    <!--
+    #####################################################################
+    SECTION 3C. FREE GIFTS
+    Shown on the Home tab AND the Free Gifts tab.
+
+    HOW TO ADD A POST HERE
+      1. Copy a template below (from <article to </article>).
+      2. Paste it right under the line "PASTE NEW GIFT POSTS BELOW".
+      3. Change the text, the email, the password and the time.
+      To add another copy box, copy one whole <div class="field">...</div>.
+      To remove a box, delete one of those blocks.
+
+    TEMPLATE: GIVEAWAY WITH EMAIL AND PASSWORD
+      <article class="card post">
+        <div class="post-head"><span class="badge gift">Giveaway</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Product name – what the account gives</h2>
+        <div class="banner b3" role="img" aria-label="Product name">
+          <div><div class="big">PRODUCT NAME</div><div class="sub">Short line under the name</div></div>
+        </div>
+        <div class="creds">
+          <div class="creds-title">Giveaway account</div>
+          <div class="field">
+            <span class="label">Email or username</span>
+            <div class="row"><input type="text" readonly value="email@example.com" aria-label="Email or username"><button class="copy" type="button">Copy</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Password</span>
+            <div class="row"><input type="text" readonly value="password-here" aria-label="Password"><button class="copy" type="button">Copy</button></div>
+          </div>
+        </div>
+      </article>
+
+    TEMPLATE: GIVEAWAY WITH LICENSE KEY, EMAIL AND PASSWORD
+      <article class="card post">
+        <div class="post-head"><span class="badge gift">Giveaway</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Product name – 1-month license key</h2>
+        <div class="creds">
+          <div class="creds-title">Giveaway key</div>
+          <div class="field">
+            <span class="label">License key</span>
+            <div class="row"><input type="text" readonly value="XXXX-XXXX-XXXX-XXXX" aria-label="License key"><button class="copy" type="button">Copy</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Email or username</span>
+            <div class="row"><input type="text" readonly value="email@example.com" aria-label="Email or username"><button class="copy" type="button">Copy</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Password</span>
+            <div class="row"><input type="text" readonly value="password-here" aria-label="Password"><button class="copy" type="button">Copy</button></div>
+          </div>
+        </div>
+      </article>
+    #####################################################################
+    -->
+    <div class="feed-group" data-group="gifts">
+
+      <!-- >>> PASTE NEW GIFT POSTS BELOW THIS LINE (newest first) <<< -->
+
+      <!-- POST: Voxa Ultra giveaway account -->
+     
+
+      <!-- END OF SECTION 3C. Older gift posts stay above this line. -->
+    </div>
+
+  </main>
+  <p class="empty" id="empty">No posts here yet.</p>
+
+
+  <!--
+  =====================================================================
+  SECTION 4. FOOTER
+  The centered text at the bottom. Change the words here.
+  =====================================================================
+  -->
+  <footer>
+    <div class="stamp" aria-label="Signature Digital">SIGNATURE DIGITAL</div>
+  </footer>
 </div>
 
-<div id="main">
-  <div id="loading" style="display: block;">
-    <div class="sk-card sk-pulse">
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-        <div class="sk-line" style="width: 55px; height: 16px; border-radius: 8px;"></div>
-        <div class="sk-line" style="width: 70px; height: 10px; margin-left: auto;"></div>
-      </div>
-      <div class="sk-line" style="width: 92%; height: 12px; margin-bottom: 8px;"></div>
-      <div class="sk-line" style="width: 80%; height: 12px; margin-bottom: 14px;"></div>
-      <div class="sk-line" style="width: 100%; height: 180px; border-radius: 12px; background: rgba(255,255,255,0.08); margin-bottom: 14px;"></div>
-      <div style="display: flex; justify-content: flex-start; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
-        <div class="sk-line" style="width: 75px; height: 26px; border-radius: 14px;"></div>
-      </div>
-    </div>
-    <div class="sk-card sk-pulse" style="animation-delay: .15s;">
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-        <div class="sk-line" style="width: 55px; height: 16px; border-radius: 8px;"></div>
-        <div class="sk-line" style="width: 70px; height: 10px; margin-left: auto;"></div>
-      </div>
-      <div class="sk-line" style="width: 88%; height: 12px; margin-bottom: 8px;"></div>
-      <div class="sk-line" style="width: 60%; height: 12px; margin-bottom: 12px;"></div>
-      <div style="display: flex; justify-content: flex-start; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
-        <div class="sk-line" style="width: 75px; height: 26px; border-radius: 14px;"></div>
-      </div>
-    </div>
-  </div>
-  <div id="updlist"></div>
-  <div id="no-upd" style="display:none;">No updates yet. Check back soon!</div>
-</div>
 
-<div id="alert-modal">
-  <div class="alert-box">
-    <button class="alert-close" onclick="closeAlert()">&#10005;</button>
-    <div class="alert-msg" id="alert-msg"></div>
-    <div id="alert-btn-wrap" style="display:none;">
-      <a class="alert-btn" id="alert-btn-link" href="#" target="_blank"></a>
+<!--
+=====================================================================
+SECTION 5. POPUP (shows every time the page loads)
+To add your channel link: replace href="#" on the button below.
+To change the words: edit the title and the line under it.
+To turn the popup off: delete this whole block (down to the line
+"END OF SECTION 5") and remove class="modal-open" from the <body> tag.
+=====================================================================
+-->
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" type="button" aria-label="Close">
+      <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12"/></svg>
+    </button>
+    <div class="modal-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path fill="#fff" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
     </div>
+    <h2 id="modalTitle">Follow channel for warranty</h2>
+    <p>Follow our WhatsApp channel for warranty &amp; updates.</p>
+    <a class="cta" id="followBtn" href="https://whatsapp.com/channel/0029Vb4Q8vtBPzjf9imWaj3b">Follow channel →</a>
   </div>
 </div>
-<div id="channel-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="channel-title">
-  <div class="alert-box channel-box">
-    <button class="alert-close" onclick="closeChannelPopup()" aria-label="Close">&#10005;</button>
-    <div class="channel-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="25" height="25" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-    </div>
-    <h2 id="channel-title" class="channel-title">Follow Channel for Warranty</h2>
-    <p class="channel-message">Follow our WhatsApp Channel for warranty &amp; updates.</p>
-    <a class="channel-follow" href="https://whatsapp.com/channel/0029Vb4Q8vtBPzjf9imWaj3b" target="_blank" rel="noopener" onclick="closeChannelPopup()">Follow Channel <span aria-hidden="true">→</span></a>
-  </div>
-</div>
-<div id="toast"></div>
+<!-- END OF SECTION 5 -->
 
-<!-- SQL Schema Setup Guide Overlay -->
-<div id="sql-guide-modal" class="overlay">
-  <div class="dialog" style="max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 22px;">
-    <h3 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;">
-      <span>💻 Supabase SQL Tables Initializer</span>
-    </h3>
-    <p style="font-size:12px;color:#667781;line-height:1.5;margin-bottom:8px;">
-      Copy and run this script in your <b>Supabase SQL Editor</b> to create tables, functions, and seed mock configurations instantly:
-    </p>
-    
-    <div style="background:#1e1e1e;border-radius:12px;padding:12px;position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;">
-      <pre id="sql-code" style="font-family: 'Fira Code', 'JetBrains Mono', monospace; font-size: 11.5px; color: #a9e159; overflow: auto; white-space: pre; line-height: 1.45; text-align: left; flex: 1; padding-right: 12px;"></pre>
-      <button onclick="copySqlScript()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);">Copy Code</button>
-    </div>
 
-    <div style="display:flex;gap:8px;margin-top:14px;flex-shrink:0;">
-      <button class="alert-btn" style="width:100%;background:#25D366;border-color:#25D366;cursor:pointer;cursor:pointer;" onclick="closeSqlGuide()">Close Setup Guide</button>
-    </div>
-  </div>
-</div>
+<!--
+=====================================================================
+SECTION 6. TOAST (the small black message bubble). Leave as it is.
+=====================================================================
+-->
+<div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!--
+=====================================================================
+SECTION 7. SCRIPT (makes tabs, Copy buttons and the popup work)
+You do not need to edit anything below this line up to Section 8.
+=====================================================================
+-->
 <script>
-const BOT_URL = 'https://whatsapp-bot-production-8af1.up.railway.app';
-const SB_URL = 'https://gufqzzhwgrxrjwyhqnki.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1ZnF6emh3Z3J4cmp3eWhxbmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTk5MDAsImV4cCI6MjA5NTAzNTkwMH0.Elfpdw9TnTNT7g8yn8HFLpxcry7bjkEZTeUlOZxuhC4';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+(function () {
 
-// Zoom and gesture prevention controls
-document.addEventListener('touchstart', function(event) {
-  if (event.touches.length > 1) {
-    event.preventDefault();
+  // ---------- 7A. Small message bubble ----------
+  var toastEl = document.getElementById("toast");
+  var toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
   }
-}, { passive: false });
 
-document.addEventListener('gesturestart', function(event) {
-  event.preventDefault();
-}, { passive: false });
-
-// Reaction definitions and configurations (Facebook-style reactions)
-const REACT_MAP = {
-  like: { emoji: '👍', label: 'Like', class: 'like' },
-  love: { emoji: '❤️', label: 'Love', class: 'love' },
-  haha: { emoji: '😆', label: 'Haha', class: 'haha' },
-  wow: { emoji: '😮', label: 'Wow', class: 'wow' },
-  sad: { emoji: '😢', label: 'Sad', class: 'sad' },
-  angry: { emoji: '😡', label: 'Angry', class: 'angry' }
-};
-
-const LIKE_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:2px;"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
-const MINI_LIKE_SVG = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
-
-var activeStateCounts = {};
-var reactTimers = {};
-var hoverTimers = {};
-var currentOpenPopupId = null;
-var popupOpenedAt = {};
-
-var pressTimer = null;
-var longPressTriggered = false;
-var isTouchDevice = false;
-var activeBreakdownId = null;
-
-function handleReactTouchStart(e, uid) {
-  isTouchDevice = true;
-  longPressTriggered = false;
-  if (pressTimer) clearTimeout(pressTimer);
-  
-  pressTimer = setTimeout(function() {
-    showReactPopup(uid);
-    longPressTriggered = true;
-  }, 400);
-}
-
-function handleReactTouchEnd(e, uid) {
-  if (pressTimer) {
-    clearTimeout(pressTimer);
-    pressTimer = null;
+  // ---------- 7B. Copy helper ----------
+  function fallbackCopy(text) {
+    return new Promise(function (resolve, reject) {
+      var t = document.createElement("textarea");
+      t.value = text; t.setAttribute("readonly", "");
+      t.style.position = "fixed"; t.style.opacity = "0";
+      document.body.appendChild(t); t.select();
+      try { document.execCommand("copy") ? resolve() : reject(); } catch (e) { reject(e); }
+      document.body.removeChild(t);
+    });
   }
-  if (longPressTriggered) {
-    e.preventDefault();
-    return;
-  }
-  e.preventDefault();
-  toggleReactDefault(uid);
-}
-
-function handleReactMouseDown(e, uid) {
-  if (isTouchDevice) return;
-  longPressTriggered = false;
-  if (pressTimer) clearTimeout(pressTimer);
-  
-  pressTimer = setTimeout(function() {
-    showReactPopup(uid);
-    longPressTriggered = true;
-  }, 400);
-}
-
-function handleReactMouseUp(e, uid) {
-  if (isTouchDevice) return;
-  if (pressTimer) {
-    clearTimeout(pressTimer);
-    pressTimer = null;
-  }
-}
-
-function handleReactMouseLeave(e, uid) {
-  if (isTouchDevice) return;
-  if (pressTimer) {
-    clearTimeout(pressTimer);
-    pressTimer = null;
-  }
-  endReactHover(uid);
-}
-
-function handleReactClick(e, uid) {
-  if (isTouchDevice) return;
-  if (longPressTriggered) {
-    e.preventDefault();
-    return;
-  }
-  toggleReactDefault(uid);
-}
-
-function startReactHover(uid) {
-  if (isTouchDevice) return;
-  if (hoverTimers[uid]) clearTimeout(hoverTimers[uid]);
-  hoverTimers[uid] = setTimeout(function() {
-    showReactPopup(uid);
-  }, 400);
-}
-
-function endReactHover(uid) {
-  if (isTouchDevice) return;
-  if (hoverTimers[uid]) clearTimeout(hoverTimers[uid]);
-  hoverTimers[uid] = setTimeout(function() {
-    var container = document.getElementById('react-container-' + uid);
-    if (container && !container.matches(':hover')) {
-      hideReactPopup(uid);
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () { return fallbackCopy(text); });
     }
-  }, 350);
-}
-
-function showReactPopup(uid) {
-  if (currentOpenPopupId && currentOpenPopupId !== uid) {
-    hideReactPopup(currentOpenPopupId);
+    return fallbackCopy(text);
   }
-  var pop = document.getElementById('react-popup-' + uid);
-  if (pop) {
-    pop.classList.add('show');
-    currentOpenPopupId = uid;
-    popupOpenedAt[uid] = Date.now();
-  }
-}
 
-function hideReactPopup(uid) {
-  var pop = document.getElementById('react-popup-' + uid);
-  if (pop) {
-    pop.classList.remove('show');
-  }
-  if (currentOpenPopupId === uid) {
-    currentOpenPopupId = null;
-  }
-  popupOpenedAt[uid] = 0;
-}
+  // ---------- 7C. Clicks: Copy buttons, tabs, placeholder links ----------
+  document.addEventListener("click", function (e) {
 
-function showReactionBreakdown(uid, e) {
-  if (e) {
-    e.stopPropagation();
-    e.preventDefault();
-  }
-  
-  if (activeBreakdownId && activeBreakdownId !== uid) {
-    var otherPop = document.getElementById('react-breakdown-' + activeBreakdownId);
-    if (otherPop) otherPop.style.display = 'none';
-  }
-  
-  var pop = document.getElementById('react-breakdown-' + uid);
-  if (!pop) return;
-  
-  if (pop.style.display === 'flex') {
-    pop.style.display = 'none';
-    activeBreakdownId = null;
-    return;
-  }
-  
-  var countsObj = activeStateCounts[uid];
-  if (!countsObj) return;
-  
-  var items = [
-    { key: 'like', count: countsObj.react_like || 0, emoji: '👍', label: 'Like' },
-    { key: 'love', count: countsObj.react_love || 0, emoji: '❤️', label: 'Love' },
-    { key: 'haha', count: countsObj.react_haha || 0, emoji: '😆', label: 'Haha' },
-    { key: 'wow', count: countsObj.react_wow || 0, emoji: '😮', label: 'Wow' },
-    { key: 'sad', count: countsObj.react_sad || 0, emoji: '😢', label: 'Sad' },
-    { key: 'angry', count: countsObj.react_angry || 0, emoji: '😡', label: 'Angry' }
-  ];
-  
-  var activeItems = items.filter(function(i) { return i.count > 0; });
-  if (activeItems.length === 0) return;
-  
-  var html = '<div style="font-weight:700;font-size:11px;color:rgba(255,255,255,.9);margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:4px;width:100%;">Reactions Breakdown</div>';
-  activeItems.forEach(function(item) {
-    var itemEmoji = item.emoji;
-    if (item.key === 'like') {
-      itemEmoji = '<span style="display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.15);width:16px;height:16px;border-radius:50%;margin-right:2px;border:1px solid rgba(255,255,255,0.25);">' + MINI_LIKE_SVG + '</span>';
-    } else {
-      itemEmoji = '<span>' + item.emoji + '</span>';
-    }
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;font-size:12px;color:rgba(255,255,255,.9);padding:3px 0;">' +
-              '<span style="display:flex;align-items:center;gap:6px;">' + itemEmoji + ' <span>' + item.label + '</span></span>' +
-              '<span style="font-weight:700;color:#25D366;">' + fmtCount(item.count) + '</span>' +
-            '</div>';
-  });
-  
-  pop.innerHTML = html;
-  pop.style.display = 'flex';
-  activeBreakdownId = uid;
-}
-
-document.addEventListener('click', function(e) {
-  if (currentOpenPopupId) {
-    var container = document.getElementById('react-container-' + currentOpenPopupId);
-    if (container && !container.contains(e.target)) {
-      hideReactPopup(currentOpenPopupId);
-    }
-  }
-  if (activeBreakdownId) {
-    var pop = document.getElementById('react-breakdown-' + activeBreakdownId);
-    var countsEl = document.getElementById('react-counts-' + activeBreakdownId);
-    if (pop && !pop.contains(e.target) && countsEl && !countsEl.contains(e.target)) {
-      pop.style.display = 'none';
-      activeBreakdownId = null;
-    }
-  }
-});
-
-function updateReactBtnUI(uid, type) {
-  var btn = document.getElementById('react-btn-' + uid);
-  var icon = document.getElementById('react-icon-' + uid);
-  var lbl = document.getElementById('react-lbl-' + uid);
-  if (!btn || !icon || !lbl) return;
-  
-  btn.className = 'u-react-btn';
-  
-  if (type && REACT_MAP[type]) {
-    var match = REACT_MAP[type];
-    if (type === 'like') {
-      icon.innerHTML = LIKE_SVG;
-    } else {
-      icon.textContent = match.emoji;
-    }
-    lbl.textContent = match.label;
-    btn.classList.add('active', match.class);
-  } else {
-    icon.innerHTML = LIKE_SVG;
-    lbl.textContent = 'Like';
-  }
-}
-
-function renderCountsUI(uid) {
-  var countsObj = activeStateCounts[uid];
-  if (!countsObj) return;
-  
-  var total = 0;
-  var items = [
-    { type: 'like', count: countsObj.react_like || 0, emoji: '👍' },
-    { type: 'love', count: countsObj.react_love || 0, emoji: '❤️' },
-    { type: 'haha', count: countsObj.react_haha || 0, emoji: '😆' },
-    { type: 'wow', count: countsObj.react_wow || 0, emoji: '😮' },
-    { type: 'sad', count: countsObj.react_sad || 0, emoji: '😢' },
-    { type: 'angry', count: countsObj.react_angry || 0, emoji: '😡' }
-  ];
-  
-  items.forEach(function(item) {
-    total += item.count;
-  });
-  
-  var countsEl = document.getElementById('react-counts-' + uid);
-  if (!countsEl) return;
-  
-  if (total === 0) {
-    countsEl.style.display = 'none';
-    return;
-  }
-  
-  var activeItems = items.filter(function(i) { return i.count > 0; });
-  activeItems.sort(function(a, b) { return b.count - a.count; });
-  
-  var topEmojisHtml = '<div class="u-react-emoji-icons">';
-  var displayCount = Math.min(3, activeItems.length);
-  for (var i = 0; i < displayCount; i++) {
-    if (activeItems[i].type === 'like') {
-      topEmojisHtml += '<span style="display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.15);width:16px;height:16px;border-radius:50%;margin-right:2px;border:1px solid rgba(255,255,255,0.25);">' + MINI_LIKE_SVG + '</span>';
-    } else {
-      topEmojisHtml += '<span>' + activeItems[i].emoji + '</span>';
-    }
-  }
-  topEmojisHtml += '</div>';
-  
-  countsEl.innerHTML = topEmojisHtml + '<span class="u-react-total-num">' + fmtCount(total) + '</span>';
-  countsEl.style.display = 'flex';
-}
-
-async function toggleReactDefault(uid) {
-  var openedTime = popupOpenedAt[uid] || 0;
-  var now = Date.now();
-  if (openedTime && (now - openedTime < 450)) {
-    return;
-  }
-  
-  var pop = document.getElementById('react-popup-' + uid);
-  if (pop && pop.classList.contains('show')) {
-    hideReactPopup(uid);
-  }
-  
-  var active = localStorage.getItem('react_' + uid);
-  if (active) {
-    localStorage.removeItem('react_' + uid);
-    updateReactBtnUI(uid, null);
-    await decrementReactionOnServer(uid, active);
-  } else {
-    localStorage.setItem('react_' + uid, 'like');
-    updateReactBtnUI(uid, 'like');
-    await incrementReactionOnServer(uid, 'like');
-  }
-}
-
-async function selectReaction(uid, emojiKey) {
-  hideReactPopup(uid);
-  
-  var prevReaction = localStorage.getItem('react_' + uid) || null;
-  if (prevReaction === emojiKey) {
-    localStorage.removeItem('react_' + uid);
-    updateReactBtnUI(uid, null);
-    await decrementReactionOnServer(uid, emojiKey);
-    return;
-  }
-  
-  if (prevReaction) {
-    await decrementReactionOnServer(uid, prevReaction);
-  }
-  
-  localStorage.setItem('react_' + uid, emojiKey);
-  updateReactBtnUI(uid, emojiKey);
-  await incrementReactionOnServer(uid, emojiKey);
-}
-
-async function incrementReactionOnServer(uid, type) {
-  try {
-    var r = await sb.rpc('react_to_post', { update_id: uid, reaction: type, val: 1 });
-    if (r.error) throw r.error;
-  } catch (err) {
-    console.warn("RPC react_to_post failed, falling back to direct update:", err);
-    try {
-      var currentVal = activeStateCounts[uid] ? (activeStateCounts[uid]['react_' + type] || 0) : 0;
-      var updateData = {};
-      updateData['react_' + type] = currentVal + 1;
-      await sb.from('updates').update(updateData).eq('id', uid);
-    } catch (e) {
-      console.error("Direct update fallback failed too:", e);
-    }
-  }
-  if (activeStateCounts[uid]) {
-    activeStateCounts[uid]['react_' + type] = (activeStateCounts[uid]['react_' + type] || 0) + 1;
-    renderCountsUI(uid);
-  }
-}
-
-async function decrementReactionOnServer(uid, type) {
-  try {
-    var r = await sb.rpc('react_to_post', { update_id: uid, reaction: type, val: -1 });
-    if (r.error) throw r.error;
-  } catch (err) {
-    console.warn("RPC react_to_post failed, falling back to direct update:", err);
-    try {
-      var currentVal = activeStateCounts[uid] ? (activeStateCounts[uid]['react_' + type] || 0) : 0;
-      var updateData = {};
-      updateData['react_' + type] = Math.max(0, currentVal - 1);
-      await sb.from('updates').update(updateData).eq('id', uid);
-    } catch (e) {
-      console.error("Direct update fallback failed too:", e);
-    }
-  }
-  if (activeStateCounts[uid]) {
-    activeStateCounts[uid]['react_' + type] = Math.max(0, (activeStateCounts[uid]['react_' + type] || 0) - 1);
-    renderCountsUI(uid);
-  }
-}
-
-function sanitize(t){
-  if(!t) return '';
-  var formatted = t.replace(/\n/g, '<br>');
-  return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['b', 'i', 'u', 's', 'strong', 'em', 'br', 'span', 'div', 'p'] });
-}
-
-function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function escAttr(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-
-function fmtTime(d){
-  var now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  var yest=new Date(today-86400000), md=new Date(d.getFullYear(),d.getMonth(),d.getDate());
-  var t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  if(md.getTime()===today.getTime()) return t;
-  if(md.getTime()===yest.getTime()) return 'Yesterday '+t;
-  return d.toLocaleDateString()+' '+t;
-}
-
-async function loadAlert(){
-  try{
-    var r=await sb.from('site_config').select('value').eq('key','alert').single();
-    if(!r.data) return;
-    var cfg=JSON.parse(r.data.value);
-    if(!cfg.enabled||!cfg.message) return;
-    if(sessionStorage.getItem('alert_seen')) return;
-    document.getElementById('alert-msg').textContent=cfg.message;
-    var bw=document.getElementById('alert-btn-wrap');
-    var bl=document.getElementById('alert-btn-link');
-    if(cfg.btn_label&&cfg.btn_url){
-      bl.textContent=cfg.btn_label;
-      bl.href=cfg.btn_url;
-      bw.style.display='';
-    }
-    document.getElementById('alert-modal').classList.add('show');
-  }catch(e){}
-}
-function closeAlert(){
-  document.getElementById('alert-modal').classList.remove('show');
-  sessionStorage.setItem('alert_seen','1');
-}
-
-function showChannelPopup(){
-  document.getElementById('channel-modal').style.display='flex';
-}
-function closeChannelPopup(){
-  document.getElementById('channel-modal').style.display='none';
-}
-
-function fmtCount(n){
-  if(n>=1000000) return (n/1000000).toFixed(1).replace('.0','')+'M';
-  if(n>=1000) return (n/1000).toFixed(1).replace('.0','')+'k';
-  return String(n);
-}
-
-
-
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  if(!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-function copyTextById(elId, btnId) {
-  var el = document.getElementById(elId);
-  var btn = document.getElementById(btnId);
-  if (!el || !btn) return;
-  
-  var keyText = el.getAttribute('data-fullval') || el.textContent || el.innerText;
-  navigator.clipboard.writeText(keyText).then(function() {
-    btn.classList.add('copied');
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-    showToast('Copied to clipboard!');
-    setTimeout(function() {
-      btn.classList.remove('copied');
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-    }, 2000);
-  }).catch(function() {
-    alert("Val: " + keyText);
-  });
-}
-
-function copyGiveaway(uid) {
-  var el = document.getElementById('gw-val-' + uid);
-  var btn = document.getElementById('gw-btn-' + uid);
-  if (!el || !btn) return;
-  
-  var keyText = el.getAttribute('data-fullval') || el.textContent || el.innerText;
-  navigator.clipboard.writeText(keyText).then(function() {
-    btn.classList.add('copied');
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-    showToast('Copied to clipboard!');
-    setTimeout(function() {
-      btn.classList.remove('copied');
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-    }, 2000);
-  }).catch(function() {
-    // fallback view copy notice
-    alert("Key: " + keyText);
-  });
-}
-
-async function downloadFileForce(url, fileName) {
-  try {
-    showToast('Downloading attached file...');
-    var res = await fetch(url);
-    var blob = await res.blob();
-    var blobUrl = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = fileName || 'download.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
-  } catch (e) {
-    console.error('Blob download failed, opening in new tab:', e);
-    window.open(url, '_blank');
-  }
-}
-
-async function loadUpdates(){
-  try{
-    var r = await sb.from('updates').select('*').order('created_at',{ascending:false}).limit(50);
-    document.getElementById('loading').style.display='none';
-    var list=document.getElementById('updlist'), none=document.getElementById('no-upd');
-    
-    if (r.error) {
-      console.warn('Supabase updates table fetch error:', r.error);
-      list.innerHTML = '<div style="text-align:center;padding:32px 14px;background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);border-radius:18px;border:1px dashed rgba(255,255,255,0.25);margin-top:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">' +
-        '<div style="font-size:28px;margin-bottom:10px;">⚙️</div>' +
-        '<div style="font-size:14px;font-weight:700;color:#ffdd6b;margin-bottom:6px;">Supabase Database Setup Needed</div>' +
-        '<div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;margin-bottom:14px;max-width:320px;margin-left:auto;margin-right:auto;">The "updates" table was not detected. Please initialize your database tables using our helper initializer tool.</div>' +
-        '<a href="#" onclick="showSqlGuide();return false;" style="display:inline-flex;align-items:center;justify-content:center;padding:8px 18px;background:rgba(37,211,102,0.85);border:1px solid rgba(37,211,102,0.5);border-radius:24px;color:#fff;font-size:12px;font-weight:700;text-decoration:none;">Open SQL Setup Guide &rarr;</a>' +
-      '</div>';
+    // Copy buttons copy the box right next to the button
+    var copyBtn = e.target.closest(".copy");
+    if (copyBtn) {
+      var input = copyBtn.closest(".row").querySelector("input");
+      copyText(input.value).then(function () {
+        copyBtn.textContent = "Copied";
+        copyBtn.classList.add("done");
+        setTimeout(function () { copyBtn.textContent = "Copy"; copyBtn.classList.remove("done"); }, 1600);
+      }, function () { input.select(); toast("Press Ctrl+C to copy"); });
       return;
     }
-    
-    if(!r.data||!r.data.length){ none.style.display=''; return; }
-    none.style.display='none';
-    
-    list.innerHTML = r.data.map(function(u){
-      var cleanText = u.text || '';
-      var giveawayHtml = '';
-      
-      // Look for XML comment signature
-      var match = cleanText.match(/<!--GIVEAWAY_JSON:(.*?)-->/);
-      if (match && match[1]) {
-        try {
-          var gw = JSON.parse(match[1]);
-          if (gw) {
-            var fullVal = gw.value || '';
-            var fullEmail = gw.email || '';
-            var fullPass = gw.password || '';
-            
-            var displayVal = fullVal.length > 32 ? fullVal.substring(0, 32) + '...' : fullVal;
-            var displayEmail = fullEmail.length > 32 ? fullEmail.substring(0, 32) + '...' : fullEmail;
-            var displayPass = fullPass.length > 32 ? fullPass.substring(0, 32) + '...' : fullPass;
 
-            if (gw.type === 'all' || (gw.value && gw.email && gw.password)) {
-              giveawayHtml = '<div class="giveaway-box">' +
-                '<div class="giveaway-badge">🎁 Giveaway Info</div>' +
-                (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
-                '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;">LICENSE KEY / CODE</div>' +
-                '<div class="giveaway-val-container" style="margin-bottom: 8px;">' +
-                  '<span class="giveaway-val" id="gw-val-' + u.id + '" data-fullval="' + escAttr(fullVal) + '">' + esc(displayVal) + '</span>' +
-                  '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Key">' +
-                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                  '</button>' +
-                '</div>' +
-                '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">EMAIL / USERNAME</div>' +
-                '<div class="giveaway-val-container" style="margin-bottom: 8px;">' +
-                  '<span class="giveaway-val" id="gw-email-' + u.id + '" data-fullval="' + escAttr(fullEmail) + '">' + esc(displayEmail) + '</span>' +
-                  '<button class="copy-btn" id="gw-email-btn-' + u.id + '" onclick="copyTextById(\'gw-email-' + u.id + '\', \'gw-email-btn-' + u.id + '\')" title="Copy Email">' +
-                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                  '</button>' +
-                '</div>' +
-                '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">PASSWORD</div>' +
-                '<div class="giveaway-val-container">' +
-                  '<span class="giveaway-val" id="gw-pass-' + u.id + '" data-fullval="' + escAttr(fullPass) + '">' + esc(displayPass) + '</span>' +
-                  '<button class="copy-btn" id="gw-pass-btn-' + u.id + '" onclick="copyTextById(\'gw-pass-' + u.id + '\', \'gw-pass-btn-' + u.id + '\')" title="Copy Password">' +
-                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                  '</button>' +
-                '</div>' +
-              '</div>';
-            } else if (gw.type === 'account' || (gw.email && gw.password)) {
-              giveawayHtml = '<div class="giveaway-box">' +
-                '<div class="giveaway-badge">🎁 Giveaway Account</div>' +
-                (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
-                '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;">EMAIL / USERNAME</div>' +
-                '<div class="giveaway-val-container" style="margin-bottom: 8px;">' +
-                  '<span class="giveaway-val" id="gw-email-' + u.id + '" data-fullval="' + escAttr(fullEmail) + '">' + esc(displayEmail) + '</span>' +
-                  '<button class="copy-btn" id="gw-email-btn-' + u.id + '" onclick="copyTextById(\'gw-email-' + u.id + '\', \'gw-email-btn-' + u.id + '\')" title="Copy Email">' +
-                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                  '</button>' +
-                '</div>' +
-                '<div style="font-size: 10px; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">PASSWORD</div>' +
-                '<div class="giveaway-val-container">' +
-                  '<span class="giveaway-val" id="gw-pass-' + u.id + '" data-fullval="' + escAttr(fullPass) + '">' + esc(displayPass) + '</span>' +
-                  '<button class="copy-btn" id="gw-pass-btn-' + u.id + '" onclick="copyTextById(\'gw-pass-' + u.id + '\', \'gw-pass-btn-' + u.id + '\')" title="Copy Password">' +
-                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                  '</button>' +
-                '</div>' +
-              '</div>';
-            } else if (gw.value) {
-              giveawayHtml = '<div class="giveaway-box">' +
-                '<div class="giveaway-badge">🎁 Giveaway</div>' +
-                (gw.label ? '<span class="giveaway-label">' + esc(gw.label) + '</span>' : '') +
-                '<div class="giveaway-val-container">' +
-                  '<span class="giveaway-val" id="gw-val-' + u.id + '" data-fullval="' + escAttr(fullVal) + '">' + esc(displayVal) + '</span>' +
-                  '<button class="copy-btn" id="gw-btn-' + u.id + '" onclick="copyGiveaway(\'' + u.id + '\')" title="Copy Credentials">' +
-                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-                  '</button>' +
-                '</div>' +
-              '</div>';
-            }
-          }
-        } catch(e) {}
-        // strip comment out from text
-        cleanText = cleanText.replace(/<!--GIVEAWAY_JSON:(.*?)-->/g, '');
-      }
+    // Top tabs: Home shows every group, the other tabs show one group
+    var tab = e.target.closest(".tab");
+    if (tab) {
+      var f = tab.getAttribute("data-filter");
+      document.querySelectorAll(".tab").forEach(function (b) {
+        b.setAttribute("aria-pressed", b === tab ? "true" : "false");
+      });
+      var shown = 0;
+      document.querySelectorAll("#feed .feed-group").forEach(function (g) {
+        var ok = f === "all" || g.getAttribute("data-group") === f;
+        g.style.display = ok ? "" : "none";
+        if (ok) shown += g.querySelectorAll(".post").length;
+      });
+      document.getElementById("empty").style.display = shown ? "none" : "block";
+      return;
+    }
 
-      var fileHtml = '';
-      var fileMatch = cleanText.match(/<!--FILE_JSON:(.*?)-->/);
-      if (fileMatch && fileMatch[1]) {
-        try {
-          var fileObj = JSON.parse(fileMatch[1]);
-          if (fileObj && fileObj.url) {
-            fileHtml = '<div style="margin-top: 10px; margin-bottom: 2px;">' +
-              '<button onclick="downloadFileForce(\'' + fileObj.url + '\', \'' + (fileObj.name || 'file.txt').replace(/'/g, "\\'") + '\')" class="download-att-btn" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#ffffff;border:none;border-radius:18px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(37,211,102,0.25);transition:transform 0.2s, background-color 0.2s;height:32px;">' +
-                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' +
-                '<span>Download ' + esc(fileObj.name || 'Attachment') + '</span>' +
-              '</button>' +
-            '</div>';
-          }
-        } catch(e) {}
-        cleanText = cleanText.replace(/<!--FILE_JSON:(.*?)-->/g, '');
-      }
+    // Links that still say href="#" are placeholders
+    var link = e.target.closest('a[href="#"]');
+    if (link) {
+      e.preventDefault();
+      toast("Add your link in the code");
+    }
+  });
 
-      // Cache counts locally for reactive state
-      activeStateCounts[u.id] = {
-        react_like: u.react_like || 0,
-        react_love: u.react_love || 0,
-        react_haha: u.react_haha || 0,
-        react_wow: u.react_wow || 0,
-        react_sad: u.react_sad || 0,
-        react_angry: u.react_angry || 0
-      };
-
-      return '<div class="ucard">'+
-        '<div class="umeta">'+
-          '<span class="ubadge">UPDATE</span>'+
-          '<span class="utime">'+fmtTime(new Date(u.created_at))+'</span>'+
-        '</div>'+
-        (u.image_url?'<img class="uimg" src="'+u.image_url+'" alt="">':'')+
-        (cleanText?'<div class="utxt">'+sanitize(cleanText)+'</div>':'')+
-        giveawayHtml +
-        fileHtml +
-        '<div class="u-action-bar">'+
-          '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'+
-            '<div class="u-react-container" id="react-container-'+u.id+'" onmouseenter="startReactHover(\''+u.id+'\')" onmouseleave="endReactHover(\''+u.id+'\')">'+
-              '<button class="u-react-btn" id="react-btn-'+u.id+'" '+
-                      'onmousedown="handleReactMouseDown(event, \''+u.id+'\')" '+
-                      'onmouseup="handleReactMouseUp(event, \''+u.id+'\')" '+
-                      'onmouseleave="handleReactMouseLeave(event, \''+u.id+'\')" '+
-                      'ontouchstart="handleReactTouchStart(event, \''+u.id+'\')" '+
-                      'ontouchend="handleReactTouchEnd(event, \''+u.id+'\')" '+
-                      'oncontextmenu="event.preventDefault()" '+
-                      'onclick="handleReactClick(event, \''+u.id+'\')">'+
-                '<span class="react-btn-icon" id="react-icon-'+u.id+'">'+LIKE_SVG+'</span> '+
-                '<span class="react-btn-text" id="react-lbl-'+u.id+'">Like</span>'+
-              '</button>'+
-              '<div class="u-react-popup" id="react-popup-'+u.id+'">'+
-                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'like\')" title="Like" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;">'+
-                  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>'+
-                '</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'love\')" title="Love">❤️</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'haha\')" title="Haha">😆</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'wow\')" title="Wow">😮</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'sad\')" title="Sad">😢</button>'+
-                '<button class="u-emoji-btn" onclick="selectReaction(\''+u.id+'\', \'angry\')" title="Angry">😡</button>'+
-              '</div>'+
-              '<div class="u-react-counts" id="react-counts-'+u.id+'" onclick="showReactionBreakdown(\''+u.id+'\', event)"></div>' +
-              '<div class="u-react-breakdown-pop" id="react-breakdown-'+u.id+'"></div>'+
-            '</div>'+
-            (giveawayHtml ? '<span style="font-size:12.5px;color:rgba(255,255,255,0.75);line-height:1.3;margin-left:2px;display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap;word-break:break-all;">Account not working? <a href="https://wa.me/94778315058" target="_blank" style="text-decoration:underline;color:#ffffff;font-weight:600;">Report Admin now.</a></span>' : '') +
-          '</div>'+
-          (u.btn_label&&u.btn_url?'<a href="'+(u.btn_url.startsWith('http')?u.btn_url:'https://'+u.btn_url)+'" target="_blank" class="upd-btn" style="margin-top:0;padding:6px 16px;font-size:12px;border-radius:16px;margin-left:auto;">'+esc(u.btn_label)+'</a>':'')+
-        '</div>'+
-      '</div>';
-    }).join('');
-    
-    r.data.forEach(function(u){
-      renderCountsUI(u.id);
-      var userReactedKey = localStorage.getItem('react_' + u.id);
-      if (userReactedKey) {
-        updateReactBtnUI(u.id, userReactedKey);
+  // ---------- 7D. Download picker: highlight the buttons that fit the visitor's device ----------
+  (function () {
+    var ua = navigator.userAgent || "";
+    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    var fits = {
+      android: /Android/i.test(ua),
+      windows: /Windows/i.test(ua) && !isMobile,
+      chrome: !isMobile && /Chrome\//.test(ua)
+    };
+    document.querySelectorAll(".dl[data-platform]").forEach(function (btn) {
+      if (btn.classList.contains("soon")) return;
+      if (fits[btn.getAttribute("data-platform")]) {
+        btn.classList.add("match");
+        var tag = document.createElement("span");
+        tag.className = "dl-tag";
+        tag.textContent = "Your device";
+        btn.appendChild(tag);
       }
     });
-  }catch(e){
-    console.error('Supabase load updates failed:', e);
-    document.getElementById('loading').style.display='none';
-    var list = document.getElementById('updlist');
-    list.innerHTML = '<div style="text-align:center;padding:32px 14px;background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);border-radius:18px;border:1px dashed rgba(255,255,255,0.25);margin-top:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">' +
-      '<div style="font-size:28px;margin-bottom:10px;">⚙️</div>' +
-      '<div style="font-size:14px;font-weight:700;color:#ffdd6b;margin-bottom:6px;">Supabase Connection Error</div>' +
-      '<div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.5;margin-bottom:14px;max-width:320px;margin-left:auto;margin-right:auto;">Database tables might not be fully configured yet.</div>' +
-      '<a href="#" onclick="showSqlGuide();return false;" style="display:inline-flex;align-items:center;justify-content:center;padding:8px 18px;background:rgba(37,211,102,0.85);border:1px solid rgba(37,211,102,0.5);border-radius:24px;color:#fff;font-size:12px;font-weight:700;text-decoration:none;">Open SQL Setup Guide &rarr;</a>' +
-    '</div>';
+  })();
+
+  // ---------- 7E. Popup on page load ----------
+  var overlay = document.getElementById("overlay");
+  var followBtn = document.getElementById("followBtn");
+  function closeModal() {
+    overlay.hidden = true;
+    document.body.classList.remove("modal-open");
   }
-}
-
-// Views tracking removed
-
-
-const SQL_SCRIPT_TEMPLATE = `-- Create site_config table if missing
-CREATE TABLE IF NOT EXISTS site_config (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-);
-
--- Seed default credentials if empty
-INSERT INTO site_config (key, value)
-VALUES ('admin_user', 'admin')
-ON CONFLICT (key) DO NOTHING;
-
-INSERT INTO site_config (key, value)
-VALUES ('admin_pass', 'admin')
-ON CONFLICT (key) DO NOTHING;
-
-INSERT INTO site_config (key, value)
-VALUES ('pwd', 'admin')
-ON CONFLICT (key) DO NOTHING;
-
--- Seed initial alert popup layout 
-INSERT INTO site_config (key, value)
-VALUES ('alert', '{"enabled":false,"message":"","btn_label":"","btn_url":""}')
-ON CONFLICT (key) DO NOTHING;
-
--- Create actual updates news table 
-CREATE TABLE IF NOT EXISTS updates (
-    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-    text TEXT NOT NULL,
-    image_url TEXT,
-    views INT NOT NULL DEFAULT 0,
-    btn_label TEXT,
-    btn_url TEXT,
-    react_like INT NOT NULL DEFAULT 0,
-    react_love INT NOT NULL DEFAULT 0,
-    react_haha INT NOT NULL DEFAULT 0,
-    react_wow INT NOT NULL DEFAULT 0,
-    react_sad INT NOT NULL DEFAULT 0,
-    react_angry INT NOT NULL DEFAULT 0
-);
-
--- Ensure all columns exist even if the updates table was created in an earlier build
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_like INT NOT NULL DEFAULT 0;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_love INT NOT NULL DEFAULT 0;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_haha INT NOT NULL DEFAULT 0;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_wow INT NOT NULL DEFAULT 0;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_sad INT NOT NULL DEFAULT 0;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS react_angry INT NOT NULL DEFAULT 0;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_label TEXT;
-ALTER TABLE updates ADD COLUMN IF NOT EXISTS btn_url TEXT;
-
--- Create followers tracking tally
-CREATE TABLE IF NOT EXISTS followers (
-    id INT PRIMARY KEY,
-    count INT NOT NULL DEFAULT 1250
-);
-
--- Seed single follower account item
-INSERT INTO followers (id, count)
-VALUES (1, 1250)
-ON CONFLICT (id) DO NOTHING;
-
--- Active-Enable Row Level Security (RLS) across all tables to block direct unauthenticated abuse!
-ALTER TABLE site_config ENABLE ROW LEVEL SECURITY;
-ALTER TABLE updates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE followers ENABLE ROW LEVEL SECURITY;
-
--- Drop any previous wide-open policies so we start clean
-DROP POLICY IF EXISTS allow_read_updates ON updates;
-DROP POLICY IF EXISTS allow_read_followers ON followers;
-DROP POLICY IF EXISTS allow_read_alert ON site_config;
-
--- Create highly narrow SELECT-only policies for anonymous readers
-CREATE POLICY allow_read_updates ON updates FOR SELECT TO anon USING (true);
-CREATE POLICY allow_read_followers ON followers FOR SELECT TO anon USING (true);
-CREATE POLICY allow_read_alert ON site_config FOR SELECT TO anon USING (key = 'alert');
-
--- RPC secure credentials validator function
-CREATE OR REPLACE FUNCTION verify_admin(u TEXT, p TEXT)
-RETURNS BOOLEAN AS $$
-DECLARE
-  db_u TEXT;
-  db_p TEXT;
-BEGIN
-  SELECT value INTO db_u FROM site_config WHERE key = 'admin_user';
-  SELECT value INTO db_p FROM site_config WHERE key = 'admin_pass';
-  
-  -- Fallbacks if empty
-  IF db_u IS NULL THEN db_u := 'admin'; END IF;
-  IF db_p IS NULL THEN db_p := 'admin'; END IF;
-  
-  RETURN (u = db_u) AND (p = db_p);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- SECURE MUTATION RPC: Create an update entry (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_create_update(u TEXT, p TEXT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
-RETURNS VOID AS $$
-BEGIN
-  IF NOT verify_admin(u, p) THEN
-    RAISE EXCEPTION 'Unauthorized admin credentials!';
-  END IF;
-  
-  INSERT INTO updates (text, image_url, views, btn_label, btn_url, react_like, react_love, react_haha, react_wow, react_sad, react_angry)
-  VALUES (t_text, t_img_url, 0, t_btn_label, t_btn_url, 0, 0, 0, 0, 0, 0);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Drop existing function signatures if they exist to prevent PostgreSQL parameter change errors!
-DROP FUNCTION IF EXISTS secure_edit_update(TEXT, TEXT, BIGINT, TEXT, TEXT, TEXT, TEXT);
-DROP FUNCTION IF EXISTS secure_delete_update(TEXT, TEXT, BIGINT);
-DROP FUNCTION IF EXISTS react_to_post(BIGINT, TEXT, INT);
-DROP FUNCTION IF EXISTS increment_view_count(BIGINT);
-
-DROP FUNCTION IF EXISTS secure_edit_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);
-DROP FUNCTION IF EXISTS secure_delete_update(TEXT, TEXT, TEXT);
-DROP FUNCTION IF EXISTS react_to_post(TEXT, TEXT, INT);
-DROP FUNCTION IF EXISTS increment_view_count(TEXT);
-
--- SECURE MUTATION RPC: Edit an update entry (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_edit_update(u TEXT, p TEXT, uid TEXT, t_text TEXT, t_img_url TEXT, t_btn_label TEXT, t_btn_url TEXT)
-RETURNS VOID AS $$
-BEGIN
-  IF NOT verify_admin(u, p) THEN
-    RAISE EXCEPTION 'Unauthorized admin credentials!';
-  END IF;
-  
-  UPDATE updates
-  SET text = t_text,
-      image_url = t_img_url,
-      btn_label = t_btn_label,
-      btn_url = t_btn_url
-  WHERE id::text = uid;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- SECURE MUTATION RPC: Delete an update (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_delete_update(u TEXT, p TEXT, uid TEXT)
-RETURNS VOID AS $$
-BEGIN
-  IF NOT verify_admin(u, p) THEN
-    RAISE EXCEPTION 'Unauthorized admin credentials!';
-  END IF;
-  
-  DELETE FROM updates WHERE id::text = uid;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- SECURE MUTATION RPC: Save Global Alert popup Broadcast (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_save_alert(u TEXT, p TEXT, payload TEXT)
-RETURNS VOID AS $$
-BEGIN
-  IF NOT verify_admin(u, p) THEN
-    RAISE EXCEPTION 'Unauthorized admin credentials!';
-  END IF;
-  
-  INSERT INTO site_config (key, value)
-  VALUES ('alert', payload)
-  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- SECURE MUTATION RPC: Update Admin Credentials (validated on DB level)
-CREATE OR REPLACE FUNCTION secure_update_credentials(u TEXT, p TEXT, new_u TEXT, new_p TEXT)
-RETURNS VOID AS $$
-BEGIN
-  IF NOT verify_admin(u, p) THEN
-    RAISE EXCEPTION 'Unauthorized admin credentials!';
-  END IF;
-  
-  IF COALESCE(new_u, '') = '' OR COALESCE(new_p, '') = '' THEN
-    RAISE EXCEPTION 'New credentials cannot be blank!';
-  END IF;
-  
-  INSERT INTO site_config (key, value) VALUES ('admin_user', new_u) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
-  INSERT INTO site_config (key, value) VALUES ('admin_pass', new_p) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
-  INSERT INTO site_config (key, value) VALUES ('pwd', new_p) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Safe reaction counter: uses secure definer to increment to prevent client logic tampering
-CREATE OR REPLACE FUNCTION react_to_post(update_id TEXT, reaction TEXT, val INT)
-RETURNS VOID AS $$
-BEGIN
-  -- Validate input value to prevent people from sending random values (-1000 or +1000000)
-  IF val != 1 AND val != -1 THEN
-    RAISE EXCEPTION 'Invalid increment step value';
-  END IF;
-  
-  IF reaction = 'like' THEN
-    UPDATE updates SET react_like = GREATEST(0, COALESCE(react_like, 0) + val) WHERE id::text = update_id;
-  ELSIF reaction = 'love' THEN
-    UPDATE updates SET react_love = GREATEST(0, COALESCE(react_love, 0) + val) WHERE id::text = update_id;
-  ELSIF reaction = 'haha' THEN
-    UPDATE updates SET react_haha = GREATEST(0, COALESCE(react_haha, 0) + val) WHERE id::text = update_id;
-  ELSIF reaction = 'wow' THEN
-    UPDATE updates SET react_wow = GREATEST(0, COALESCE(react_wow, 0) + val) WHERE id::text = update_id;
-  ELSIF reaction = 'sad' THEN
-    UPDATE updates SET react_sad = GREATEST(0, COALESCE(react_sad, 0) + val) WHERE id::text = update_id;
-  ELSIF reaction = 'angry' THEN
-    UPDATE updates SET react_angry = GREATEST(0, COALESCE(react_angry, 0) + val) WHERE id::text = update_id;
-  END IF;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- RPC views increment tool setup
-CREATE OR REPLACE FUNCTION increment_view_count(update_id TEXT)
-RETURNS VOID AS $$
-BEGIN
-  UPDATE updates
-  SET views = COALESCE(views, 0) + 1
-  WHERE id::text = update_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- RPC followers join/leave calculator counter
-CREATE OR REPLACE FUNCTION adjust_follower(action TEXT)
-RETURNS VOID AS $$
-BEGIN
-  IF action = 'follow' THEN
-    UPDATE followers SET count = COALESCE(count, 0) + 1 WHERE id = 1;
-  ELSIF action = 'unfollow' THEN
-    UPDATE followers SET count = GREATEST(0, COALESCE(count, 0) - 1) WHERE id = 1;
-  END IF;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Grant explicit execute permissions on all functions to active service client/anonymous/authenticated API users!
-GRANT EXECUTE ON FUNCTION verify_admin(TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_create_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_edit_update(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_delete_update(TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_save_alert(TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION secure_update_credentials(TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION react_to_post(TEXT, TEXT, INT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION increment_view_count(TEXT) TO anon, authenticated, public;
-GRANT EXECUTE ON FUNCTION adjust_follower(TEXT) TO anon, authenticated, public;`;
-
-function showSqlGuide() {
-  document.getElementById('sql-code').textContent = SQL_SCRIPT_TEMPLATE;
-  document.getElementById('sql-guide-modal').style.display = 'flex';
-}
-
-function closeSqlGuide() {
-  document.getElementById('sql-guide-modal').style.display = 'none';
-}
-
-function copySqlScript() {
-  navigator.clipboard.writeText(SQL_SCRIPT_TEMPLATE).then(function() {
-    showToast('SQL Script copied to clipboard!');
-  }).catch(function() {
-    alert(SQL_SCRIPT_TEMPLATE);
-  });
-}
-
-loadUpdates();
-loadAlert();
-showChannelPopup();
+  if (overlay) {
+    document.getElementById("modalClose").addEventListener("click", closeModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !overlay.hidden) closeModal(); });
+    followBtn.addEventListener("click", function () {
+      if (followBtn.getAttribute("href") !== "#") setTimeout(closeModal, 200);
+    });
+    followBtn.focus();
+  }
+})();
 </script>
+
+<!--
+=====================================================================
+SECTION 8. POST TEMPLATE LIBRARY (copy and paste)
+Every template is also placed at the top of the section it belongs to.
+Paste into the section that matches where you want the post to appear:
+   3A HOME ONLY   for downloads and notices
+   3B BUY SOFTWARES   for product posts
+   3C FREE GIFTS   for giveaway posts
+Post spacing is automatic, so pasted posts line up exactly like the
+existing ones. Just paste, edit the words, and add your link.
+
+
+=====================================================================
+TEMPLATE 1: DOWNLOAD POST WITH THREE BUTTONS (goes in Section 3A)
+=====================================================================
+      <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>App name – latest version</h2>
+        <p class="lede">Pick the version for your device.</p>
+        <div class="downloads">
+          <a class="dl" data-platform="android" href="#">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 9h12v9a1 1 0 0 1-1 1h-1v3a1.5 1.5 0 0 1-3 0v-3h-2v3a1.5 1.5 0 0 1-3 0v-3H7a1 1 0 0 1-1-1V9z"/><path d="M4.5 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5zM17 9.5a1.25 1.25 0 0 1 2.5 0v5a1.25 1.25 0 0 1-2.5 0v-5z"/><path fill-rule="evenodd" d="M6.2 8a5.8 5.8 0 0 1 11.6 0H6.2zM9.2 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0zM13.3 5.6a.75.75 0 1 0 1.5 0 .75.75 0 1 0-1.5 0z"/><path d="M8.4 1.6l1.4 2.2M15.6 1.6l-1.4 2.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Android</span>
+            <span class="dl-meta">v1.0</span>
+          </a>
+          <a class="dl" data-platform="windows" href="#">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6l7.6-1v7H3V5.6zM11.7 4.4L21 3v8.6h-9.3V4.4zM3 12.6h7.6v7L3 18.4v-5.8zM11.7 12.6H21V21l-9.3-1.4v-7z"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Windows</span>
+            <span class="dl-meta">v1.0</span>
+          </a>
+          <a class="dl" data-platform="chrome" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none"/><path d="M12 8.4h8.4M8.9 13.8L4.7 6.6M15.1 13.8l-4.2 7.2"/></svg>
+            <span class="dl-cap">Download for</span>
+            <span class="dl-name">Chrome</span>
+            <span class="dl-meta">Extension</span>
+          </a>
+        </div>
+      </article>
+
+
+=====================================================================
+TEMPLATE 2: TEXT NOTICE (goes in Section 3A)
+=====================================================================
+      <article class="card post">
+        <div class="post-head"><span class="badge notice">Notice</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Notice title</h2>
+        <p class="lede">Write your message here.</p>
+      </article>
+
+
+=====================================================================
+TEMPLATE 3: PRODUCT POST (goes in Section 3B)
+=====================================================================
+      <article class="card post">
+        <div class="post-head"><span class="badge">Update</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Product name – Rs. 2,450 per month</h2>
+        <ul class="features">
+          <li>Feature one</li>
+          <li>Feature two</li>
+          <li>Feature three</li>
+        </ul>
+        <div class="actions center"><a class="cta" href="#">Buy now</a></div>
+      </article>
+
+
+=====================================================================
+TEMPLATE 4: GIVEAWAY WITH EMAIL AND PASSWORD (goes in Section 3C)
+=====================================================================
+      <article class="card post">
+        <div class="post-head"><span class="badge gift">Giveaway</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Product name – what the account gives</h2>
+        <div class="banner b3" role="img" aria-label="Product name">
+          <div><div class="big">PRODUCT NAME</div><div class="sub">Short line under the name</div></div>
+        </div>
+        <div class="creds">
+          <div class="creds-title">Giveaway account</div>
+          <div class="field">
+            <span class="label">Email or username</span>
+            <div class="row"><input type="text" readonly value="email@example.com" aria-label="Email or username"><button class="copy" type="button">Copy</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Password</span>
+            <div class="row"><input type="text" readonly value="password-here" aria-label="Password"><button class="copy" type="button">Copy</button></div>
+          </div>
+        </div>
+      </article>
+
+
+=====================================================================
+TEMPLATE 5: GIVEAWAY WITH LICENSE KEY (goes in Section 3C)
+=====================================================================
+      <article class="card post">
+        <div class="post-head"><span class="badge gift">Giveaway</span><span class="time">9/19/2026 06:40 PM</span></div>
+        <h2>Product name – 1-month license key</h2>
+        <div class="creds">
+          <div class="creds-title">Giveaway key</div>
+          <div class="field">
+            <span class="label">License key</span>
+            <div class="row"><input type="text" readonly value="XXXX-XXXX-XXXX-XXXX" aria-label="License key"><button class="copy" type="button">Copy</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Email or username</span>
+            <div class="row"><input type="text" readonly value="email@example.com" aria-label="Email or username"><button class="copy" type="button">Copy</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Password</span>
+            <div class="row"><input type="text" readonly value="password-here" aria-label="Password"><button class="copy" type="button">Copy</button></div>
+          </div>
+        </div>
+      </article>
+
+
+=====================================================================
+OTHER SMALL EDITS
+=====================================================================
+Phone number and contact buttons: Section 1.
+Brand name and tagline: Section 1.
+Tab names: Section 2.
+Blue Update badge word: change "Update" inside <span class="badge">.
+Footer text: Section 4.
+Popup link and words: Section 5.
+Colors: CSS 1 at the top of the file.
+-->
 </body>
 </html>
