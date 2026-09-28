@@ -40,6 +40,40 @@ SIGNATURE DIGITAL – FILE MAP (use Ctrl+F and search the section name)
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!--
+=====================================================================
+CACHE BUSTING (keeps visitors from seeing an old cached version)
+GitHub Pages does not let you set real server cache headers, so this
+page forces itself instead. On every visit, this checks whether the
+page's web address already has a "?v=..." tag on the end.
+  - If it does not have one yet, the page instantly reloads itself
+    with a "?v=" tag containing the current time added to the end.
+    Browsers and GitHub's own CDN both treat a different address as a
+    brand new page, so this skips any old cached copy completely.
+  - If it already has the tag (meaning this just happened), nothing
+    more occurs, so the page does not reload in a loop.
+This happens on every single visit, so it always fetches the latest
+version of this file. The meta tags below are a second, backup layer
+that also asks the browser not to reuse a saved copy.
+Note for the very first time this is put on the live site: visitors
+whose browser already has an old page saved will not run this new
+script until that old copy expires or they refresh once by hand.
+After that one time, this keeps them up to date automatically.
+=====================================================================
+-->
+<script>
+(function () {
+  if (location.search.indexOf("v=") === -1) {
+    var sep = location.search ? "&" : "?";
+    location.replace(location.pathname + location.search + sep + "v=" + Date.now() + location.hash);
+  }
+})();
+</script>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <title>Signature Digital</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
