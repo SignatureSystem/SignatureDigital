@@ -460,6 +460,15 @@ button:focus, a:focus, .dl:focus, .cta:focus, .pill-link:focus, .tab:focus, .cop
          will share the full width.
       7. Devices are detected automatically. The buttons that work on the
          visitor's device turn blue and get a "Your device" tag.
+      8. To make one button download more than one file (a main file plus
+         a helper file, for example), add data-extra="URL" to that button's
+         opening tag, right after its href. For two or more extra files,
+         separate the links with a | character, for example:
+         data-extra="https://example.com/helper.zip|https://example.com/second.zip"
+         The link in href still downloads as the main file; every link in
+         data-extra downloads a moment after, one by one. Browsers may ask
+         the visitor to allow multiple downloads the first time this happens
+         on your site, which is normal and only needs approving once.
 
     TEMPLATE: DOWNLOAD POST (three buttons)
       <article class="card post">
@@ -518,21 +527,12 @@ button:focus, a:focus, .dl:focus, .cta:focus, .pill-link:focus, .tab:focus, .cop
             <span class="dl-name">Windows</span>
             <span class="dl-meta">Software</span>
           </a>
-    <a class="dl" data-platform="chrome" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgczI5LnppcCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3OTA2MjU1NjEsImV4cCI6MTgyMjE2MTU2MX0.wmZad9AJZZehnaBgNQ5NivzsbK437W2X31e7-y5NqwE">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none"/><path d="M12 8.4h8.4M8.9 13.8L4.7 6.6M15.1 13.8l-4.2 7.2"/></svg>
-  <span class="dl-cap">Veo 3 Ultra Injector</span>
-  <span class="dl-name">Chrome</span>
-  <span class="dl-meta">Extension</span>
-</a>
-<script>
-  document.querySelector('.dl[data-platform="chrome"]').addEventListener('click', function () {
-    const helper = document.createElement('a');
-    helper.href = 'https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20Helper%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgSGVscGVyIHMyOS56aXAiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzkwNjI1NTUyLCJleHAiOjE4MjIxNjE1NTJ9.WD3zCtGFRddwNxoLhr2de-RGM1k3kHzlvWyUAwMHu1w';
-    document.body.appendChild(helper);
-    helper.click();
-    helper.remove();
-  });
-</script>
+          <a class="dl" data-platform="chrome" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgczI5LnppcCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3OTA2MjU1NjEsImV4cCI6MTgyMjE2MTU2MX0.wmZad9AJZZehnaBgNQ5NivzsbK437W2X31e7-y5NqwE" data-extra="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20Helper%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgSGVscGVyIHMyOS56aXAiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzkwNjI1NTUyLCJleHAiOjE4MjIxNjE1NTJ9.WD3zCtGFRddwNxoLhr2de-RGM1k3kHzlvWyUAwMHu1w">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none"/><path d="M12 8.4h8.4M8.9 13.8L4.7 6.6M15.1 13.8l-4.2 7.2"/></svg>
+            <span class="dl-cap">Veo 3 Ultra Injector</span>
+            <span class="dl-name">Chrome</span>
+            <span class="dl-meta">Extension</span>
+          </a>
         </div>
       </article>
 
@@ -795,6 +795,27 @@ You do not need to edit anything below this line up to Section 8.
         setTimeout(function () { copyBtn.textContent = "Copy"; copyBtn.classList.remove("done"); }, 1600);
       }, function () { input.select(); toast("Press Ctrl+C to copy"); });
       return;
+    }
+
+    // Buttons with data-extra="url1|url2" also download those extra files.
+    // Used for a download that needs more than one file (a main file plus
+    // a helper file, for example). Add data-extra="URL" (or several URLs
+    // separated by |) to any .dl button to turn on this behavior.
+    var extraBtn = e.target.closest(".dl[data-extra]");
+    if (extraBtn && extraBtn.getAttribute("href") !== "#") {
+      var extras = extraBtn.getAttribute("data-extra").split("|");
+      extras.forEach(function (url, i) {
+        url = url.trim();
+        if (!url) return;
+        setTimeout(function () {
+          var helper = document.createElement("a");
+          helper.href = url;
+          helper.setAttribute("download", "");
+          document.body.appendChild(helper);
+          helper.click();
+          helper.remove();
+        }, 250 * (i + 1));
+      });
     }
 
     // Chrome download buttons: copy chrome://extensions/ so the visitor can
