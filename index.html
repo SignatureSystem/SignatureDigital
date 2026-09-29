@@ -573,7 +573,7 @@ button:focus, a:focus, .dl:focus, .cta:focus, .pill-link:focus, .tab:focus, .cop
               <span class="dl-cap">Download</span>
               <span class="dl-name">Main extension</span>
             </a>
-            <a class="dl dl-small match" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20Helper%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgSGVscGVyIHMyOS56aXAiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzkwNjI1NTUyLCJleHAiOjE4MjIxNjE1NTJ9.WD3zCtGFRddwNxoLhr2de-RGM1k3kHzlvWyUAwMHu1w" aria-label="Download the Veo 3 Ultra helper">
+            <a class="dl dl-small" data-platform="chrome" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20Helper%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgSGVscGVyIHMyOS56aXAiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzkwNjI1NTUyLCJleHAiOjE4MjIxNjE1NTJ9.WD3zCtGFRddwNxoLhr2de-RGM1k3kHzlvWyUAwMHu1w" aria-label="Download the Veo 3 Ultra helper">
               <span class="dl-cap">Download</span>
               <span class="dl-name">Helper</span>
             </a>
@@ -913,10 +913,14 @@ You do not need to edit anything below this line up to Section 8.
       if (btn.classList.contains("soon")) return;
       if (fits[btn.getAttribute("data-platform")]) {
         btn.classList.add("match");
-        var tag = document.createElement("span");
-        tag.className = "dl-tag";
-        tag.textContent = "Your device";
-        btn.appendChild(tag);
+        var stack = btn.closest(".chrome-download-stack");
+        var firstChromeButton = stack && stack.querySelector('.dl[data-platform="chrome"]');
+        if (!stack || btn === firstChromeButton) {
+          var tag = document.createElement("span");
+          tag.className = "dl-tag";
+          tag.textContent = "Your device";
+          btn.appendChild(tag);
+        }
       }
     });
   })();
