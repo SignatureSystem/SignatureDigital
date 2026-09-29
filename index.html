@@ -324,6 +324,13 @@ a { color: var(--link); }
   padding: 3px 10px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,10,50,.25);
 }
 .dl.soon { opacity: .55; pointer-events: none; }
+.chrome-download-stack { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dl.dl-small {
+  flex: 1; justify-content: center; gap: 0; padding: 8px 6px; border-radius: 12px;
+}
+.dl-small .dl-cap { font-size: 10px; }
+.dl-small .dl-name { font-size: 13px; line-height: 1.2; }
+.dl-small .dl-meta { font-size: 10px; margin-top: 2px; }
 
 /* =====================================================================
    CSS 9. POPUP (Follow channel window that shows on every page load)
@@ -561,12 +568,16 @@ button:focus, a:focus, .dl:focus, .cta:focus, .pill-link:focus, .tab:focus, .cop
             <span class="dl-name">Windows</span>
             <span class="dl-meta">Software</span>
           </a>
-          <a class="dl" data-platform="chrome" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgczI5LnppcCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3OTA2MjU1NjEsImV4cCI6MTgyMjE2MTU2MX0.wmZad9AJZZehnaBgNQ5NivzsbK437W2X31e7-y5NqwE" data-extra="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20Helper%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgSGVscGVyIHMyOS56aXAiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzkwNjI1NTUyLCJleHAiOjE4MjIxNjE1NTJ9.WD3zCtGFRddwNxoLhr2de-RGM1k3kHzlvWyUAwMHu1w">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none"/><path d="M12 8.4h8.4M8.9 13.8L4.7 6.6M15.1 13.8l-4.2 7.2"/></svg>
-            <span class="dl-cap">Veo 3 Ultra Injector</span>
-            <span class="dl-name">Chrome</span>
-            <span class="dl-meta">Extension</span>
-          </a>
+          <div class="chrome-download-stack" aria-label="Veo 3 Ultra extension downloads">
+            <a class="dl dl-small" data-platform="chrome" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgczI5LnppcCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3OTA2MjU1NjEsImV4cCI6MTgyMjE2MTU2MX0.wmZad9AJZZehnaBgNQ5NivzsbK437W2X31e7-y5NqwE" aria-label="Download the Veo 3 Ultra main Chrome extension">
+              <span class="dl-cap">Download</span>
+              <span class="dl-name">Main extension</span>
+            </a>
+            <a class="dl dl-small match" href="https://gufqzzhwgrxrjwyhqnki.supabase.co/storage/v1/object/sign/ASD/Veo%203%20Ultra%20Helper%20s29.zip?token=eyJraWQiOiIwNjU4YmU4MC1kZDBjLTQ3ZGYtYjRiZi02OTVmZTIwMWYwNWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBU0QvVmVvIDMgVWx0cmEgSGVscGVyIHMyOS56aXAiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzkwNjI1NTUyLCJleHAiOjE4MjIxNjE1NTJ9.WD3zCtGFRddwNxoLhr2de-RGM1k3kHzlvWyUAwMHu1w" aria-label="Download the Veo 3 Ultra helper">
+              <span class="dl-cap">Download</span>
+              <span class="dl-name">Helper</span>
+            </a>
+          </div>
         </div>
       </article>
 
