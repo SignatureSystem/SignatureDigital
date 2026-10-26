@@ -43,31 +43,72 @@ SIGNATURE DIGITAL – FILE MAP (use Ctrl+F and search the section name)
 
 <!--
 =====================================================================
-CACHE BUSTING (keeps visitors from seeing an old cached version)
-GitHub Pages does not let you set real server cache headers, so this
-page forces itself instead. On every visit, this checks whether the
-page's web address already has a "?v=..." tag on the end.
-  - If it does not have one yet, the page instantly reloads itself
-    with a "?v=" tag containing the current time added to the end.
-    Browsers and GitHub's own CDN both treat a different address as a
-    brand new page, so this skips any old cached copy completely.
-  - If it already has the tag (meaning this just happened), nothing
-    more occurs, so the page does not reload in a loop.
-This happens on every single visit, so it always fetches the latest
-version of this file. The meta tags below are a second, backup layer
-that also asks the browser not to reuse a saved copy.
-Note for the very first time this is put on the live site: visitors
-whose browser already has an old page saved will not run this new
-script until that old copy expires or they refresh once by hand.
-After that one time, this keeps them up to date automatically.
+ALWAYS-FRESH PAGE (replaces the old "?v=" reload trick)
+You do NOT need to change anything here when you update the site.
+Just edit this file on GitHub and upload new files to Supabase as usual.
+How it works:
+  1. When the page opens, it quietly downloads the newest copy of
+     itself straight from GitHub (skipping every saved copy).
+  2. It compares the download links and post titles with what the
+     visitor is looking at. If anything differs, the page swaps
+     itself for the newest version automatically.
+  3. It also checks again when a visitor comes back to an old tab,
+     presses Back, or the phone restores the page from memory.
+  4. Old links with "?v=..." still work: they get checked the same way,
+     and the "?v=" is removed from the address so it is not shared again.
 =====================================================================
 -->
 <script>
 (function () {
-  if (location.search.indexOf("v=") === -1) {
-    var sep = location.search ? "&" : "?";
-    location.replace(location.pathname + location.search + sep + "v=" + Date.now() + location.hash);
+  // Clean any old "?v=" / "?fresh=" tags from the address bar
+  try {
+    var p = new URLSearchParams(location.search);
+    if (p.has("v") || p.has("fresh")) {
+      p.delete("v"); p.delete("fresh");
+      var q = p.toString();
+      history.replaceState(null, "", location.pathname + (q ? "?" + q : "") + location.hash);
+    }
+  } catch (e) {}
+
+  function fingerprint(doc) {
+    var parts = [];
+    doc.querySelectorAll("body a[href]").forEach(function (a) { parts.push(a.getAttribute("href").trim()); });
+    doc.querySelectorAll("body h2, body .time, body .lede").forEach(function (el) {
+      // ignore labels our own script adds (like "Your device")
+      var c = el.cloneNode(true);
+      c.querySelectorAll(".dl-tag").forEach(function (t) { t.remove(); });
+      parts.push(c.textContent.replace(/\s+/g, " ").trim());
+    });
+    return parts.join("|");
   }
+
+  var checking = false;
+  function checkForNewVersion() {
+    if (checking || !window.fetch || !window.DOMParser) return;
+    checking = true;
+    fetch(location.pathname + "?fresh=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (html) {
+        checking = false;
+        if (!html) return;
+        var fresh = new DOMParser().parseFromString(html, "text/html");
+        if (fingerprint(fresh) === fingerprint(document)) return;
+        // Stop endless reloads while GitHub is still publishing the update
+        var last = +sessionStorage.getItem("sd-refreshed") || 0;
+        if (Date.now() - last < 20000) return;
+        sessionStorage.setItem("sd-refreshed", Date.now());
+        location.replace(location.pathname + "?v=" + Date.now() + location.hash);
+      })
+      .catch(function () { checking = false; });
+  }
+
+  document.addEventListener("DOMContentLoaded", checkForNewVersion);
+  // Back button / phone restoring the page from memory
+  window.addEventListener("pageshow", function (e) { if (e.persisted) checkForNewVersion(); });
+  // Visitor returns to a tab they left open
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") checkForNewVersion();
+  });
 })();
 </script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -856,6 +897,15 @@ You do not need to edit anything below this line up to Section 8.
       return;
     }
 
+    // Every Supabase download gets a unique tag added at the moment of the
+    // click, so browsers and Supabase's CDN can never hand out an old saved
+    // copy of a file you replaced. Works on every download button automatically.
+    var sbLink = e.target.closest('a[href*="supabase.co/storage"]');
+    if (sbLink) {
+      var raw = sbLink.getAttribute("href").trim().replace(/([?&])cb=\d+&?/, "$1").replace(/[?&]$/, "");
+      sbLink.setAttribute("href", raw + (raw.indexOf("?") === -1 ? "?" : "&") + "cb=" + Date.now());
+    }
+
     // Buttons with data-extra="url1|url2" also download those extra files.
     // Used for a download that needs more than one file (a main file plus
     // a helper file, for example). Add data-extra="URL" (or several URLs
@@ -866,6 +916,7 @@ You do not need to edit anything below this line up to Section 8.
       extras.forEach(function (url, i) {
         url = url.trim();
         if (!url) return;
+        url += (url.indexOf("?") === -1 ? "?" : "&") + "cb=" + Date.now();
         setTimeout(function () {
           var helper = document.createElement("a");
           helper.href = url;
