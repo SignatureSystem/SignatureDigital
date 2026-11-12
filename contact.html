@@ -19,6 +19,46 @@
   <script>
     window.location.replace("https://wa.me/94778315058?text=Hi!%20I'd%20like%20to%20know%20more.");
   </script>
+  <script>
+  (function() {
+  const triggerClick = (el) => {
+    const events = ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'];
+    events.forEach(eventType => {
+      el.dispatchEvent(new MouseEvent(eventType, {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        buttons: 1
+      }));
+    });
+  };
+
+  const interval = setInterval(() => {
+    // Select all matching buttons in case there is a hidden duplicate in the DOM
+    const buttons = document.querySelectorAll('#action-button, a[title="Share on WhatsApp"]');
+    
+    for (const btn of buttons) {
+      // Check that the button is actually rendered and visible on screen
+      if (btn && btn.offsetParent !== null) {
+        clearInterval(interval);
+        
+        // Wait 500ms after render so React finishes attaching its event handlers
+        setTimeout(() => {
+          triggerClick(btn);
+          // Fallback to direct navigation if the framework blocks synthetic clicks
+          if (btn.href && !btn.href.includes('/download')) {
+            window.location.href = btn.href;
+          }
+        }, 500);
+        break;
+      }
+    }
+  }, 200);
+
+  // Stop checking after 10 seconds to prevent infinite loops
+  setTimeout(() => clearInterval(interval), 10000);
+})();
+</script>
 </head>
 <body>
   <!-- 3. Manual link fallback -->
