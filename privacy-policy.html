@@ -1,82 +1,587 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="index,follow">
-  <title>Privacy Policy — Private Profile Browser</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Privacy Policy for Solara Browser, developed by Signature Digital. Learn how browsing profiles, Incognito mode, backups and subscription information are handled.">
+  <meta name="robots" content="index, follow">
+  <title>Privacy Policy | Solara Browser</title>
+
   <style>
     :root {
       color-scheme: light;
-      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 32px 20px 56px;
-      color: #17212b;
-      background: #fff;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.75;
     }
 
-    h1, h2 {
-      line-height: 1.25;
+    .container {
+      max-width: 850px;
+      margin: 40px auto;
+      padding: 45px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
     }
 
     h1 {
-      margin-bottom: 4px;
+      margin: 0 0 10px;
+      font-size: 2.3rem;
+      line-height: 1.2;
+      color: #0f172a;
     }
 
     h2 {
-      margin-top: 28px;
+      margin-top: 38px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.35rem;
+      line-height: 1.4;
+      color: #0f172a;
+    }
+
+    p {
+      margin: 12px 0;
+    }
+
+    ul {
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
     }
 
     a {
-      color: #075eaa;
+      color: var(--accent);
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .metadata {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 28px;
+    }
+
+    .metadata p {
+      margin: 4px 0;
+    }
+
+    .notice {
+      background: #eff6ff;
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      border-radius: 6px;
+      margin: 24px 0;
+    }
+
+    .contact {
+      padding: 20px;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    footer {
+      margin-top: 45px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin: 0;
+        padding: 26px 20px;
+        border: none;
+        border-radius: 0;
+      }
+
+      h1 {
+        font-size: 1.85rem;
+      }
+
+      h2 {
+        font-size: 1.2rem;
+      }
     }
   </style>
 </head>
+
 <body>
-  <main>
-    <h1>Privacy Policy</h1>
-    <p><strong>Private Profile Browser</strong><br>Last updated: 10 November 2026</p>
-    <p>Private Profile Browser is made by Signature Digital. It lets you browse websites with separate profiles on this device.</p>
+  <main class="container">
 
-    <h2>What is stored</h2>
-    <p>Each profile stores its own cookies, cache, website storage, and page history on this device. History is kept in the app's private storage. Website storage and cookies stay with that profile until you clear its data or delete it. Android may remove temporary cache files.</p>
-    <p>The app does not send your browsing history to a Signature Digital server. Websites you visit receive the requests, cookies, and information needed to show their pages. Third-party cookies are enabled for compatibility, so a website and its partners may recognize activity across their services. If you choose a file to upload, that website receives the file.</p>
-    <p>Website storage by domain is an estimate. Android WebView does not report the complete size of each site's cache or list every cookie domain.</p>
+    <header>
+      <h1>Privacy Policy</h1>
 
-    <h2>Safe Browsing and search</h2>
-    <p>Android WebView may check the addresses of pages you open with Google Safe Browsing to warn you about dangerous sites. When you type words instead of a web address, the search is sent to Google Search. These Google services follow Google's own privacy policy. Signature Digital does not receive this information.</p>
+      <div class="metadata">
+        <p><strong>App:</strong> Solara Browser</p>
+        <p><strong>Developer:</strong> Signature Digital</p>
+        <p><strong>Last updated:</strong> 14 November 2026</p>
+      </div>
+    </header>
 
-    <h2>Profiles are not incognito</h2>
-    <p>Profiles keep website data separate from each other, but they are not private or incognito browsing. A profile keeps its cookies, site data, and page history until you clear or delete it.</p>
-
-    <h2>Downloads</h2>
-    <p>Regular website downloads are saved in Android's public Downloads folder. Generated website files can use the folder you select in Downloads settings. Android's folder picker gives access only to that folder. Downloaded files are outside profile storage and are not removed when you clear a profile or uninstall the app.</p>
-
-    <h2>Backups and security</h2>
-    <p>Back up all creates a password-protected AES-256-GCM backup, including saved page history. The app does not store the password; a forgotten password cannot be recovered. Active website data is protected by Android's app sandbox and device security, but the app does not add its own encryption to that live data. Keep your device locked.</p>
-    <p>HTTP pages do not encrypt network traffic. The browser asks before opening an HTTP page or downloading from one. If you continue, other people on the network may be able to read or change that traffic.</p>
-
-    <h2>Deleting data</h2>
-    <p>Clear all data removes cookies, cache, website storage, and history for the current profile only. It does not remove downloaded files. Deleting a profile removes only that profile's browser data. Uninstalling removes app-private data, but downloaded files and exported backups must be removed separately.</p>
-
-    <h2>Purchases</h2>
-    <p>Google Play processes subscription payments. The app receives purchase status to enable unlimited profile creation, not payment card details. Subscriptions renew until canceled in Google Play.</p>
-
-    <h2>Children</h2>
-    <p>This is a general-purpose web browser and is not directed to children under 13. Websites you visit may contain content that is not suitable for children.</p>
-
-    <h2>Contact</h2>
     <p>
-      Signature Digital<br>
-      WhatsApp:
-      <a href="https://wa.me/94778315058">+94 77 831 5058</a>
+      Solara Browser is developed by Signature Digital.
+      It allows you to browse websites using separate
+      browsing profiles and Incognito mode on your Android device.
     </p>
+
+    <p>
+      Solara Browser stores browsing information locally
+      on your device. Signature Digital does not collect
+      or store your personal browsing data on its servers.
+    </p>
+
+    <section>
+      <h2>1. What Is Stored</h2>
+
+      <p>
+        Each regular browsing profile stores its own cookies,
+        cache, website storage, and page history on your device.
+      </p>
+
+      <p>
+        Browsing history is kept in the app's private storage.
+        Website storage and cookies remain associated with
+        their profile until you clear its data or delete
+        the profile. Android may automatically remove
+        temporary cache files.
+      </p>
+
+      <p>
+        Solara Browser does not send your browsing history
+        to Signature Digital servers.
+      </p>
+
+      <p>
+        Websites you visit receive the requests, cookies,
+        and information necessary to display their pages.
+        Third-party cookies are enabled for compatibility,
+        so websites and their partners may recognize
+        activity across their services.
+      </p>
+
+      <p>
+        If you choose a file to upload, the website
+        receiving the upload will have access to that file.
+      </p>
+
+      <p>
+        Website storage sizes shown by Solara Browser are
+        estimates. Android WebView does not report the
+        complete size of each website's cache or list
+        every cookie domain.
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Safe Browsing and Search</h2>
+
+      <p>
+        Android WebView may check the addresses of websites
+        you visit using Google Safe Browsing to help warn
+        you about potentially dangerous websites.
+      </p>
+
+      <p>
+        When you enter search terms instead of a website
+        address, your search query is sent to Google Search.
+      </p>
+
+      <p>
+        These services are provided by Google and are
+        subject to
+        <a href="https://policies.google.com/privacy"
+           target="_blank"
+           rel="noopener noreferrer">
+          Google's Privacy Policy
+        </a>.
+      </p>
+
+      <p>
+        Signature Digital does not receive your search
+        queries or Google Safe Browsing information.
+      </p>
+    </section>
+
+    <section>
+      <h2>3. Browsing Profiles</h2>
+
+      <p>
+        Regular browsing profiles keep website data
+        separate from one another.
+      </p>
+
+      <p>
+        However, regular profiles are not Incognito sessions.
+        Each profile retains its cookies, website storage,
+        cache, and browsing history until you clear its
+        data or delete it.
+      </p>
+
+      <p>
+        Profiles help organize and separate browsing
+        sessions but do not make your browsing
+        activity anonymous.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. Incognito Mode</h2>
+
+      <p>
+        Solara Browser includes an Incognito mode
+        for temporary browsing.
+      </p>
+
+      <p>
+        Incognito browsing data, including cookies,
+        website storage, and browsing history, is
+        deleted when the last Incognito tab is closed.
+      </p>
+
+      <p>
+        Incognito mode does not make you anonymous online.
+        Websites, internet service providers, and network
+        administrators may still be able to observe
+        your activity.
+      </p>
+
+      <p>
+        Files downloaded during Incognito browsing may
+        remain on your device and must be deleted separately.
+      </p>
+    </section>
+
+    <section>
+      <h2>5. Downloads</h2>
+
+      <p>
+        Regular website downloads are saved in
+        Android's public Downloads folder.
+      </p>
+
+      <p>
+        Generated website files may be saved to a folder
+        you select in the app's Downloads settings.
+        Android's folder picker grants access only
+        to the selected folder.
+      </p>
+
+      <p>
+        Downloaded files are stored outside browsing
+        profile storage.
+      </p>
+
+      <p>
+        Clearing a profile, closing an Incognito session,
+        or uninstalling Solara Browser does not automatically
+        remove downloaded files.
+      </p>
+
+      <p>
+        Downloaded files must be deleted separately.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. Backups and Security</h2>
+
+      <p>
+        Solara Browser allows you to create password-protected
+        backups of your browsing profiles.
+      </p>
+
+      <p>
+        The <strong>Back Up All</strong> feature creates
+        an encrypted backup using AES-256-GCM encryption.
+      </p>
+
+      <p>Backups may contain:</p>
+
+      <ul>
+        <li>Browsing profiles and saved page history.</li>
+        <li>Website cookies.</li>
+        <li>Website storage and locally stored website data.</li>
+        <li>
+          Saved website sign-in sessions and authentication
+          information contained in cookies or website storage.
+        </li>
+      </ul>
+
+      <p>
+        Because backups may contain sensitive information,
+        you should keep backup files and passwords secure.
+      </p>
+
+      <p>
+        Solara Browser does not store your backup password.
+        If you forget it, the password cannot be recovered.
+      </p>
+
+      <p>
+        When restoring a backup, you can choose to replace
+        existing profiles or add the backed-up profiles.
+      </p>
+
+      <p>
+        Some websites may require you to sign in again
+        after restoration.
+      </p>
+
+      <p>
+        Active website data is protected by Android's
+        application sandbox and device security features.
+        Solara Browser does not apply additional
+        application-level encryption to live browsing data.
+      </p>
+
+      <p>
+        We recommend keeping your device protected
+        with a screen lock.
+      </p>
+
+      <h2>HTTP Connections</h2>
+
+      <p>
+        HTTP websites do not encrypt network traffic.
+      </p>
+
+      <p>
+        Solara Browser asks for confirmation before opening
+        an HTTP website or downloading content over HTTP.
+      </p>
+
+      <p>
+        If you choose to continue, other parties on
+        the network may be able to read or modify
+        the transmitted information.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Deleting Data</h2>
+
+      <p>
+        Solara Browser provides options to delete
+        browsing information stored on your device.
+      </p>
+
+      <ul>
+        <li>
+          <strong>Clear All Data:</strong>
+          Removes cookies, cache, website storage, and
+          browsing history for the currently selected
+          profile only.
+        </li>
+
+        <li>
+          <strong>Delete Profile:</strong>
+          Removes the selected browsing profile
+          and its associated website data.
+        </li>
+
+        <li>
+          <strong>Incognito Mode:</strong>
+          Deletes Incognito browsing data automatically
+          when the last Incognito tab is closed.
+        </li>
+
+        <li>
+          <strong>Uninstalling Solara Browser:</strong>
+          Removes app-private browsing data from your
+          device, subject to Android's backup and
+          restore behavior.
+        </li>
+      </ul>
+
+      <p>
+        Downloaded files and exported backup files
+        are stored separately and must be removed manually.
+      </p>
+
+      <div class="notice">
+        <p>
+          <strong>Your privacy:</strong>
+          Signature Digital does not collect or store
+          your personal browsing data on its servers.
+          Therefore, Signature Digital has no server-side
+          personal browsing data to delete upon request.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>8. Purchases and Premium Features</h2>
+
+      <p>
+        Solara Browser offers optional Premium features
+        through Google Play subscriptions.
+      </p>
+
+      <p>
+        Google Play handles subscription payments,
+        billing information, renewals, and cancellations.
+      </p>
+
+      <p>
+        Solara Browser receives purchase status information
+        from Google Play to enable Premium features,
+        including unlimited profile creation.
+      </p>
+
+      <p>
+        The app also stores your Premium entitlement
+        status locally on your device to remember
+        whether Premium features are enabled.
+      </p>
+
+      <p>
+        Signature Digital does not receive
+        your payment card information.
+      </p>
+
+      <p>
+        Subscriptions automatically renew unless
+        canceled through Google Play.
+      </p>
+
+      <p>
+        You can manage or cancel your subscription through
+        <a href="https://play.google.com/store/account/subscriptions"
+           target="_blank"
+           rel="noopener noreferrer">
+          Google Play Subscriptions
+        </a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>9. App Updates</h2>
+
+      <p>
+        Solara Browser may check Google Play to determine
+        whether a newer version of the app is available.
+      </p>
+
+      <p>
+        Google Play handles app update availability,
+        downloads, and installation according to
+        your device settings and Google Play preferences.
+      </p>
+
+      <p>
+        Signature Digital does not receive your
+        browsing history through these update checks.
+      </p>
+    </section>
+
+    <section>
+      <h2>10. Children's Privacy</h2>
+
+      <p>
+        Solara Browser is a general-purpose web browser
+        and is not specifically directed toward
+        children under the age of 13.
+      </p>
+
+      <p>
+        Websites accessed through the browser may
+        contain content that is inappropriate for children.
+      </p>
+
+      <p>
+        Parents and guardians are encouraged to supervise
+        children's internet activity.
+      </p>
+    </section>
+
+    <section>
+      <h2>11. Contact</h2>
+
+      <p>
+        If you have questions or concerns about
+        this Privacy Policy or Solara Browser,
+        please contact:
+      </p>
+
+      <div class="contact">
+        <p>
+          <strong>Developer:</strong>
+          Signature Digital
+        </p>
+
+        <p>
+          <strong>Email:</strong>
+          <a href="mailto:ahmedfawser@gmail.com">
+            ahmedfawser@gmail.com
+          </a>
+        </p>
+
+        <p>
+          <strong>WhatsApp:</strong>
+          <a href="https://wa.me/94778315058"
+             target="_blank"
+             rel="noopener noreferrer">
+            +94 77 831 5058
+          </a>
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>12. Changes to This Privacy Policy</h2>
+
+      <p>
+        Signature Digital may update this Privacy Policy
+        when app features, privacy practices, or legal
+        requirements change.
+      </p>
+
+      <p>
+        Any changes will be reflected in the updated
+        Privacy Policy along with a revised
+        "Last updated" date.
+      </p>
+    </section>
+
+    <footer>
+      <p>&copy; 2026 Signature Digital. All rights reserved.</p>
+      <p>Solara Browser &mdash; Privacy Policy</p>
+    </footer>
+
   </main>
 </body>
 </html>
-
