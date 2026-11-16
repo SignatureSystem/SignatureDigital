@@ -38,8 +38,7 @@
   ul{padding-left:22px}
   li{margin:4px 0}
   a{color:var(--accent)}
-  .todo{background:#fff3c4; padding:0 4px; border-radius:4px}
-  footer{text-align:center; color:var(--muted); font-size:14px; padding:0 20px 40px}
+    footer{text-align:center; color:var(--muted); font-size:14px; padding:0 20px 40px}
   @media (max-width:560px){
     body{font-size:16px}
     h1{font-size:28px}
@@ -54,14 +53,20 @@
   <p>Frosty Fling &middot; Effective 15 November 2026</p>
 </header>
 
+<main><header>
+  <div class="snow" aria-hidden="true">❄️</div>
+  <h1>Privacy Policy</h1>
+  <p>Frosty Fling &middot; Effective 17 November 2026 &middot; App version 1.77</p>
+</header>
+
 <main>
   <div class="summary">
     <strong>The short version</strong>
     <ul>
-      <li>You don't need an account to play, and we never ask for your name, email or phone number.</li>
-      <li>Your progress is saved on your device. If you're signed in to Google Play Games, a copy is also saved there so you can restore it.</li>
-      <li>The game shows ads from Google AdMob. AdMob uses your device's advertising ID and some device information to show and measure ads.</li>
-      <li>Where the law requires it, you're asked for consent before ads use your data, and you can change your choice at any time.</li>
+      <li>You don't need an account to play. We never ask for your email or phone number. The game asks for a player name, which you can make up.</li>
+      <li>Your progress is saved on your device, and a copy is saved to Google Play Games if you're signed in.</li>
+      <li>If you use the online Leaderboard or World Boss, your player name, scores and a scrambled device ID are sent to our game server, and your name and scores are shown to other players.</li>
+      <li>The game shows ads from Google AdMob, which uses your advertising ID and some device information. Where the law requires it, you're asked for consent first.</li>
       <li>Purchases are handled by Google Play. We never see your payment details.</li>
     </ul>
   </div>
@@ -72,22 +77,47 @@
   <h2>Information saved on your device</h2>
   <p>To remember your progress, the game saves the following on your phone or tablet:</p>
   <ul>
+    <li>The player name you choose</li>
     <li>Your coins, unlocked levels and worlds, and level stars</li>
-    <li>Power-ups and skins you own</li>
+    <li>Power-ups, upgrades and skins you own</li>
     <li>A record of items you've bought, so they stay unlocked</li>
-    <li>Game statistics and achievements</li>
-    <li>Which tutorials you've already seen, and whether sound is on or off</li>
+    <li>Game statistics, achievements, daily rewards and Monster Book progress</li>
+    <li>Your settings, such as sound and reminders, and which tutorials you've already seen</li>
   </ul>
-  <p>This information is not sent to us, and we can't see it. If you uninstall the game or clear its data, it is deleted from your device.</p>
+  <p>If you uninstall the game or clear its data, this is deleted from your device. Some of it is also sent to our game server if you use the online features described below.</p>
   <p>If you have Android backup turned on, your phone may include the game's saved data in your personal device backup to your Google account. Google handles that backup, and you can turn it off in your phone's settings.</p>
 
+  <h2>Your player name</h2>
+  <p>The first time you open the game, it asks for a name (up to 12 letters). It's used in the game, for example when monsters tease you, and on the online leaderboards. You don't have to use your real name, and you can change it at any time in Settings. Please don't use your full name or anything that identifies you.</p>
+
+  <h2>Leaderboard and World Boss (online features)</h2>
+  <p>The game has an online <strong>Leaderboard</strong> (Total Coins and Total Stars) and a <strong>World Boss</strong> that all players fight together. These run on our own game server. To make them work, the game sends the server:</p>
+  <ul>
+    <li>Your player name</li>
+    <li>A random player ID and a secret code that the game creates for you, so the server knows which scores are yours</li>
+    <li>Your scores: total coins, coins spent, total stars, and World Boss damage, snowballs, power-ups used and rewards</li>
+    <li>The number of coins on your device</li>
+    <li>A device ID: Android's ID for this app on your phone, scrambled (hashed) by the game before it's sent</li>
+    <li>Your IP address, which any internet connection reveals. The server uses it only to deliver the connection and doesn't use it to find your location.</li>
+  </ul>
+  <p><strong>What other players see:</strong> your player name, your rank, your scores, your World Boss damage and reward, and messages like “Mia dealt 20 damage”.</p>
+  <p><strong>Why we use it:</strong> to run the leaderboards and World Boss, give out rewards, gift snowballs, and prevent cheating and abuse. The device ID lets us block a phone that breaks the rules, even if the game is reinstalled. If a player or device is banned, the game shows a message and the online features stop working for them.</p>
+  <p>The server is hosted by <a href="https://railway.com/legal/privacy" target="_blank" rel="noopener">Railway</a>, which stores the data for us and doesn't use it for its own purposes. We don't sell this information or use it for ads. We keep it while the online features are running, and you can ask us to delete it at any time (see “Your choices” below).</p>
+
   <h2>Google Play Games and cloud saves</h2>
-  <p>If Google Play Games is available on your device, the game signs you in to it automatically. This lets the game save a copy of your progress (the information listed above) to your Google Play Games account, so you can restore it on a new phone using <strong>Restore Progress</strong> in the game's settings.</p>
+  <p>If Google Play Games is available on your device, the game signs you in to it automatically. This lets the game save a copy of your progress (the information listed above, including your player name) to your Google Play Games account, and restore it automatically on a new phone or after reinstalling.</p>
   <ul>
     <li>Your saved progress is stored by Google in your own account. We don't receive it and can't see it.</li>
     <li>Google gives the game a player ID for your Play Games profile. The game uses it only to load and save your progress. We don't receive your email address.</li>
   </ul>
   <p>Google Play Games is covered by the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>. You can sign out, or delete your Play Games data, in the Google Play Games settings on your phone.</p>
+
+  <h2>Reminders</h2>
+  <p>The game can show reminders on your phone, for example when your daily spin or daily reward is ready. Android asks your permission first. These reminders are scheduled on your phone; nothing is sent to us or to a notification service. You can turn them off in the game's Settings or in your phone's notification settings.</p>
+
+  <h2>Dare a friend</h2>
+  <p>After a level you can dare a friend. This opens your phone's share menu with a message containing your player name, the level and your score, plus a Google Play link. You choose who to send it to; the game doesn't see your contacts.</p>
+  <p>When someone installs the game from a dare link, the game asks Google Play for the information in that link (the level, score and name) so it can show the dare. Google Play handles this; it isn't sent to us.</p>
 
   <h2>Ads</h2>
   <p>Frosty Fling is free to play and shows ads: optional reward videos you can choose to watch for a bonus, and an ad between levels. Ads are provided by <strong>Google AdMob</strong>.</p>
@@ -129,28 +159,31 @@
 
   <h2>What we don't do</h2>
   <ul>
-    <li>We don't ask for your name, email address or phone number in the game.</li>
-    <li>We don't use our own analytics, crash reporting or tracking tools. The only third-party services are the Google and ad services described above.</li>
+    <li>We don't ask for your email address or phone number in the game.</li>
+    <li>We don't use analytics, crash reporting or tracking tools. The only outside services are Google, the ad networks above, and the host of our game server.</li>
     <li>We don't access your precise (GPS) location, contacts, photos, camera or microphone.</li>
     <li>We don't sell personal information for money. Information is shared with ad partners only as described in the Ads section.</li>
   </ul>
 
   <h2>Children</h2>
-  <p>Frosty Fling is intended for players aged 13 and over. It isn't directed at children under 13, and we don't knowingly collect personal information from them. If you think a child under 13 has given us personal information, for example in a support email, contact us and we will delete it. All purchases go through Google Play, where parents can require approval with a password or Family Link.</p>
+  <p>Frosty Fling is intended for players aged 13 and over. It isn't directed at children under 13, and we don't knowingly collect personal information from them. If you think a child under 13 has given us personal information, for example a real name on the leaderboard or in a support email, contact us and we will delete it. All purchases go through Google Play, where parents can require approval with a password or Family Link.</p>
 
   <h2>Support emails</h2>
   <p>If you email us, we'll receive your email address and whatever you write. We only use it to answer you, and we delete it when we no longer need it.</p>
 
   <h2>Keeping your information safe</h2>
-  <p>We hold very little information about you, and that's the best protection. Purchases use Google Play's secure payment system, cloud saves are stored in your Google account, and information sent to ad services is encrypted in transit. Your saved progress on the phone is protected by your device's own security.</p>
+  <p>We collect as little as we can. Information sent to our game server and to ad services is encrypted in transit, and your device ID is scrambled before it leaves your phone. Purchases use Google Play's secure payment system, cloud saves are stored in your Google account, and your progress on the phone is protected by your device's own security.</p>
 
   <h2>Your choices and deleting your data</h2>
   <ul>
-    <li><strong>Delete your game data on this device:</strong> uninstall the game, or go to Settings &rarr; Apps &rarr; Frosty Fling &rarr; Storage &rarr; Clear data.</li>
-    <li><strong>Delete your cloud save:</strong> remove the game's data from your account in the Google Play Games settings.</li>
-    <li><strong>Ads:</strong> use <strong>Privacy choices</strong> in the game's settings, or reset or delete your advertising ID in your phone's settings.</li>
+    <li><strong>Player name:</strong> change it at any time in the game's Settings. The new name replaces the old one on the leaderboards.</li>
+    <li><strong>Online features:</strong> you don't have to open the Leaderboard or World Boss. To delete your leaderboard and World Boss data from our server, email us your player name.</li>
+    <li><strong>Game data on this device:</strong> uninstall the game, or go to Settings &rarr; Apps &rarr; Frosty Fling &rarr; Storage &rarr; Clear data.</li>
+    <li><strong>Cloud save:</strong> remove the game's data from your account in the Google Play Games settings.</li>
+    <li><strong>Reminders:</strong> turn them off in the game's Settings or your phone's notification settings.</li>
+    <li><strong>Ads:</strong> use Privacy choices in the game's settings, or reset or delete your advertising ID in your phone's settings.</li>
     <li><strong>Purchases and refunds:</strong> manage them in your Google Play account. Google keeps its own record of your orders.</li>
-    <li><strong>Questions or requests:</strong> email us. We'll help you see or delete any information we hold about you, depending on the privacy laws where you live.</li>
+    <li><strong>Questions or requests:</strong> email us. We'll help you see, correct or delete any information we hold about you, depending on the privacy laws where you live.</li>
   </ul>
 
   <h2>Changes to this policy</h2>
@@ -158,7 +191,7 @@
 
   <h2>Contact us</h2>
   <p>Signature Digital<br>
-  Email: <a class="todo" href="mailto:ahmedfawser@gmail.com">ahmedfawser@gmail.com/a></p>
+  Email: <a href="mailto:ahmedfawser@gmail.com">ahmedfawser@gmail.com</a></p>
 </main>
 
 <footer>&copy; 2026 Signature Digital. Frosty Fling.</footer>
